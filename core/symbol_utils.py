@@ -2,43 +2,54 @@ from __future__ import annotations
 
 from typing import Optional
 
-from core.mexc_direct import futures_symbol_raw
+from core.mexc_direct import futures_symbol_display, futures_symbol_raw, futures_symbol_slash
 
 
 def canonical_futures_symbol(symbol: str | None) -> Optional[str]:
-    raw = str(symbol or "").strip().upper()
-    if not raw:
+    value = str(symbol or "").strip().upper()
+    if not value:
         return None
 
-    if "_" in raw:
-        parts = raw.split("_", 1)
-        if len(parts) == 2:
-            raw = f"{parts[0]}/{parts[1]}"
-
-    if raw.endswith("USDT") and "/" not in raw and ":" not in raw and len(raw) > 4:
-        base = raw[:-4]
-        raw = f"{base}/USDT:USDT"
-        return raw
-
-    if "/" in raw and ":" not in raw:
-        return f"{raw}:USDT"
-
-    if ":" in raw:
-        left, right = raw.split(":", 1)
-        if right == "USDT":
-            return f"{left}:USDT"
+    value = value.replace(":USDT:USDT", ":USDT")
+    value = value.replace("/USDT/USDT", "/USDT")
 
     try:
-        normalized_raw = futures_symbol_raw(raw)
-        if normalized_raw:
-            normalized_raw = str(normalized_raw).upper()
-            if normalized_raw.endswith("USDT") and "/" not in normalized_raw and len(normalized_raw) > 4:
-                base = normalized_raw[:-4]
-                return f"{base}/USDT:USDT"
+        return futures_symbol_display(value)
     except Exception:
         pass
 
-    return raw
+    if value.endswith("USDT") and "/" not in value and ":" not in value and "_" not in value and len(value) > 4:
+        base = value[:-4]
+        if base:
+            return f"{base}/USDT:USDT"
+
+    if value.endswith("/USDT") and ":USDT" not in value:
+        return f"{value}:USDT"
+
+    return value
+
+
+def build_symbol_aliases(symbol: str | None) -> list[str]:
+    canonical = canonical_futures_symbol(symbol)
+    if not canonical:
+        return []
+
+    aliases = {canonical}
+
+    try:
+        aliases.add(futures_symbol_slash(canonical).upper())
+    except Exception:
+        pass
+
+    try:
+        aliases.add(futures_symbol_raw(canonical).upper())
+    except Exception:
+        pass
+
+    if ":" in canonical:
+        aliases.add(canonical.split(":", 1)[0])
+
+    return sorted(str(x).strip().upper() for x in aliases if str(x).strip())
 
 
 def symbols_match(left: str | None, right: str | None) -> bool:

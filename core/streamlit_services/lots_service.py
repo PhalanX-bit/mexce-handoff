@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 from core.streamlit_services.common import _to_float_series
+from core.symbol_utils import build_symbol_aliases
 
 
 def list_position_lots(con, symbol: str = "ALL", status: str = "ALL", limit: int = 500):
@@ -15,8 +16,14 @@ def list_position_lots(con, symbol: str = "ALL", status: str = "ALL", limit: int
     params = []
 
     if symbol != "ALL":
-        clauses.append("symbol = ?")
-        params.append(symbol)
+        aliases = build_symbol_aliases(symbol)
+        if aliases:
+            placeholders = ",".join("?" for _ in aliases)
+            clauses.append(f"UPPER(symbol) IN ({placeholders})")
+            params.extend(aliases)
+        else:
+            clauses.append("symbol = ?")
+            params.append(symbol)
 
     if status != "ALL":
         clauses.append("status = ?")
@@ -42,8 +49,14 @@ def list_lot_realizations(con, symbol: str = "ALL", limit: int = 500):
     params = []
 
     if symbol != "ALL":
-        sql += " WHERE symbol = ?"
-        params.append(symbol)
+        aliases = build_symbol_aliases(symbol)
+        if aliases:
+            placeholders = ",".join("?" for _ in aliases)
+            sql += f" WHERE UPPER(symbol) IN ({placeholders})"
+            params.extend(aliases)
+        else:
+            sql += " WHERE symbol = ?"
+            params.append(symbol)
 
     sql += " ORDER BY id DESC LIMIT ?"
     params.append(limit)
@@ -100,17 +113,34 @@ def compute_eligible_lots_df(df_lots: pd.DataFrame, current_price):
 
 
 def get_open_lots_for_symbol(con, symbol: str):
-    rows = con.execute(
-        """
-        SELECT id, symbol, side, qty_opened, qty_remaining, entry_price,
-               target_roi_pct, leverage, target_price, opened_at,
-               source_action_id, source_task_type, source_task_id, status
-        FROM position_lots
-        WHERE symbol = ?
-          AND status = 'OPEN'
-          AND COALESCE(qty_remaining, 0) > 0
-        ORDER BY id ASC
-        """,
-        (symbol,),
-    ).fetchall()
+    aliases = build_symbol_aliases(symbol)
+    if aliases:
+        placeholders = ",".join("?" for _ in aliases)
+        rows = con.execute(
+            f"""
+            SELECT id, symbol, side, qty_opened, qty_remaining, entry_price,
+                   target_roi_pct, leverage, target_price, opened_at,
+                   source_action_id, source_task_type, source_task_id, status
+            FROM position_lots
+            WHERE UPPER(symbol) IN ({placeholders})
+              AND status = 'OPEN'
+              AND COALESCE(qty_remaining, 0) > 0
+            ORDER BY id ASC
+            """,
+            tuple(aliases),
+        ).fetchall()
+    else:
+        rows = con.execute(
+            """
+            SELECT id, symbol, side, qty_opened, qty_remaining, entry_price,
+                   target_roi_pct, leverage, target_price, opened_at,
+                   source_action_id, source_task_type, source_task_id, status
+            FROM position_lots
+            WHERE symbol = ?
+              AND status = 'OPEN'
+              AND COALESCE(qty_remaining, 0) > 0
+            ORDER BY id ASC
+            """,
+            (symbol,),
+        ).fetchall()
     return [dict(r) for r in rows]

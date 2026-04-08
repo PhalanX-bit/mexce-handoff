@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from core.symbol_utils import build_symbol_aliases
+
 
 def get_latest_account_snapshot(con):
     row = con.execute(
@@ -34,21 +36,40 @@ def get_latest_positions_per_symbol_side(con):
 
 
 def get_latest_positions_for_symbol(con, symbol: str):
-    rows = con.execute(
-        """
-        SELECT p.symbol, p.side, p.contracts, p.entry_price, p.unrealized_pnl, p.created_at
-        FROM positions_snapshot p
-        JOIN (
-            SELECT symbol, side, MAX(id) AS max_id
-            FROM positions_snapshot
-            WHERE symbol = ?
-            GROUP BY symbol, side
-        ) latest
-        ON p.id = latest.max_id
-        ORDER BY p.symbol ASC, p.side ASC
-        """,
-        (symbol,),
-    ).fetchall()
+    aliases = build_symbol_aliases(symbol)
+    if aliases:
+        placeholders = ",".join("?" for _ in aliases)
+        rows = con.execute(
+            f"""
+            SELECT p.symbol, p.side, p.contracts, p.entry_price, p.unrealized_pnl, p.created_at
+            FROM positions_snapshot p
+            JOIN (
+                SELECT symbol, side, MAX(id) AS max_id
+                FROM positions_snapshot
+                WHERE UPPER(symbol) IN ({placeholders})
+                GROUP BY symbol, side
+            ) latest
+            ON p.id = latest.max_id
+            ORDER BY p.symbol ASC, p.side ASC
+            """,
+            tuple(aliases),
+        ).fetchall()
+    else:
+        rows = con.execute(
+            """
+            SELECT p.symbol, p.side, p.contracts, p.entry_price, p.unrealized_pnl, p.created_at
+            FROM positions_snapshot p
+            JOIN (
+                SELECT symbol, side, MAX(id) AS max_id
+                FROM positions_snapshot
+                WHERE symbol = ?
+                GROUP BY symbol, side
+            ) latest
+            ON p.id = latest.max_id
+            ORDER BY p.symbol ASC, p.side ASC
+            """,
+            (symbol,),
+        ).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -69,30 +90,58 @@ def get_latest_tickers(con):
 
 
 def get_latest_ticker_for_symbol(con, symbol: str):
-    row = con.execute(
-        """
-        SELECT symbol, last_price, mark_price, created_at
-        FROM ticker_snapshot
-        WHERE symbol = ?
-        ORDER BY id DESC
-        LIMIT 1
-        """,
-        (symbol,),
-    ).fetchone()
+    aliases = build_symbol_aliases(symbol)
+    if aliases:
+        placeholders = ",".join("?" for _ in aliases)
+        row = con.execute(
+            f"""
+            SELECT symbol, last_price, mark_price, created_at
+            FROM ticker_snapshot
+            WHERE UPPER(symbol) IN ({placeholders})
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            tuple(aliases),
+        ).fetchone()
+    else:
+        row = con.execute(
+            """
+            SELECT symbol, last_price, mark_price, created_at
+            FROM ticker_snapshot
+            WHERE symbol = ?
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (symbol,),
+        ).fetchone()
     return dict(row) if row else None
 
 
 def get_latest_ticker_price_for_symbol(con, symbol: str):
-    row = con.execute(
-        """
-        SELECT last_price
-        FROM ticker_snapshot
-        WHERE symbol = ?
-        ORDER BY id DESC
-        LIMIT 1
-        """,
-        (symbol,),
-    ).fetchone()
+    aliases = build_symbol_aliases(symbol)
+    if aliases:
+        placeholders = ",".join("?" for _ in aliases)
+        row = con.execute(
+            f"""
+            SELECT last_price
+            FROM ticker_snapshot
+            WHERE UPPER(symbol) IN ({placeholders})
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            tuple(aliases),
+        ).fetchone()
+    else:
+        row = con.execute(
+            """
+            SELECT last_price
+            FROM ticker_snapshot
+            WHERE symbol = ?
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (symbol,),
+        ).fetchone()
 
     if not row:
         return None

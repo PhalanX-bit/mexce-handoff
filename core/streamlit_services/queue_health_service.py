@@ -1,18 +1,22 @@
 from __future__ import annotations
 
+from core.symbol_utils import build_symbol_aliases
+
 
 def _normalize_symbols(symbols) -> list[str]:
     out = []
     seen = set()
 
     for symbol in symbols or []:
-        s = str(symbol or "").strip()
-        if not s:
-            continue
-        if s in seen:
-            continue
-        seen.add(s)
-        out.append(s)
+        aliases = build_symbol_aliases(symbol) or [str(symbol or "").strip()]
+        for alias in aliases:
+            s = str(alias or "").strip()
+            if not s:
+                continue
+            if s in seen:
+                continue
+            seen.add(s)
+            out.append(s)
 
     return out
 
@@ -26,7 +30,7 @@ def _list_rows_for_symbols(con, *, symbols, where_sql: str, order_sql: str, limi
     sql = f"""
         SELECT *
         FROM action_queue
-        WHERE symbol IN ({placeholders})
+        WHERE UPPER(symbol) IN ({placeholders})
           AND ({where_sql})
         {order_sql}
         LIMIT ?
