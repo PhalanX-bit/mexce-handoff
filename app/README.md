@@ -27,6 +27,7 @@ Current status:
 - `bridge_api.py` is a deprecated compatibility layer for older browser/userscript flows.
 - It is not the preferred execution path for V2.
 - New work should prefer direct `action_queue` + `core/api_executor.py`.
+- Legacy `pending_limit_tasks` creation from the bridge is disabled by default.
 
 Other bridge-related files outside this folder, such as `../bridge/server.py`, are
 historical/legacy only.

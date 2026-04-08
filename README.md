@@ -34,6 +34,7 @@ The local bridge API is no longer part of the preferred V2 execution path.
 
 The bridge layer exists only for older browser/userscript-style flows and
 legacy task tracking. New feature work should avoid adding dependencies on it.
+Legacy pending-task creation from the bridge is now disabled by default.
 
 ## Legacy/reference areas
 

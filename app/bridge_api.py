@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 DB_PATH = Path(__file__).resolve().parents[1] / "data" / "mexc.sqlite"
+LEGACY_PENDING_TASK_BRIDGE_ENABLED = False
 
 app = FastAPI(title="MEXC Local Bridge")
 
@@ -213,7 +214,12 @@ def _get_latest_position_payload(
 
 @app.get("/health")
 def health() -> Dict[str, Any]:
-    return {"ok": True, "db": str(DB_PATH)}
+    return {
+        "ok": True,
+        "db": str(DB_PATH),
+        "bridge_status": "deprecated",
+        "legacy_pending_task_bridge_enabled": LEGACY_PENDING_TASK_BRIDGE_ENABLED,
+    }
 
 
 @app.get("/queue/next")
@@ -275,8 +281,8 @@ def queue_done(action_id: int, payload: Optional[Dict[str, Any]] = None) -> Dict
             (note, action_id),
         )
 
-        if cur.rowcount > 0:
-            # LIMIT-only active flow
+        if cur.rowcount > 0 and LEGACY_PENDING_TASK_BRIDGE_ENABLED:
+            # Legacy compatibility only. Disabled by default in V2.
             _upsert_pending_limit_task_from_done_note(con, action_id, note)
 
         con.commit()
