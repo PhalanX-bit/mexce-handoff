@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import os
+import sqlite3
 import time
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, ROUND_DOWN, ROUND_UP
@@ -12,6 +13,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from dotenv import load_dotenv
+
+from core.db import DB_PATH
 
 BASE_URL = "https://api.mexc.com"
 DEFAULT_TIMEOUT = 20
@@ -474,6 +477,46 @@ def get_contract_detail_raw(symbol: Optional[str] = None) -> List[Dict[str, Any]
     return _cache_set("contract_detail_raw", raw_symbol, rows)
 
 
+def _load_contract_meta_from_symbols_state(symbol: str) -> Optional[Dict[str, Any]]:
+    raw_symbol = futures_symbol_raw(symbol)
+    display_symbol = futures_symbol_display(raw_symbol)
+    slash_symbol = futures_symbol_slash(raw_symbol)
+    compact_symbol = slash_symbol.replace("/", "")
+
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    try:
+        row = conn.execute(
+            """
+            SELECT exchange_symbol, symbol, price_tick, qty_step, min_qty, price_precision, qty_precision
+            FROM symbols_state
+            WHERE UPPER(exchange_symbol) = UPPER(?)
+               OR UPPER(symbol) = UPPER(?)
+               OR UPPER(symbol) = UPPER(?)
+            LIMIT 1
+            """,
+            (display_symbol, compact_symbol, raw_symbol.replace("_", "")),
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "symbol": raw_symbol,
+        "exchange_symbol": str(row["exchange_symbol"] or display_symbol),
+        "slash_symbol": slash_symbol,
+        "price_tick": _safe_float(row["price_tick"]),
+        "qty_step": _safe_float(row["qty_step"]),
+        "min_qty": _safe_float(row["min_qty"]),
+        "price_precision": _safe_int(row["price_precision"]),
+        "qty_precision": _safe_int(row["qty_precision"]),
+        "max_leverage": None,
+        "contract_meta_source": "symbols_state",
+    }
+
+
 def get_contract_meta(symbol: str) -> Optional[Dict[str, Any]]:
     raw_symbol = futures_symbol_raw(symbol)
     cached = _cache_get("contract_meta", raw_symbol, PUBLIC_META_CACHE_TTL_SEC)
@@ -483,11 +526,15 @@ def get_contract_meta(symbol: str) -> Optional[Dict[str, Any]]:
     try:
         rows = get_contract_detail_raw(raw_symbol)
     except Exception:
-        return None
+        rows = []
 
     for row in rows:
         if str(row.get("symbol") or "").upper() == raw_symbol:
             return _cache_set("contract_meta", raw_symbol, _normalize_contract_detail_row(row))
+
+    fallback = _load_contract_meta_from_symbols_state(raw_symbol)
+    if fallback is not None:
+        return _cache_set("contract_meta", raw_symbol, fallback)
 
     return None
 
