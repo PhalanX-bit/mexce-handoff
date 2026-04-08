@@ -9,6 +9,7 @@ from core.streamlit_services.pending_limit_service import (
     get_pending_limit_status_counts,
     list_pending_limit_tasks,
     mark_pending_limit_task_status,
+    normalize_pending_limit_task_symbols,
     reset_pending_limit_task,
     set_pending_limit_created_now,
 )
@@ -58,7 +59,7 @@ def render_pending_limit_tab(con) -> None:
         if st.button("Refresh pending LIMIT tasks", key="v2_refresh_pending_limit_tasks"):
             st.rerun()
 
-    col4, col5, col6 = st.columns([1, 1, 1])
+    col4, col5, col6, col6b = st.columns([1, 1, 1, 1])
 
     with col4:
         if st.button("Reset selected task", key="v2_reset_selected_pending_limit_task"):
@@ -84,6 +85,12 @@ def render_pending_limit_tab(con) -> None:
         if st.button("Delete resolved tasks", key="v2_delete_resolved_pending_limit_tasks"):
             n = delete_resolved_pending_limit_tasks(con)
             st.success(f"Deleted resolved tasks: {n}")
+            st.rerun()
+
+    with col6b:
+        if st.button("Normalize symbols", key="v2_normalize_pending_limit_symbols"):
+            n = normalize_pending_limit_task_symbols(con)
+            st.success(f"Normalized pending LIMIT task symbols: {n}")
             st.rerun()
 
     col7, col8, col9 = st.columns([1, 1, 1])

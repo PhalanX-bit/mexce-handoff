@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from core.symbol_utils import canonical_futures_symbol
+
 
 def get_pending_chase_status_counts(con):
     rows = con.execute(
@@ -126,3 +128,41 @@ def mark_pending_chase_task_status(con, task_id: int, new_status: str, note_suff
     )
     con.commit()
     return cur.rowcount
+
+
+def normalize_pending_chase_task_symbols(con) -> int:
+    rows = con.execute(
+        """
+        SELECT id, symbol, note
+        FROM pending_chase_tasks
+        ORDER BY id ASC
+        """
+    ).fetchall()
+
+    updated = 0
+    for row in rows:
+        current_symbol = str(row["symbol"] or "").strip()
+        normalized_symbol = canonical_futures_symbol(current_symbol)
+        if not normalized_symbol:
+            continue
+        if normalized_symbol == current_symbol.upper():
+            continue
+
+        con.execute(
+            """
+            UPDATE pending_chase_tasks
+            SET symbol = ?,
+                updated_at = datetime('now'),
+                note = COALESCE(note, '') || ?
+            WHERE id = ?
+            """,
+            (
+                normalized_symbol,
+                f" | symbol_normalized_from={current_symbol}",
+                int(row["id"]),
+            ),
+        )
+        updated += 1
+
+    con.commit()
+    return updated

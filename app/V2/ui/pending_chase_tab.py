@@ -9,6 +9,7 @@ from core.streamlit_services.pending_chase_service import (
     get_pending_chase_status_counts,
     list_pending_chase_tasks,
     mark_pending_chase_task_status,
+    normalize_pending_chase_task_symbols,
     reset_pending_chase_task,
     set_pending_chase_created_now,
 )
@@ -57,7 +58,7 @@ def render_pending_chase_tab(con) -> None:
         if st.button("Refresh pending CHASE tasks", key="v2_refresh_pending_chase_tasks"):
             st.rerun()
 
-    col4, col5, col6 = st.columns([1, 1, 1])
+    col4, col5, col6, col6b = st.columns([1, 1, 1, 1])
 
     with col4:
         if st.button("Reset selected CHASE", key="v2_reset_selected_pending_chase_task"):
@@ -83,6 +84,12 @@ def render_pending_chase_tab(con) -> None:
         if st.button("Delete resolved CHASE", key="v2_delete_resolved_pending_chase_tasks"):
             n = delete_resolved_pending_chase_tasks(con)
             st.success(f"Deleted resolved CHASE tasks: {n}")
+            st.rerun()
+
+    with col6b:
+        if st.button("Normalize symbols", key="v2_normalize_pending_chase_symbols"):
+            n = normalize_pending_chase_task_symbols(con)
+            st.success(f"Normalized pending CHASE task symbols: {n}")
             st.rerun()
 
     col7, col8, col9 = st.columns([1, 1, 1])

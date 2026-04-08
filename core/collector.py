@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 
 from core.db import connect
 from core.lots import create_lot_from_open_fill, close_qty_against_lots
+from core.symbol_utils import canonical_futures_symbol
 
 PENDING_EXPIRE_MINUTES = 180
 TRIGGERED_FAIL_MINUTES = 30
@@ -189,7 +190,14 @@ def get_pending_limit_tasks(con) -> List[Dict[str, Any]]:
         ORDER BY id ASC
         """
     ).fetchall()
-    return [dict(r) for r in rows]
+    out = []
+    for row in rows:
+        item = dict(row)
+        normalized_symbol = canonical_futures_symbol(item.get("symbol"))
+        if normalized_symbol:
+            item["symbol"] = normalized_symbol.split(":", 1)[0]
+        out.append(item)
+    return out
 
 
 def get_pending_chase_tasks(con) -> List[Dict[str, Any]]:
@@ -201,7 +209,14 @@ def get_pending_chase_tasks(con) -> List[Dict[str, Any]]:
         ORDER BY id ASC
         """
     ).fetchall()
-    return [dict(r) for r in rows]
+    out = []
+    for row in rows:
+        item = dict(row)
+        normalized_symbol = canonical_futures_symbol(item.get("symbol"))
+        if normalized_symbol:
+            item["symbol"] = normalized_symbol.split(":", 1)[0]
+        out.append(item)
+    return out
 
 
 def mark_pending_chase_baseline(
