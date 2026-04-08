@@ -1,4 +1,7 @@
 # app/streamlit_app.py
+# LEGACY reference entrypoint.
+# Active ongoing work should target app/V2/streamlit_app.py.
+# This file is kept for history and comparison while V2 is stabilized.
 # FULL FILE — Strategy v2 + SAFE MODE (1 contract per action)
 # OPEN uses LIMIT
 # CLOSE uses LIMIT

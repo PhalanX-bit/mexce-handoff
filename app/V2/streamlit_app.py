@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# Active Streamlit entrypoint for ongoing V2 work on codex/v2-stabilization.
+
 import sys
 from pathlib import Path
 
