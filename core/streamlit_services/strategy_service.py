@@ -8,6 +8,8 @@ from core.streamlit_services.contract_rules_service import (
     validate_contract_constraints,
 )
 
+LEGACY_PENDING_TASK_GUARDS_ENABLED = False
+
 
 def _normalize_symbol(symbol: str) -> str:
     return str(symbol or "").strip().upper()
@@ -36,6 +38,9 @@ def has_active_task_for_symbol(con, symbol: str) -> bool:
 
 
 def has_active_pending_limit_for_symbol(con, symbol: str) -> bool:
+    if not LEGACY_PENDING_TASK_GUARDS_ENABLED:
+        return False
+
     symbol = _normalize_symbol(symbol)
     row = con.execute(
         """
@@ -51,6 +56,9 @@ def has_active_pending_limit_for_symbol(con, symbol: str) -> bool:
 
 
 def has_active_pending_chase_for_symbol(con, symbol: str) -> bool:
+    if not LEGACY_PENDING_TASK_GUARDS_ENABLED:
+        return False
+
     symbol = _normalize_symbol(symbol)
     row = con.execute(
         """

@@ -6,13 +6,11 @@
 # - reconcile missing positions -> synthetic contracts=0 row
 # - watches symbols from:
 #     a) live positions
-#     b) pending_limit_tasks with status in ('PENDING', 'TRIGGERED')
-#     c) pending_chase_tasks with status in ('PENDING')   [legacy read-only visibility]
-# - marks pending limit tasks when price crosses limit
-# - supports correct OPEN/CLOSE fill detection for LIMIT
-# - creates lots on OPEN LIMIT fills
-# - realizes lots on CLOSE LIMIT fills
-# - legacy pending_chase_tasks block is kept only for old rows, no new CHASE flow is expected
+#     b) pending_limit_tasks with status in ('PENDING', 'TRIGGERED') [legacy, optional]
+#     c) pending_chase_tasks with status in ('PENDING') [legacy, optional]
+# - can mark pending limit tasks when price crosses limit [legacy, optional]
+# - can create/realize lots from pending limit fills [legacy, optional]
+# - pending_chase_tasks block is legacy-only and disabled by default
 # - REMOVED: fills/order-history API polling, because MEXC returns 700007
 
 import os
@@ -25,6 +23,9 @@ from dotenv import load_dotenv
 from core.db import connect
 from core.lots import create_lot_from_open_fill, close_qty_against_lots
 from core.symbol_utils import canonical_futures_symbol
+
+LEGACY_PENDING_LIMIT_TRACKING_ENABLED = False
+LEGACY_PENDING_CHASE_TRACKING_ENABLED = False
 
 PENDING_EXPIRE_MINUTES = 180
 TRIGGERED_FAIL_MINUTES = 30
@@ -511,22 +512,26 @@ def collect() -> None:
     positions = normalize_ccxt_positions(raw_positions)
 
     pending_limit_tasks = []
-    try:
-        pending_limit_tasks = get_pending_limit_tasks(con)
-    except Exception as e:
-        print("pending_limit_tasks query failed (non-fatal):", e)
-        pending_limit_tasks = []
+    if LEGACY_PENDING_LIMIT_TRACKING_ENABLED:
+        try:
+            pending_limit_tasks = get_pending_limit_tasks(con)
+        except Exception as e:
+            print("pending_limit_tasks query failed (non-fatal):", e)
+            pending_limit_tasks = []
 
     pending_chase_tasks = []
-    try:
-        pending_chase_tasks = get_pending_chase_tasks(con)
-    except Exception as e:
-        print("pending_chase_tasks query failed (non-fatal):", e)
-        pending_chase_tasks = []
+    if LEGACY_PENDING_CHASE_TRACKING_ENABLED:
+        try:
+            pending_chase_tasks = get_pending_chase_tasks(con)
+        except Exception as e:
+            print("pending_chase_tasks query failed (non-fatal):", e)
+            pending_chase_tasks = []
 
     watch_symbols: Set[str] = {p["symbol"] for p in positions if p.get("symbol")}
-    watch_symbols |= {str(t["symbol"]) for t in pending_limit_tasks if t.get("symbol")}
-    watch_symbols |= {str(t["symbol"]) for t in pending_chase_tasks if t.get("symbol")}
+    if LEGACY_PENDING_LIMIT_TRACKING_ENABLED:
+        watch_symbols |= {str(t["symbol"]) for t in pending_limit_tasks if t.get("symbol")}
+    if LEGACY_PENDING_CHASE_TRACKING_ENABLED:
+        watch_symbols |= {str(t["symbol"]) for t in pending_chase_tasks if t.get("symbol")}
 
     latest_prices: Dict[str, Optional[float]] = {}
 
@@ -579,41 +584,259 @@ def collect() -> None:
         print("reconcile failed (non-fatal):", e)
 
     # ---------- pending LIMIT processing ----------
-    try:
-        live_contracts_map = {
-            (p["symbol"], p["side"]): float(p["contracts"])
-            for p in positions
-        }
+    if LEGACY_PENDING_LIMIT_TRACKING_ENABLED:
+        try:
+            live_contracts_map = {
+                (p["symbol"], p["side"]): float(p["contracts"])
+                for p in positions
+            }
 
-        for task in pending_limit_tasks:
-            task_id = int(task["id"])
-            action_id = task.get("action_id")
-            sym = str(task["symbol"])
-            side = str(task["side"]).upper()
-            panel_mode = str(task.get("panel_mode") or "OPEN").upper()
-            limit_price = float(task["limit_price"])
-            task_status = str(task["status"]).upper()
-            last_price = latest_prices.get(sym)
+            for task in pending_limit_tasks:
+                task_id = int(task["id"])
+                action_id = task.get("action_id")
+                sym = str(task["symbol"])
+                side = str(task["side"]).upper()
+                panel_mode = str(task.get("panel_mode") or "OPEN").upper()
+                limit_price = float(task["limit_price"])
+                task_status = str(task["status"]).upper()
+                last_price = latest_prices.get(sym)
 
-            prev_contracts = float(prev_open.get((sym, side), {}).get("contracts", 0.0) or 0.0)
-            live_contracts = float(live_contracts_map.get((sym, side), 0.0) or 0.0)
+                prev_contracts = float(prev_open.get((sym, side), {}).get("contracts", 0.0) or 0.0)
+                live_contracts = float(live_contracts_map.get((sym, side), 0.0) or 0.0)
 
-            baseline_contracts = task.get("baseline_contracts")
-            baseline_contracts = float(baseline_contracts) if baseline_contracts is not None else None
+                baseline_contracts = task.get("baseline_contracts")
+                baseline_contracts = float(baseline_contracts) if baseline_contracts is not None else None
 
-            created_at = task.get("created_at")
-            triggered_at = task.get("triggered_at")
+                created_at = task.get("created_at")
+                triggered_at = task.get("triggered_at")
 
-            base_for_detection = baseline_contracts if baseline_contracts is not None else prev_contracts
+                base_for_detection = baseline_contracts if baseline_contracts is not None else prev_contracts
 
-            crossed = price_crossed_limit(
-                panel_mode=panel_mode,
-                side=side,
-                limit_price=limit_price,
-                last_price=last_price,
-            )
+                crossed = price_crossed_limit(
+                    panel_mode=panel_mode,
+                    side=side,
+                    limit_price=limit_price,
+                    last_price=last_price,
+                )
 
-            if task_status == "PENDING":
+                if task_status == "PENDING":
+                    age_row = con.execute(
+                        """
+                        SELECT CAST((julianday('now') - julianday(?)) * 24 * 60 AS INTEGER)
+                        """,
+                        (created_at,),
+                    ).fetchone()
+                    age_minutes = int(age_row[0] or 0)
+
+                    if age_minutes >= PENDING_EXPIRE_MINUTES:
+                        mark_pending_limit_expired(
+                            con,
+                            task_id=task_id,
+                            note_suffix=f" | expired_pending_after_minutes={age_minutes}",
+                        )
+                        continue
+
+                    history_seen_fill = was_limit_fill_seen_since(
+                        con,
+                        symbol=sym,
+                        side=side,
+                        baseline_contracts=base_for_detection,
+                        created_at=created_at,
+                        panel_mode=panel_mode,
+                    )
+
+                    if is_limit_fill_detected(panel_mode, base_for_detection, live_contracts) or history_seen_fill:
+                        mark_pending_limit_filled(
+                            con,
+                            task_id=task_id,
+                            last_price=last_price,
+                            live_contracts=live_contracts,
+                        )
+
+                        if panel_mode == "OPEN":
+                            qty = float(task.get("qty") or 0.0)
+                            if qty > 0:
+                                try:
+                                    lot_id = create_lot_from_open_fill(
+                                        con,
+                                        symbol=sym,
+                                        side=side,
+                                        qty=qty,
+                                        entry_price=float(limit_price),
+                                        target_roi_pct=DEFAULT_LOT_TARGET_ROI_PCT,
+                                        leverage=DEFAULT_LOT_LEVERAGE,
+                                        opened_at=snapshot_ts,
+                                        source_action_id=int(action_id) if action_id is not None else None,
+                                        source_task_type="ACTION_QUEUE",
+                                        source_task_id=int(action_id) if action_id is not None else task_id,
+                                    )
+                                    print(f"created lot {lot_id} for open limit fill task {task_id}")
+                                except Exception as e:
+                                    print(f"create lot failed for open limit task {task_id}:", e)
+
+                        elif panel_mode == "CLOSE":
+                            try:
+                                matched = close_qty_against_lots(
+                                    con,
+                                    symbol=sym,
+                                    side=side,
+                                    close_qty=float(task.get("qty") or 0.0),
+                                    close_price=float(limit_price),
+                                    close_action_id=int(action_id) if action_id is not None else None,
+                                    close_task_type="ACTION_QUEUE",
+                                    close_task_id=int(action_id) if action_id is not None else task_id,
+                                    note=str(task.get("note") or f"collector_close_limit_fill task_id={task_id}"),
+                                    eligible_first=True,
+                                )
+                                print(f"lot realization on PENDING->FILLED for task {task_id}: {matched}")
+                            except Exception as e:
+                                print(f"lot realization failed for pending close limit task {task_id}:", e)
+
+                        continue
+
+                    if not crossed:
+                        continue
+
+                    mark_pending_limit_triggered(
+                        con,
+                        task_id=task_id,
+                        last_price=last_price,
+                        baseline_contracts=base_for_detection,
+                    )
+
+                elif task_status == "TRIGGERED":
+                    base = baseline_contracts if baseline_contracts is not None else prev_contracts
+
+                    history_seen_fill = was_limit_fill_seen_since(
+                        con,
+                        symbol=sym,
+                        side=side,
+                        baseline_contracts=base,
+                        created_at=(triggered_at or created_at),
+                        panel_mode=panel_mode,
+                    )
+
+                    if is_limit_fill_detected(panel_mode, base, live_contracts) or history_seen_fill:
+                        mark_pending_limit_filled(
+                            con,
+                            task_id=task_id,
+                            last_price=last_price,
+                            live_contracts=live_contracts,
+                        )
+
+                        if panel_mode == "OPEN":
+                            qty = float(task.get("qty") or 0.0)
+                            if qty > 0:
+                                try:
+                                    lot_id = create_lot_from_open_fill(
+                                        con,
+                                        symbol=sym,
+                                        side=side,
+                                        qty=qty,
+                                        entry_price=float(limit_price),
+                                        target_roi_pct=DEFAULT_LOT_TARGET_ROI_PCT,
+                                        leverage=DEFAULT_LOT_LEVERAGE,
+                                        opened_at=snapshot_ts,
+                                        source_action_id=int(action_id) if action_id is not None else None,
+                                        source_task_type="ACTION_QUEUE",
+                                        source_task_id=int(action_id) if action_id is not None else task_id,
+                                    )
+                                    print(f"created lot {lot_id} for triggered open limit fill task {task_id}")
+                                except Exception as e:
+                                    print(f"create lot failed for triggered open limit task {task_id}:", e)
+
+                        elif panel_mode == "CLOSE":
+                            try:
+                                matched = close_qty_against_lots(
+                                    con,
+                                    symbol=sym,
+                                    side=side,
+                                    close_qty=float(task.get("qty") or 0.0),
+                                    close_price=float(limit_price),
+                                    close_action_id=int(action_id) if action_id is not None else None,
+                                    close_task_type="ACTION_QUEUE",
+                                    close_task_id=int(action_id) if action_id is not None else task_id,
+                                    note=str(task.get("note") or f"collector_close_limit_fill task_id={task_id}"),
+                                    eligible_first=True,
+                                )
+                                print(f"lot realization on TRIGGERED->FILLED for task {task_id}: {matched}")
+                            except Exception as e:
+                                print(f"lot realization failed for triggered close limit task {task_id}:", e)
+
+                        continue
+
+                    trig_row = con.execute(
+                        """
+                        SELECT CAST((julianday('now') - julianday(?)) * 24 * 60 AS INTEGER)
+                        """,
+                        (triggered_at or created_at,),
+                    ).fetchone()
+                    trig_minutes = int(trig_row[0] or 0)
+
+                    if trig_minutes >= TRIGGERED_FAIL_MINUTES:
+                        mark_pending_limit_failed_after_trigger(
+                            con,
+                            task_id=task_id,
+                            note_suffix=f" | failed_after_trigger_minutes={trig_minutes}",
+                        )
+
+        except Exception as e:
+            print("pending limit processing failed (non-fatal):", e)
+
+    # ---------- pending CHASE processing [legacy only] ----------
+    if LEGACY_PENDING_CHASE_TRACKING_ENABLED:
+        try:
+            live_contracts_map = {
+                (p["symbol"], p["side"]): float(p["contracts"])
+                for p in positions
+            }
+
+            for task in pending_chase_tasks:
+                task_id = int(task["id"])
+                sym = str(task["symbol"])
+                side = str(task["side"]).upper()
+                task_status = str(task["status"]).upper()
+                panel_mode = str(task.get("panel_mode") or "OPEN").upper()
+
+                if task_status != "PENDING":
+                    continue
+
+                live_contracts = float(live_contracts_map.get((sym, side), 0.0) or 0.0)
+
+                baseline_contracts = task.get("baseline_contracts")
+                baseline_contracts = float(baseline_contracts) if baseline_contracts is not None else None
+
+                created_at = task.get("created_at")
+
+                if baseline_contracts is None:
+                    mark_pending_chase_baseline(
+                        con,
+                        task_id=task_id,
+                        baseline_contracts=live_contracts,
+                    )
+                    continue
+
+                history_seen_fill = was_contracts_changed_past_baseline_since(
+                    con,
+                    symbol=sym,
+                    side=side,
+                    baseline_contracts=baseline_contracts,
+                    created_at=created_at,
+                    panel_mode=panel_mode,
+                )
+
+                is_open_fill = panel_mode == "OPEN" and live_contracts > baseline_contracts
+                is_close_fill = panel_mode == "CLOSE" and live_contracts < baseline_contracts
+
+                if is_open_fill or is_close_fill or history_seen_fill:
+                    fill_contracts = live_contracts
+                    mark_pending_chase_filled(
+                        con,
+                        task_id=task_id,
+                        live_contracts=fill_contracts,
+                    )
+                    continue
+
                 age_row = con.execute(
                     """
                     SELECT CAST((julianday('now') - julianday(?)) * 24 * 60 AS INTEGER)
@@ -622,231 +845,15 @@ def collect() -> None:
                 ).fetchone()
                 age_minutes = int(age_row[0] or 0)
 
-                if age_minutes >= PENDING_EXPIRE_MINUTES:
-                    mark_pending_limit_expired(
+                if age_minutes >= CHASE_EXPIRE_MINUTES:
+                    mark_pending_chase_expired(
                         con,
                         task_id=task_id,
-                        note_suffix=f" | expired_pending_after_minutes={age_minutes}",
-                    )
-                    continue
-
-                history_seen_fill = was_limit_fill_seen_since(
-                    con,
-                    symbol=sym,
-                    side=side,
-                    baseline_contracts=base_for_detection,
-                    created_at=created_at,
-                    panel_mode=panel_mode,
-                )
-
-                if is_limit_fill_detected(panel_mode, base_for_detection, live_contracts) or history_seen_fill:
-                    mark_pending_limit_filled(
-                        con,
-                        task_id=task_id,
-                        last_price=last_price,
-                        live_contracts=live_contracts,
+                        note_suffix=f" | chase_expired_after_minutes={age_minutes}",
                     )
 
-                    if panel_mode == "OPEN":
-                        qty = float(task.get("qty") or 0.0)
-                        if qty > 0:
-                            try:
-                                lot_id = create_lot_from_open_fill(
-                                    con,
-                                    symbol=sym,
-                                    side=side,
-                                    qty=qty,
-                                    entry_price=float(limit_price),
-                                    target_roi_pct=DEFAULT_LOT_TARGET_ROI_PCT,
-                                    leverage=DEFAULT_LOT_LEVERAGE,
-                                    opened_at=snapshot_ts,
-                                    source_action_id=int(action_id) if action_id is not None else None,
-                                    source_task_type="ACTION_QUEUE",
-                                    source_task_id=int(action_id) if action_id is not None else task_id,
-                                )
-                                print(f"created lot {lot_id} for open limit fill task {task_id}")
-                            except Exception as e:
-                                print(f"create lot failed for open limit task {task_id}:", e)
-
-                    elif panel_mode == "CLOSE":
-                        try:
-                            matched = close_qty_against_lots(
-                                con,
-                                symbol=sym,
-                                side=side,
-                                close_qty=float(task.get("qty") or 0.0),
-                                close_price=float(limit_price),
-                                close_action_id=int(action_id) if action_id is not None else None,
-                                close_task_type="ACTION_QUEUE",
-                                close_task_id=int(action_id) if action_id is not None else task_id,
-                                note=str(task.get("note") or f"collector_close_limit_fill task_id={task_id}"),
-                                eligible_first=True,
-                            )
-                            print(f"lot realization on PENDING->FILLED for task {task_id}: {matched}")
-                        except Exception as e:
-                            print(f"lot realization failed for pending close limit task {task_id}:", e)
-
-                    continue
-
-                if not crossed:
-                    continue
-
-                mark_pending_limit_triggered(
-                    con,
-                    task_id=task_id,
-                    last_price=last_price,
-                    baseline_contracts=base_for_detection,
-                )
-
-            elif task_status == "TRIGGERED":
-                base = baseline_contracts if baseline_contracts is not None else prev_contracts
-
-                history_seen_fill = was_limit_fill_seen_since(
-                    con,
-                    symbol=sym,
-                    side=side,
-                    baseline_contracts=base,
-                    created_at=(triggered_at or created_at),
-                    panel_mode=panel_mode,
-                )
-
-                if is_limit_fill_detected(panel_mode, base, live_contracts) or history_seen_fill:
-                    mark_pending_limit_filled(
-                        con,
-                        task_id=task_id,
-                        last_price=last_price,
-                        live_contracts=live_contracts,
-                    )
-
-                    if panel_mode == "OPEN":
-                        qty = float(task.get("qty") or 0.0)
-                        if qty > 0:
-                            try:
-                                lot_id = create_lot_from_open_fill(
-                                    con,
-                                    symbol=sym,
-                                    side=side,
-                                    qty=qty,
-                                    entry_price=float(limit_price),
-                                    target_roi_pct=DEFAULT_LOT_TARGET_ROI_PCT,
-                                    leverage=DEFAULT_LOT_LEVERAGE,
-                                    opened_at=snapshot_ts,
-                                    source_action_id=int(action_id) if action_id is not None else None,
-                                    source_task_type="ACTION_QUEUE",
-                                    source_task_id=int(action_id) if action_id is not None else task_id,
-                                )
-                                print(f"created lot {lot_id} for triggered open limit fill task {task_id}")
-                            except Exception as e:
-                                print(f"create lot failed for triggered open limit task {task_id}:", e)
-
-                    elif panel_mode == "CLOSE":
-                        try:
-                            matched = close_qty_against_lots(
-                                con,
-                                symbol=sym,
-                                side=side,
-                                close_qty=float(task.get("qty") or 0.0),
-                                close_price=float(limit_price),
-                                close_action_id=int(action_id) if action_id is not None else None,
-                                close_task_type="ACTION_QUEUE",
-                                close_task_id=int(action_id) if action_id is not None else task_id,
-                                note=str(task.get("note") or f"collector_close_limit_fill task_id={task_id}"),
-                                eligible_first=True,
-                            )
-                            print(f"lot realization on TRIGGERED->FILLED for task {task_id}: {matched}")
-                        except Exception as e:
-                            print(f"lot realization failed for triggered close limit task {task_id}:", e)
-
-                    continue
-
-                trig_row = con.execute(
-                    """
-                    SELECT CAST((julianday('now') - julianday(?)) * 24 * 60 AS INTEGER)
-                    """,
-                    (triggered_at or created_at,),
-                ).fetchone()
-                trig_minutes = int(trig_row[0] or 0)
-
-                if trig_minutes >= TRIGGERED_FAIL_MINUTES:
-                    mark_pending_limit_failed_after_trigger(
-                        con,
-                        task_id=task_id,
-                        note_suffix=f" | failed_after_trigger_minutes={trig_minutes}",
-                    )
-
-    except Exception as e:
-        print("pending limit processing failed (non-fatal):", e)
-
-    # ---------- pending CHASE processing [legacy only] ----------
-    try:
-        live_contracts_map = {
-            (p["symbol"], p["side"]): float(p["contracts"])
-            for p in positions
-        }
-
-        for task in pending_chase_tasks:
-            task_id = int(task["id"])
-            sym = str(task["symbol"])
-            side = str(task["side"]).upper()
-            task_status = str(task["status"]).upper()
-            panel_mode = str(task.get("panel_mode") or "OPEN").upper()
-
-            if task_status != "PENDING":
-                continue
-
-            live_contracts = float(live_contracts_map.get((sym, side), 0.0) or 0.0)
-
-            baseline_contracts = task.get("baseline_contracts")
-            baseline_contracts = float(baseline_contracts) if baseline_contracts is not None else None
-
-            created_at = task.get("created_at")
-
-            if baseline_contracts is None:
-                mark_pending_chase_baseline(
-                    con,
-                    task_id=task_id,
-                    baseline_contracts=live_contracts,
-                )
-                continue
-
-            history_seen_fill = was_contracts_changed_past_baseline_since(
-                con,
-                symbol=sym,
-                side=side,
-                baseline_contracts=baseline_contracts,
-                created_at=created_at,
-                panel_mode=panel_mode,
-            )
-
-            is_open_fill = panel_mode == "OPEN" and live_contracts > baseline_contracts
-            is_close_fill = panel_mode == "CLOSE" and live_contracts < baseline_contracts
-
-            if is_open_fill or is_close_fill or history_seen_fill:
-                fill_contracts = live_contracts
-                mark_pending_chase_filled(
-                    con,
-                    task_id=task_id,
-                    live_contracts=fill_contracts,
-                )
-                continue
-
-            age_row = con.execute(
-                """
-                SELECT CAST((julianday('now') - julianday(?)) * 24 * 60 AS INTEGER)
-                """,
-                (created_at,),
-            ).fetchone()
-            age_minutes = int(age_row[0] or 0)
-
-            if age_minutes >= CHASE_EXPIRE_MINUTES:
-                mark_pending_chase_expired(
-                    con,
-                    task_id=task_id,
-                    note_suffix=f" | chase_expired_after_minutes={age_minutes}",
-                )
-
-    except Exception as e:
-        print("pending chase processing failed (non-fatal):", e)
+        except Exception as e:
+            print("pending chase processing failed (non-fatal):", e)
 
     con.commit()
     con.close()
