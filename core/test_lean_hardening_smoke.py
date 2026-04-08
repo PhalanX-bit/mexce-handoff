@@ -5,6 +5,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 from core.db import DB_PATH
 from core.reprice_service import RepriceServiceConfig
 from core.reprice_worker import RepriceWorkerConfig, run_reprice_pass
@@ -57,7 +58,7 @@ def fetch_candidate_row(
             sql += " AND created_by LIKE ?"
             params.append(f"{created_by_prefix}%")
 
-        sql += " ORDER BY priority DESC, id ASC LIMIT 1"
+        sql += f" ORDER BY {ACTION_QUEUE_EXECUTOR_ORDER_BY} LIMIT 1"
 
         row = conn.execute(sql, params).fetchone()
         return dict(row) if row else None

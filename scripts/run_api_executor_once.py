@@ -10,6 +10,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from core.db import DB_PATH
 from core.api_executor import process_one_action
+from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 
 
 def main() -> None:
@@ -21,11 +22,11 @@ def main() -> None:
     conn.row_factory = sqlite3.Row
     try:
         row = conn.execute(
-            """
+            f"""
             SELECT id, symbol, status, priority, created_at, panel_mode, side, qty, limit_price, order_kind
             FROM action_queue
             WHERE status = 'ARMED'
-            ORDER BY priority DESC, id ASC
+            ORDER BY {ACTION_QUEUE_EXECUTOR_ORDER_BY}
             LIMIT 1
             """
         ).fetchone()

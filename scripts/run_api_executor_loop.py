@@ -11,6 +11,7 @@ if str(ROOT_DIR) not in sys.path:
 
 from core.db import DB_PATH
 from core.api_executor import process_one_action
+from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 
 
 POLL_INTERVAL_SEC = 2.0
@@ -21,11 +22,11 @@ def fetch_next_armed_action_id() -> int | None:
     conn.row_factory = sqlite3.Row
     try:
         row = conn.execute(
-            """
+            f"""
             SELECT id
             FROM action_queue
             WHERE status = 'ARMED'
-            ORDER BY priority DESC, id ASC
+            ORDER BY {ACTION_QUEUE_EXECUTOR_ORDER_BY}
             LIMIT 1
             """
         ).fetchone()

@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 from core.symbol_utils import canonical_futures_symbol
 
 
@@ -71,11 +72,11 @@ def queue_insert_v2(con, payload: dict) -> int:
 def queue_list_v2(con, status=None, limit: int = 200):
     if status and status != "ALL":
         rows = con.execute(
-            """
+            f"""
             SELECT *
             FROM action_queue
             WHERE status = ?
-            ORDER BY priority ASC, id ASC
+            ORDER BY {ACTION_QUEUE_EXECUTOR_ORDER_BY}
             LIMIT ?
             """,
             (status, limit),

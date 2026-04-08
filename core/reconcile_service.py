@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
+from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 from core.db import DB_PATH
 from core.mexc_direct import (
     futures_symbol_raw,
@@ -133,7 +134,7 @@ def _fetch_reconcile_candidates_raw(
     FROM action_queue
     WHERE status IN ({status_placeholders})
       AND api_order_id IS NOT NULL
-    ORDER BY priority DESC, id ASC
+    ORDER BY {ACTION_QUEUE_EXECUTOR_ORDER_BY}
     LIMIT ?
     """
     params = list(statuses) + [int(max_items)]

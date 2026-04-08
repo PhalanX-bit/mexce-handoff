@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
+from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 from core.db import DB_PATH
 from core.reprice_service import RepriceServiceConfig
 from core.reprice_action_once_hardened import reprice_action_once_hardened
@@ -77,7 +78,7 @@ def _fetch_candidates_raw(
         WHERE status IN ({status_placeholders})
           AND order_kind IN ({kind_placeholders})
           AND api_order_id IS NOT NULL
-        ORDER BY priority DESC, id ASC
+        ORDER BY {ACTION_QUEUE_EXECUTOR_ORDER_BY}
         LIMIT ?
         """
 
