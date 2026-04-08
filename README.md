@@ -24,12 +24,25 @@ The main places for new work are:
 - `scripts/run_api_executor_once.py`
 - `scripts/run_api_executor_loop.py`
 
+## Bridge status
+
+The local bridge API is no longer part of the preferred V2 execution path.
+
+- Active V2 path: `Streamlit V2 -> action_queue -> core/api_executor.py`
+- Legacy compatibility only: `app/bridge_api.py`
+- Historical only: `bridge/server.py`
+
+The bridge layer exists only for older browser/userscript-style flows and
+legacy task tracking. New feature work should avoid adding dependencies on it.
+
 ## Legacy/reference areas
 
 These files are kept for history, comparison, and fallback reference. They are
 not the preferred place for new feature work:
 
 - `app/streamlit_app.py`
+- `app/bridge_api.py`
+- `bridge/server.py`
 - dated copies under `app/`
 - dated copies under `core/`
 

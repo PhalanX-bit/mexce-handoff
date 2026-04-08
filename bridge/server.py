@@ -3,6 +3,9 @@ from pathlib import Path
 import sqlite3
 from typing import Optional, Dict, Any
 
+# Historical bridge server kept only for legacy reference.
+# Do not use this as part of the active V2 runtime path.
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 

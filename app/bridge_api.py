@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+# Deprecated compatibility bridge for older browser/userscript flows.
+# Keep only while legacy integrations still need HTTP access to action_queue
+# and pending_* task tracking. New V2 work should use direct queue/executor
+# flow instead of this API layer.
+
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, Optional
