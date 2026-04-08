@@ -138,8 +138,11 @@ def normalize_action(action: Dict[str, Any]) -> Dict[str, Any]:
         limit_price = float(limit_price)
 
     leverage = action.get("leverage")
-    if leverage is not None:
-        leverage = int(leverage)
+    if leverage in (None, ""):
+        raise ValueError("Action is missing leverage")
+    leverage = int(leverage)
+    if leverage <= 0:
+        raise ValueError(f"Invalid leverage for action {action.get('id')}: {leverage}")
 
     symbol = str(action["symbol"]).strip()
     symbol_raw = futures_symbol_raw(symbol)

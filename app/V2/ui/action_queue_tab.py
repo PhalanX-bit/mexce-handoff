@@ -104,7 +104,7 @@ def render_action_queue_tab(con) -> None:
         reduce_only = c7.checkbox("Reduce-only", value=True)
 
         leverage_input_max = int(max_leverage) if isinstance(max_leverage, int) and max_leverage > 0 else 500
-        leverage_default = min(500, leverage_input_max)
+        leverage_default = min(100, leverage_input_max)
 
         leverage = c8.number_input(
             "Leverage",
@@ -117,7 +117,7 @@ def render_action_queue_tab(con) -> None:
         if max_leverage is not None:
             c8.caption(f"Max leverage for {symbol}: {int(max_leverage)}x")
         else:
-            c8.caption("Max leverage unknown; UI allows up to 500x.")
+            c8.caption("Max leverage unknown; using conservative default 100x and allowing up to 500x.")
 
         c9, c10, c11, c12 = st.columns(4)
         trigger_type = c9.selectbox("Trigger type", ["manual", "immediate", "price"], index=0)
