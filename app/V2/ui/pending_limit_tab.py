@@ -5,7 +5,9 @@ import streamlit as st
 
 from core.streamlit_services.pending_limit_service import (
     delete_pending_limit_task,
+    delete_orphaned_resolved_pending_limit_tasks,
     delete_resolved_pending_limit_tasks,
+    get_pending_limit_audit_counts,
     get_pending_limit_status_counts,
     list_pending_limit_tasks,
     mark_pending_limit_task_status,
@@ -17,8 +19,10 @@ from core.streamlit_services.pending_limit_service import (
 
 def render_pending_limit_tab(con) -> None:
     st.subheader("Pending LIMIT tasks")
+    st.caption("Compatibility / tracking layer. New V2 source of truth is Action Queue; this table mainly supports legacy bridge and historical fill tracking.")
 
     counts = get_pending_limit_status_counts(con)
+    audit = get_pending_limit_audit_counts(con)
 
     m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("PENDING", counts.get("PENDING", 0))
@@ -26,6 +30,11 @@ def render_pending_limit_tab(con) -> None:
     m3.metric("FILLED", counts.get("FILLED", 0))
     m4.metric("EXPIRED", counts.get("EXPIRED", 0))
     m5.metric("FAILED_AFTER_TRIGGER", counts.get("FAILED_AFTER_TRIGGER", 0))
+
+    a1, a2, a3 = st.columns(3)
+    a1.metric("Total rows", audit.get("total_rows", 0))
+    a2.metric("Orphan rows", audit.get("orphan_rows", 0))
+    a3.metric("Orphan FAILED_AFTER_TRIGGER", audit.get("orphan_failed_after_trigger_rows", 0))
 
     status_options = [
         "ALL",
@@ -59,7 +68,7 @@ def render_pending_limit_tab(con) -> None:
         if st.button("Refresh pending LIMIT tasks", key="v2_refresh_pending_limit_tasks"):
             st.rerun()
 
-    col4, col5, col6, col6b = st.columns([1, 1, 1, 1])
+    col4, col5, col6, col6b, col6c = st.columns([1, 1, 1, 1, 1])
 
     with col4:
         if st.button("Reset selected task", key="v2_reset_selected_pending_limit_task"):
@@ -91,6 +100,12 @@ def render_pending_limit_tab(con) -> None:
         if st.button("Normalize symbols", key="v2_normalize_pending_limit_symbols"):
             n = normalize_pending_limit_task_symbols(con)
             st.success(f"Normalized pending LIMIT task symbols: {n}")
+            st.rerun()
+
+    with col6c:
+        if st.button("Delete orphan resolved", key="v2_delete_orphan_resolved_pending_limit_tasks"):
+            n = delete_orphaned_resolved_pending_limit_tasks(con)
+            st.success(f"Deleted orphan resolved pending LIMIT tasks: {n}")
             st.rerun()
 
     col7, col8, col9 = st.columns([1, 1, 1])
@@ -141,6 +156,8 @@ def render_pending_limit_tab(con) -> None:
         display_cols = [
             "id",
             "action_id",
+            "action_exists",
+            "action_status",
             "symbol",
             "side",
             "panel_mode",
