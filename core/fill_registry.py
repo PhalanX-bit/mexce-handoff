@@ -8,6 +8,7 @@ from core.lots import (
     close_lots_for_qty,
     create_position_lot,
 )
+from core.symbol_utils import canonical_futures_symbol
 
 
 def _safe_float(x: Any, default: float = 0.0) -> float:
@@ -29,7 +30,10 @@ def _safe_int(x: Any, default: Optional[int] = None) -> Optional[int]:
 
 
 def _norm_symbol(symbol: Optional[str]) -> str:
-    return str(symbol or "").strip().upper().replace(":USDT", "/USDT")
+    canonical = canonical_futures_symbol(symbol)
+    if canonical:
+        return canonical
+    return str(symbol or "").strip().upper()
 
 
 def _norm_side(side: Optional[str]) -> str:
