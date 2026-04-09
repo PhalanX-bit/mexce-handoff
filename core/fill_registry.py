@@ -8,6 +8,10 @@ from core.lots import (
     close_lots_for_qty,
     create_position_lot,
 )
+from core.streamlit_services.action_ledger_service import (
+    build_lot_ledger_note,
+    log_lot_event,
+)
 from core.symbol_utils import canonical_futures_symbol
 
 
@@ -38,6 +42,76 @@ def _norm_symbol(symbol: Optional[str]) -> str:
 
 def _norm_side(side: Optional[str]) -> str:
     return str(side or "").strip().upper()
+
+
+def _log_open_lot_event(
+    con,
+    *,
+    action_id: Optional[int],
+    symbol: str,
+    side: str,
+    qty_opened: float,
+    entry_price: float,
+    lot_result: Dict[str, Any],
+    opened_at: Optional[str],
+) -> bool:
+    action_id_i = _safe_int(action_id)
+    if action_id_i is None:
+        return False
+
+    note = build_lot_ledger_note(
+        action_id_i,
+        "OPEN_REGISTERED_DUPLICATE" if lot_result.get("duplicate") else "OPEN_REGISTERED",
+        lot_id=_safe_int(lot_result.get("lot_id")),
+    )
+    return log_lot_event(
+        con,
+        created_at=str(opened_at or ""),
+        action_id=action_id_i,
+        symbol=symbol,
+        event_kind="OPEN_REGISTERED_DUPLICATE" if lot_result.get("duplicate") else "OPEN_REGISTERED",
+        side=side,
+        qty=qty_opened,
+        price=entry_price,
+        note=note,
+    )
+
+
+def _log_close_lot_event(
+    con,
+    *,
+    action_id: Optional[int],
+    symbol: str,
+    side: str,
+    close_price: float,
+    close_result: Dict[str, Any],
+    closed_at: Optional[str],
+) -> bool:
+    action_id_i = _safe_int(action_id)
+    if action_id_i is None:
+        return False
+
+    matched = close_result.get("matched") or []
+    first_lot_id = _safe_int((matched[0] if matched else {}).get("lot_id"))
+    event_kind = "CLOSE_REGISTERED_DUPLICATE" if close_result.get("duplicate") else "CLOSE_REGISTERED"
+    note = build_lot_ledger_note(
+        action_id_i,
+        event_kind,
+        lot_id=first_lot_id,
+        matched_close_qty=_safe_float(close_result.get("matched_close_qty"), 0.0),
+        unmatched_close_qty=_safe_float(close_result.get("unmatched_close_qty"), 0.0),
+    )
+    return log_lot_event(
+        con,
+        created_at=str(closed_at or ""),
+        action_id=action_id_i,
+        symbol=symbol,
+        event_kind=event_kind,
+        side=side,
+        qty=_safe_float(close_result.get("matched_close_qty"), 0.0),
+        price=close_price,
+        note=note,
+    )
 
 
 def _open_lot_already_registered(
@@ -185,12 +259,23 @@ def register_open_fill_from_action(
         source_task_id=source_task_id_i,
     )
     if existing:
-        return {
+        result = {
             "ok": True,
             "duplicate": True,
             "lot_id": int(existing["id"]),
             "lot": existing,
         }
+        _log_open_lot_event(
+            con,
+            action_id=action_id_i,
+            symbol=symbol_n,
+            side=side_n,
+            qty_opened=qty_opened_f,
+            entry_price=entry_price_f,
+            lot_result=result,
+            opened_at=opened_at,
+        )
+        return result
 
     lot_id = create_position_lot(
         con,
@@ -218,12 +303,23 @@ def register_open_fill_from_action(
         (lot_id,),
     ).fetchone()
 
-    return {
+    result = {
         "ok": True,
         "duplicate": False,
         "lot_id": int(lot_id),
         "lot": dict(row) if row else None,
     }
+    _log_open_lot_event(
+        con,
+        action_id=action_id_i,
+        symbol=symbol_n,
+        side=side_n,
+        qty_opened=qty_opened_f,
+        entry_price=entry_price_f,
+        lot_result=result,
+        opened_at=opened_at,
+    )
+    return result
 
 
 def register_close_fill_from_action(
@@ -297,7 +393,7 @@ def register_close_fill_from_action(
                 }
             )
 
-        return {
+        result = {
             "ok": True,
             "duplicate": True,
             "matched": matched_rows,
@@ -305,6 +401,16 @@ def register_close_fill_from_action(
             "matched_close_qty": total_qty,
             "unmatched_close_qty": max(0.0, close_qty_f - total_qty),
         }
+        _log_close_lot_event(
+            con,
+            action_id=action_id_i,
+            symbol=symbol_n,
+            side=side_n,
+            close_price=close_price_f,
+            close_result=result,
+            closed_at=closed_at,
+        )
+        return result
 
     matched = close_lots_for_qty(
         con,
@@ -323,7 +429,7 @@ def register_close_fill_from_action(
     matched_close_qty = sum(_safe_float(x.get("matched_qty"), 0.0) for x in matched)
     unmatched_close_qty = max(0.0, close_qty_f - matched_close_qty)
 
-    return {
+    result = {
         "ok": True,
         "duplicate": False,
         "matched": matched,
@@ -331,3 +437,13 @@ def register_close_fill_from_action(
         "matched_close_qty": matched_close_qty,
         "unmatched_close_qty": unmatched_close_qty,
     }
+    _log_close_lot_event(
+        con,
+        action_id=action_id_i,
+        symbol=symbol_n,
+        side=side_n,
+        close_price=close_price_f,
+        close_result=result,
+        closed_at=closed_at,
+    )
+    return result

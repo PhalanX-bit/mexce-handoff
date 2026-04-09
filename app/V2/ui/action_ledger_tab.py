@@ -87,6 +87,7 @@ def render_action_ledger_tab(con) -> None:
             "latest_status",
             "latest_lifecycle_state",
             "latest_stage",
+            "latest_event_kind",
             "latest_reason",
         ]
         timeline_cols = [c for c in timeline_cols if c in df_timeline.columns]
@@ -105,7 +106,11 @@ def render_action_ledger_tab(con) -> None:
         "note_status",
         "note_lifecycle_state",
         "note_stage",
+        "note_event_kind",
         "note_reason",
+        "note_lot_id",
+        "note_matched_close_qty",
+        "note_unmatched_close_qty",
         "note_previous_order_id",
         "note_new_order_id",
         "note",

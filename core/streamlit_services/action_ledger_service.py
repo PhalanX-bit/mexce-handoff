@@ -73,6 +73,30 @@ def build_reprice_ledger_note(
     return " | ".join(parts)
 
 
+def build_lot_ledger_note(
+    action_id: int,
+    event_kind: str,
+    *,
+    lot_id: Optional[int] = None,
+    matched_close_qty: Optional[float] = None,
+    unmatched_close_qty: Optional[float] = None,
+    extra: Optional[str] = None,
+) -> str:
+    parts = [
+        f"action_id={int(action_id)}",
+        f"event_kind={str(event_kind or '').upper()}",
+    ]
+    if lot_id is not None:
+        parts.append(f"lot_id={int(lot_id)}")
+    if matched_close_qty is not None:
+        parts.append(f"matched_close_qty={float(matched_close_qty)}")
+    if unmatched_close_qty is not None:
+        parts.append(f"unmatched_close_qty={float(unmatched_close_qty)}")
+    if extra:
+        parts.append(str(extra).strip())
+    return " | ".join(parts)
+
+
 def log_action_queue_event(
     con,
     *,
@@ -192,6 +216,50 @@ def log_reprice_event(
     return True
 
 
+def log_lot_event(
+    con,
+    *,
+    created_at: str,
+    action_id: int,
+    symbol: str,
+    event_kind: str,
+    side: Optional[str] = None,
+    qty: Optional[float] = None,
+    price: Optional[float] = None,
+    note: Optional[str] = None,
+) -> bool:
+    canonical_symbol = canonical_futures_symbol(symbol) or str(symbol or "").strip().upper()
+    event_type = f"LOT_{str(event_kind or 'UNKNOWN').strip().upper()}"
+    note_text = str(note or "").strip() or None
+
+    existing = con.execute(
+        """
+        SELECT id
+        FROM actions_ledger
+        WHERE action_type = ?
+          AND symbol = ?
+          AND COALESCE(note, '') = COALESCE(?, '')
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (event_type, canonical_symbol, note_text),
+    ).fetchone()
+    if existing is not None:
+        return False
+
+    add_action_ledger(
+        con,
+        created_at=created_at,
+        symbol=canonical_symbol,
+        action_type=event_type,
+        side=(str(side).strip().upper() if side else None),
+        qty=float(qty) if qty is not None else None,
+        price=float(price) if price is not None else None,
+        note=note_text,
+    )
+    return True
+
+
 def get_recent_actions(con, limit=50):
     rows = con.execute(
         """
@@ -223,8 +291,8 @@ def get_action_ledger_summary(con) -> dict[str, int]:
         """
         SELECT
             COUNT(*) AS total_rows,
-            SUM(CASE WHEN action_type LIKE 'QUEUE_%' OR action_type LIKE 'EXECUTOR_%' OR action_type LIKE 'RECONCILE_%' OR action_type LIKE 'REPRICE_%' THEN 1 ELSE 0 END) AS system_rows,
-            SUM(CASE WHEN action_type NOT LIKE 'QUEUE_%' AND action_type NOT LIKE 'EXECUTOR_%' AND action_type NOT LIKE 'RECONCILE_%' AND action_type NOT LIKE 'REPRICE_%' THEN 1 ELSE 0 END) AS manual_rows
+            SUM(CASE WHEN action_type LIKE 'QUEUE_%' OR action_type LIKE 'EXECUTOR_%' OR action_type LIKE 'RECONCILE_%' OR action_type LIKE 'REPRICE_%' OR action_type LIKE 'LOT_%' THEN 1 ELSE 0 END) AS system_rows,
+            SUM(CASE WHEN action_type NOT LIKE 'QUEUE_%' AND action_type NOT LIKE 'EXECUTOR_%' AND action_type NOT LIKE 'RECONCILE_%' AND action_type NOT LIKE 'REPRICE_%' AND action_type NOT LIKE 'LOT_%' THEN 1 ELSE 0 END) AS manual_rows
         FROM actions_ledger
         """
     ).fetchone()
@@ -260,9 +328,9 @@ def query_action_ledger(
 
     source_norm = str(source or "ALL").strip().upper()
     if source_norm == "SYSTEM":
-        where.append("(action_type LIKE 'QUEUE_%' OR action_type LIKE 'EXECUTOR_%' OR action_type LIKE 'RECONCILE_%' OR action_type LIKE 'REPRICE_%')")
+        where.append("(action_type LIKE 'QUEUE_%' OR action_type LIKE 'EXECUTOR_%' OR action_type LIKE 'RECONCILE_%' OR action_type LIKE 'REPRICE_%' OR action_type LIKE 'LOT_%')")
     elif source_norm == "MANUAL":
-        where.append("(action_type NOT LIKE 'QUEUE_%' AND action_type NOT LIKE 'EXECUTOR_%' AND action_type NOT LIKE 'RECONCILE_%' AND action_type NOT LIKE 'REPRICE_%')")
+        where.append("(action_type NOT LIKE 'QUEUE_%' AND action_type NOT LIKE 'EXECUTOR_%' AND action_type NOT LIKE 'RECONCILE_%' AND action_type NOT LIKE 'REPRICE_%' AND action_type NOT LIKE 'LOT_%')")
 
     where_sql = ""
     if where:
@@ -308,7 +376,11 @@ def enrich_action_ledger_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]
         item["note_status"] = parsed.get("status")
         item["note_lifecycle_state"] = parsed.get("lifecycle_state")
         item["note_stage"] = parsed.get("stage")
+        item["note_event_kind"] = parsed.get("event_kind")
         item["note_reason"] = parsed.get("reason")
+        item["note_lot_id"] = parsed.get("lot_id")
+        item["note_matched_close_qty"] = parsed.get("matched_close_qty")
+        item["note_unmatched_close_qty"] = parsed.get("unmatched_close_qty")
         item["note_previous_order_id"] = parsed.get("previous_order_id")
         item["note_new_order_id"] = parsed.get("new_order_id")
         enriched.append(item)
@@ -335,6 +407,7 @@ def summarize_action_ledger_timeline(rows: list[dict[str, Any]]) -> list[dict[st
                 "latest_status": row.get("note_status"),
                 "latest_lifecycle_state": row.get("note_lifecycle_state"),
                 "latest_stage": row.get("note_stage"),
+                "latest_event_kind": row.get("note_event_kind"),
                 "latest_reason": row.get("note_reason"),
             },
         )
@@ -351,6 +424,7 @@ def summarize_action_ledger_timeline(rows: list[dict[str, Any]]) -> list[dict[st
             current["latest_status"] = row.get("note_status")
             current["latest_lifecycle_state"] = row.get("note_lifecycle_state")
             current["latest_stage"] = row.get("note_stage")
+            current["latest_event_kind"] = row.get("note_event_kind")
             current["latest_reason"] = row.get("note_reason")
 
     return sorted(grouped.values(), key=lambda x: (str(x.get("last_at") or ""), int(x.get("action_id") or 0)), reverse=True)
