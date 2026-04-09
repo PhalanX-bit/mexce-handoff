@@ -12,6 +12,7 @@ from core.streamlit_services.lots_service import (
     list_done_actions_for_lot_backfill,
     list_lot_realizations,
     list_position_lots,
+    preview_close_backfill_from_action_queue,
     summarize_open_lots_by_symbol,
 )
 
@@ -79,6 +80,28 @@ def render_lots_tab(con) -> None:
     )
     if selected_backfill_row:
         st.dataframe([selected_backfill_row], width="stretch", hide_index=True)
+        if str(selected_backfill_row.get("panel_mode") or "").upper() == "CLOSE":
+            try:
+                preview = preview_close_backfill_from_action_queue(
+                    con,
+                    action_id=int(selected_backfill_action_id),
+                    fill_qty=(None if float(backfill_qty_override) <= 0 else float(backfill_qty_override)),
+                    fill_price=(None if float(backfill_price_override) <= 0 else float(backfill_price_override)),
+                    eligible_first=bool(backfill_eligible_first),
+                )
+                st.write("### CLOSE backfill preview")
+                st.caption(
+                    f"Matched qty: {float(preview.get('matched_close_qty') or 0.0):.4f} / "
+                    f"requested {float(preview.get('requested_close_qty') or 0.0):.4f} | "
+                    f"unmatched: {float(preview.get('unmatched_close_qty') or 0.0):.4f}"
+                )
+                preview_rows = preview.get("preview_rows") or []
+                if preview_rows:
+                    st.dataframe(preview_rows, width="stretch", hide_index=True)
+                else:
+                    st.info("No matching open lots found for this CLOSE action.")
+            except Exception as exc:
+                st.warning(f"Preview failed: {exc}")
 
     if st.button("Backfill selected DONE action", key="v2_lots_backfill_action_button"):
         if not selected_backfill_row:
@@ -211,6 +234,10 @@ def render_lots_tab(con) -> None:
             "realized_roi_pct",
             "closed_at",
             "close_action_id",
+            "close_action_status",
+            "close_panel_mode",
+            "close_order_kind",
+            "close_created_by",
             "close_task_type",
             "close_task_id",
             "note",

@@ -7,6 +7,7 @@ from core.fill_registry import (
     register_close_fill_from_action,
     register_open_fill_from_action,
 )
+from core.lots import is_lot_eligible_for_close, list_open_lots
 
 
 def list_position_lots(con, symbol: str = "ALL", status: str = "ALL", limit: int = 500):
@@ -51,10 +52,16 @@ def list_position_lots(con, symbol: str = "ALL", status: str = "ALL", limit: int
 
 def list_lot_realizations(con, symbol: str = "ALL", limit: int = 500):
     sql = """
-        SELECT id, lot_id, symbol, side, close_qty, entry_price, close_price,
-               target_price, realized_roi_pct, closed_at,
-               close_action_id, close_task_type, close_task_id, note
-        FROM lot_realizations
+        SELECT lr.id, lr.lot_id, lr.symbol, lr.side, lr.close_qty, lr.entry_price, lr.close_price,
+               lr.target_price, lr.realized_roi_pct, lr.closed_at,
+               lr.close_action_id, lr.close_task_type, lr.close_task_id, lr.note,
+               aq.status AS close_action_status,
+               aq.panel_mode AS close_panel_mode,
+               aq.order_kind AS close_order_kind,
+               aq.created_by AS close_created_by
+        FROM lot_realizations lr
+        LEFT JOIN action_queue aq
+          ON aq.id = lr.close_action_id
     """
     params = []
 
@@ -62,13 +69,13 @@ def list_lot_realizations(con, symbol: str = "ALL", limit: int = 500):
         aliases = build_symbol_aliases(symbol)
         if aliases:
             placeholders = ",".join("?" for _ in aliases)
-            sql += f" WHERE UPPER(symbol) IN ({placeholders})"
+            sql += f" WHERE UPPER(lr.symbol) IN ({placeholders})"
             params.extend(aliases)
         else:
-            sql += " WHERE symbol = ?"
+            sql += " WHERE lr.symbol = ?"
             params.append(symbol)
 
-    sql += " ORDER BY id DESC LIMIT ?"
+    sql += " ORDER BY lr.id DESC LIMIT ?"
     params.append(limit)
 
     rows = con.execute(sql, tuple(params)).fetchall()
@@ -275,4 +282,116 @@ def backfill_lot_from_action_queue(
         "fill_qty": qty_value,
         "fill_price": price_value,
         "result": result,
+    }
+
+
+def preview_close_backfill_from_action_queue(
+    con,
+    *,
+    action_id: int,
+    fill_qty: float | None = None,
+    fill_price: float | None = None,
+    eligible_first: bool = True,
+):
+    row = con.execute(
+        """
+        SELECT id, created_at, symbol, panel_mode, side, qty, limit_price, leverage, api_order_id, status, note
+        FROM action_queue
+        WHERE id = ?
+        LIMIT 1
+        """,
+        (int(action_id),),
+    ).fetchone()
+
+    if row is None:
+        raise ValueError(f"Action not found: {int(action_id)}")
+
+    action = dict(row)
+    panel_mode = str(action.get("panel_mode") or "OPEN").upper()
+    if panel_mode != "CLOSE":
+        return {
+            "action": action,
+            "panel_mode": panel_mode,
+            "preview_rows": [],
+            "requested_close_qty": 0.0,
+            "matched_close_qty": 0.0,
+            "unmatched_close_qty": 0.0,
+        }
+
+    qty_value = float(fill_qty) if fill_qty is not None else float(action.get("qty") or 0.0)
+    price_value = float(fill_price) if fill_price is not None else float(action.get("limit_price") or 0.0)
+    if qty_value <= 0:
+        raise ValueError(f"Invalid close qty for action {int(action_id)}")
+    if price_value <= 0:
+        raise ValueError(f"Invalid close price for action {int(action_id)}")
+
+    lots = list_open_lots(
+        con,
+        symbol=str(action["symbol"]),
+        side=str(action["side"]).upper(),
+    )
+
+    if eligible_first:
+        eligible = []
+        non_eligible = []
+        for lot in lots:
+            if is_lot_eligible_for_close(
+                side=str(action["side"]).upper(),
+                target_price=float(lot.get("target_price") or 0.0),
+                close_price=price_value,
+            ):
+                eligible.append(lot)
+            else:
+                non_eligible.append(lot)
+        ordered_lots = eligible + non_eligible
+    else:
+        ordered_lots = lots
+
+    qty_left = qty_value
+    preview_rows = []
+    matched_close_qty = 0.0
+
+    for lot in ordered_lots:
+        if qty_left <= 0:
+            break
+
+        qty_remaining = float(lot.get("qty_remaining") or 0.0)
+        if qty_remaining <= 0:
+            continue
+
+        matched_qty = min(qty_left, qty_remaining)
+        was_eligible = is_lot_eligible_for_close(
+            side=str(action["side"]).upper(),
+            target_price=float(lot.get("target_price") or 0.0),
+            close_price=price_value,
+        )
+
+        preview_rows.append(
+            {
+                "lot_id": int(lot["id"]),
+                "symbol": lot.get("symbol"),
+                "side": lot.get("side"),
+                "qty_remaining_before": qty_remaining,
+                "matched_qty": matched_qty,
+                "qty_remaining_after": max(0.0, qty_remaining - matched_qty),
+                "entry_price": float(lot.get("entry_price") or 0.0),
+                "target_price": float(lot.get("target_price") or 0.0),
+                "close_price": price_value,
+                "was_eligible_at_close": bool(was_eligible),
+                "source_action_id": lot.get("source_action_id"),
+            }
+        )
+
+        matched_close_qty += matched_qty
+        qty_left -= matched_qty
+
+    return {
+        "action": action,
+        "panel_mode": panel_mode,
+        "fill_qty": qty_value,
+        "fill_price": price_value,
+        "preview_rows": preview_rows,
+        "requested_close_qty": qty_value,
+        "matched_close_qty": matched_close_qty,
+        "unmatched_close_qty": max(0.0, qty_value - matched_close_qty),
     }
