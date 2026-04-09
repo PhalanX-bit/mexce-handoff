@@ -6,6 +6,10 @@ from typing import Optional
 
 from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 from core.symbol_utils import canonical_futures_symbol
+from core.streamlit_services.action_ledger_service import (
+    build_action_queue_ledger_note,
+    log_action_queue_event,
+)
 
 
 def now_utc_iso() -> str:
@@ -64,6 +68,23 @@ def queue_insert_v2(con, payload: dict) -> int:
             payload.get("panel_mode", "CLOSE"),
             payload.get("order_kind", "LIMIT"),
             payload.get("leverage"),
+        ),
+    )
+    action_id = int(cur.lastrowid)
+
+    log_action_queue_event(
+        con,
+        created_at=payload["created_at"],
+        action_id=action_id,
+        symbol=payload["symbol"],
+        event_type="QUEUE_CREATED",
+        side=payload.get("side"),
+        qty=float(payload["qty"]),
+        price=payload.get("limit_price"),
+        note=build_action_queue_ledger_note(
+            action_id,
+            payload.get("status", "PENDING"),
+            f"panel_mode={payload.get('panel_mode', 'CLOSE')} | order_kind={payload.get('order_kind', 'LIMIT')}",
         ),
     )
     return int(cur.rowcount)
@@ -142,6 +163,19 @@ def queue_arm(con, action_id: int):
         """,
         (now_utc_iso(), action_id),
     )
+    row = get_action_by_id(con, action_id)
+    if row and str(row.get("status") or "").upper() == "ARMED":
+        log_action_queue_event(
+            con,
+            created_at=row.get("last_update_at") or now_utc_iso(),
+            action_id=action_id,
+            symbol=row.get("symbol"),
+            event_type="QUEUE_ARMED",
+            side=row.get("side"),
+            qty=row.get("qty"),
+            price=row.get("limit_price"),
+            note=build_action_queue_ledger_note(action_id, "ARMED"),
+        )
 
 
 def queue_cancel(con, action_id: int):
@@ -155,6 +189,19 @@ def queue_cancel(con, action_id: int):
         """,
         (now_utc_iso(), action_id),
     )
+    row = get_action_by_id(con, action_id)
+    if row and str(row.get("status") or "").upper() == "CANCELED":
+        log_action_queue_event(
+            con,
+            created_at=row.get("last_update_at") or now_utc_iso(),
+            action_id=action_id,
+            symbol=row.get("symbol"),
+            event_type="QUEUE_CANCELED",
+            side=row.get("side"),
+            qty=row.get("qty"),
+            price=row.get("limit_price"),
+            note=build_action_queue_ledger_note(action_id, "CANCELED"),
+        )
 
 
 def delete_action_queue_by_statuses(con, statuses: list[str]) -> int:
@@ -211,8 +258,18 @@ def reset_running(con, symbol: Optional[str] = None, also_reset_armed: bool = Fa
 
     placeholders = ",".join("?" for _ in statuses)
 
+    affected_rows = []
     if symbol:
         normalized_symbol = canonical_futures_symbol(symbol) or symbol
+        affected_rows = con.execute(
+            f"""
+            SELECT id, symbol, side, qty, limit_price
+            FROM action_queue
+            WHERE symbol = ?
+              AND status IN ({placeholders})
+            """,
+            (normalized_symbol, *statuses),
+        ).fetchall()
         cur = con.execute(
             f"""
             UPDATE action_queue
@@ -225,6 +282,14 @@ def reset_running(con, symbol: Optional[str] = None, also_reset_armed: bool = Fa
             (normalized_symbol, *statuses),
         )
     else:
+        affected_rows = con.execute(
+            f"""
+            SELECT id, symbol, side, qty, limit_price
+            FROM action_queue
+            WHERE status IN ({placeholders})
+            """,
+            tuple(statuses),
+        ).fetchall()
         cur = con.execute(
             f"""
             UPDATE action_queue
@@ -234,6 +299,20 @@ def reset_running(con, symbol: Optional[str] = None, also_reset_armed: bool = Fa
             WHERE status IN ({placeholders})
             """,
             tuple(statuses),
+        )
+
+    ts = now_utc_iso()
+    for row in affected_rows:
+        log_action_queue_event(
+            con,
+            created_at=ts,
+            action_id=int(row["id"]),
+            symbol=row["symbol"],
+            event_type="QUEUE_RESET_FAILED",
+            side=row["side"],
+            qty=row["qty"],
+            price=row["limit_price"],
+            note=build_action_queue_ledger_note(int(row["id"]), "FAILED", "manual reset (stuck)"),
         )
 
     con.commit()

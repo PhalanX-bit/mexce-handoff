@@ -15,6 +15,10 @@ from core.mexc_direct import (
     create_market_order_raw,
     futures_symbol_raw,
 )
+from core.streamlit_services.action_ledger_service import (
+    build_action_queue_ledger_note,
+    log_action_queue_event,
+)
 
 API_MODE = "direct_futures_api"
 
@@ -107,7 +111,21 @@ def claim_action(conn: sqlite3.Connection, action_id: int) -> Optional[Dict[str,
         last_error=None,
     )
     conn.commit()
-    return get_action_by_id(conn, action_id)
+    claimed = get_action_by_id(conn, action_id)
+    if claimed is not None:
+        log_action_queue_event(
+            conn,
+            created_at=claimed.get("last_update_at") or utc_now_iso(),
+            action_id=action_id,
+            symbol=claimed.get("symbol"),
+            event_type="EXECUTOR_RUNNING",
+            side=claimed.get("side"),
+            qty=claimed.get("qty"),
+            price=claimed.get("limit_price"),
+            note=build_action_queue_ledger_note(action_id, "RUNNING"),
+        )
+        conn.commit()
+    return claimed
 
 
 def normalize_action(action: Dict[str, Any]) -> Dict[str, Any]:
@@ -337,6 +355,23 @@ def mark_done(
         api_response=safe_json(api_response),
         last_error=None,
     )
+    action_row = get_action_by_id(conn, action_id)
+    if action_row is not None:
+        log_action_queue_event(
+            conn,
+            created_at=action_row.get("last_update_at") or utc_now_iso(),
+            action_id=action_id,
+            symbol=action_row.get("symbol"),
+            event_type="EXECUTOR_DONE",
+            side=action_row.get("side"),
+            qty=action_row.get("qty"),
+            price=action_row.get("limit_price"),
+            note=build_action_queue_ledger_note(
+                action_id,
+                "DONE",
+                f"api_order_id={api_order_id or ''} | api_mode={API_MODE}",
+            ),
+        )
     conn.commit()
 
 
@@ -358,6 +393,20 @@ def mark_failed(
         api_response=safe_json(api_response) if api_response is not None else None,
         last_error=error_text[:4000],
     )
+    action_row = get_action_by_id(conn, action_id)
+    if action_row is not None:
+        short_error = str(error_text or "").strip().splitlines()[0][:500]
+        log_action_queue_event(
+            conn,
+            created_at=action_row.get("last_update_at") or utc_now_iso(),
+            action_id=action_id,
+            symbol=action_row.get("symbol"),
+            event_type="EXECUTOR_FAILED",
+            side=action_row.get("side"),
+            qty=action_row.get("qty"),
+            price=action_row.get("limit_price"),
+            note=build_action_queue_ledger_note(action_id, "FAILED", short_error),
+        )
     conn.commit()
 
 
