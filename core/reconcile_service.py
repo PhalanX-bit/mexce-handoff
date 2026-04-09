@@ -9,6 +9,10 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 from core.db import DB_PATH
+from core.fill_registry import (
+    register_close_fill_from_action,
+    register_open_fill_from_action,
+)
 from core.mexc_direct import (
     futures_symbol_raw,
     get_open_order_by_id,
@@ -654,6 +658,84 @@ def build_reconcile_update_payload(result: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _resolve_fill_price(result: Dict[str, Any], action_row: Dict[str, Any]) -> Optional[float]:
+    for value in (
+        result.get("deal_avg_price"),
+        result.get("resolved_avg_price"),
+        result.get("resolved_price"),
+        (action_row or {}).get("limit_price"),
+    ):
+        v = safe_float(value)
+        if v is not None and v > 0:
+            return v
+    return None
+
+
+def apply_fill_registry_from_reconcile(action_row: Dict[str, Any], result: Dict[str, Any]) -> Dict[str, Any]:
+    lifecycle_state = str(result.get("lifecycle_state") or "").upper()
+    deal_qty = safe_float(result.get("deal_qty")) or 0.0
+    if deal_qty <= 0:
+        return {"applied": False, "reason": "no_deal_qty"}
+
+    if lifecycle_state not in {
+        "PARTIALLY_FILLED_OPEN",
+        "FILLED_CONFIRMED",
+        "PARTIALLY_FILLED_CLOSED",
+        "FILLED_OR_PARTIAL_CLOSED",
+        "FILLED_BY_DEALS_ONLY",
+    }:
+        return {"applied": False, "reason": f"lifecycle_not_fill_like:{lifecycle_state}"}
+
+    panel_mode = str(action_row.get("panel_mode") or "OPEN").upper()
+    fill_price = _resolve_fill_price(result, action_row)
+    if fill_price is None or fill_price <= 0:
+        return {"applied": False, "reason": "missing_fill_price"}
+
+    action_id = int(action_row["id"])
+    symbol = str(action_row.get("symbol") or "")
+    side = str(action_row.get("side") or "").upper()
+    action_created_at = action_row.get("created_at")
+
+    with db_conn() as conn:
+        if panel_mode == "OPEN":
+            fill_result = register_open_fill_from_action(
+                conn,
+                action_id=action_id,
+                symbol=symbol,
+                side=side,
+                qty_opened=deal_qty,
+                entry_price=fill_price,
+                target_roi_pct=200.0,
+                leverage=safe_float(action_row.get("leverage"), 500.0) or 500.0,
+                opened_at=action_created_at,
+                source_task_type="ACTION_QUEUE",
+                source_task_id=action_id,
+            )
+        else:
+            fill_result = register_close_fill_from_action(
+                conn,
+                action_id=action_id,
+                symbol=symbol,
+                side=side,
+                close_qty=deal_qty,
+                close_price=fill_price,
+                closed_at=utc_now_iso(),
+                close_task_type="ACTION_QUEUE",
+                close_task_id=action_id,
+                note=f"reconcile lifecycle={lifecycle_state}",
+                eligible_first=True,
+            )
+        conn.commit()
+
+    return {
+        "applied": True,
+        "panel_mode": panel_mode,
+        "deal_qty": deal_qty,
+        "fill_price": fill_price,
+        "fill_result": fill_result,
+    }
+
+
 def reconcile_action(
     action_id: int,
     *,
@@ -663,6 +745,17 @@ def reconcile_action(
     if not result.get("ok"):
         return result
 
+    action_row = get_action_by_id(action_id)
+    fill_registry_result: Dict[str, Any] = {"applied": False, "reason": "action_not_loaded"}
+    if action_row:
+        try:
+            fill_registry_result = apply_fill_registry_from_reconcile(action_row, result)
+        except Exception as exc:
+            fill_registry_result = {
+                "applied": False,
+                "reason": f"{exc.__class__.__name__}: {exc}",
+            }
+
     updates: Dict[str, Any] = {}
     if update_action_queue:
         updates = build_reconcile_update_payload(result)
@@ -670,6 +763,7 @@ def reconcile_action(
 
     result["queue_updated"] = bool(update_action_queue)
     result["queue_update_payload"] = updates
+    result["fill_registry"] = fill_registry_result
     return result
 
 
