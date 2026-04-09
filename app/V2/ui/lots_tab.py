@@ -6,8 +6,10 @@ import streamlit as st
 from core.streamlit_services.common import _to_float_series
 from core.streamlit_services.dashboard_service import get_latest_ticker_price_for_symbol
 from core.streamlit_services.lots_service import (
+    backfill_lot_from_action_queue,
     compute_eligible_lots_df,
     get_distinct_lot_symbols,
+    list_done_actions_for_lot_backfill,
     list_lot_realizations,
     list_position_lots,
 )
@@ -36,6 +38,65 @@ def render_lots_tab(con) -> None:
 
     if st.button("Refresh lots", key="v2_refresh_lots"):
         st.rerun()
+
+    st.write("### Manual backfill from action_queue")
+    st.caption("Use only when you know a DONE action was really filled but automatic fill detection could not confirm it.")
+
+    done_actions = list_done_actions_for_lot_backfill(con, symbol=lot_symbol_filter, limit=100)
+    done_action_ids = [int(r["id"]) for r in done_actions]
+
+    b1, b2, b3, b4 = st.columns(4)
+    selected_backfill_action_id = b1.selectbox(
+        "DONE action id",
+        done_action_ids if done_action_ids else [0],
+        key="v2_lots_backfill_action_id",
+    )
+    backfill_qty_override = b2.number_input(
+        "Fill qty override (0=use action qty)",
+        min_value=0.0,
+        value=0.0,
+        step=1.0,
+        key="v2_lots_backfill_qty",
+    )
+    backfill_price_override = b3.number_input(
+        "Fill price override (0=use limit_price)",
+        min_value=0.0,
+        value=0.0,
+        step=0.0001,
+        format="%.6f",
+        key="v2_lots_backfill_price",
+    )
+    backfill_eligible_first = b4.checkbox(
+        "eligible_first for CLOSE",
+        value=True,
+        key="v2_lots_backfill_eligible_first",
+    )
+
+    selected_backfill_row = next(
+        (row for row in done_actions if int(row["id"]) == int(selected_backfill_action_id)),
+        None,
+    )
+    if selected_backfill_row:
+        st.dataframe([selected_backfill_row], width="stretch", hide_index=True)
+
+    if st.button("Backfill selected DONE action", key="v2_lots_backfill_action_button"):
+        if not selected_backfill_row:
+            st.warning("No DONE action selected.")
+        else:
+            try:
+                result = backfill_lot_from_action_queue(
+                    con,
+                    action_id=int(selected_backfill_action_id),
+                    fill_qty=(None if float(backfill_qty_override) <= 0 else float(backfill_qty_override)),
+                    fill_price=(None if float(backfill_price_override) <= 0 else float(backfill_price_override)),
+                    eligible_first=bool(backfill_eligible_first),
+                )
+                con.commit()
+                st.success(f"Backfill completed for action_id={int(selected_backfill_action_id)}")
+                st.json(result)
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Backfill failed: {exc}")
 
     lots_rows = list_position_lots(con, symbol=lot_symbol_filter, status=lot_status_filter, limit=int(lots_limit))
     realizations_rows = list_lot_realizations(con, symbol=lot_symbol_filter, limit=int(lots_limit))

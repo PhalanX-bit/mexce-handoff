@@ -3,6 +3,10 @@ from __future__ import annotations
 import pandas as pd
 from core.streamlit_services.common import _to_float_series
 from core.symbol_utils import build_symbol_aliases
+from core.fill_registry import (
+    register_close_fill_from_action,
+    register_open_fill_from_action,
+)
 
 
 def list_position_lots(con, symbol: str = "ALL", status: str = "ALL", limit: int = 500):
@@ -144,3 +148,101 @@ def get_open_lots_for_symbol(con, symbol: str):
             (symbol,),
         ).fetchall()
     return [dict(r) for r in rows]
+
+
+def list_done_actions_for_lot_backfill(con, symbol: str = "ALL", limit: int = 100):
+    sql = """
+        SELECT id, created_at, symbol, panel_mode, side, qty, limit_price, leverage, api_order_id, status, note
+        FROM action_queue
+        WHERE status = 'DONE'
+    """
+    params = []
+
+    if symbol != "ALL":
+        aliases = build_symbol_aliases(symbol)
+        if aliases:
+            placeholders = ",".join("?" for _ in aliases)
+            sql += f" AND UPPER(symbol) IN ({placeholders})"
+            params.extend(aliases)
+        else:
+            sql += " AND symbol = ?"
+            params.append(symbol)
+
+    sql += " ORDER BY id DESC LIMIT ?"
+    params.append(int(limit))
+
+    rows = con.execute(sql, tuple(params)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def backfill_lot_from_action_queue(
+    con,
+    *,
+    action_id: int,
+    fill_qty: float | None = None,
+    fill_price: float | None = None,
+    eligible_first: bool = True,
+):
+    row = con.execute(
+        """
+        SELECT id, created_at, symbol, panel_mode, side, qty, limit_price, leverage, api_order_id, status, note
+        FROM action_queue
+        WHERE id = ?
+        LIMIT 1
+        """,
+        (int(action_id),),
+    ).fetchone()
+
+    if row is None:
+        raise ValueError(f"Action not found: {int(action_id)}")
+
+    action = dict(row)
+    if str(action.get("status") or "").upper() != "DONE":
+        raise ValueError(f"Action {int(action_id)} is not DONE")
+
+    qty_value = float(fill_qty) if fill_qty is not None else float(action.get("qty") or 0.0)
+    price_value = float(fill_price) if fill_price is not None else float(action.get("limit_price") or 0.0)
+
+    if qty_value <= 0:
+        raise ValueError(f"Invalid fill qty for action {int(action_id)}")
+    if price_value <= 0:
+        raise ValueError(f"Invalid fill price for action {int(action_id)}")
+
+    panel_mode = str(action.get("panel_mode") or "OPEN").upper()
+
+    if panel_mode == "OPEN":
+        result = register_open_fill_from_action(
+            con,
+            action_id=int(action["id"]),
+            symbol=str(action["symbol"]),
+            side=str(action["side"]),
+            qty_opened=qty_value,
+            entry_price=price_value,
+            target_roi_pct=200.0,
+            leverage=float(action.get("leverage") or 500.0),
+            opened_at=action.get("created_at"),
+            source_task_type="ACTION_QUEUE",
+            source_task_id=int(action["id"]),
+        )
+    else:
+        result = register_close_fill_from_action(
+            con,
+            action_id=int(action["id"]),
+            symbol=str(action["symbol"]),
+            side=str(action["side"]),
+            close_qty=qty_value,
+            close_price=price_value,
+            closed_at=action.get("created_at"),
+            close_task_type="ACTION_QUEUE",
+            close_task_id=int(action["id"]),
+            note=f"manual backfill from action_queue id={int(action['id'])}",
+            eligible_first=bool(eligible_first),
+        )
+
+    return {
+        "action": action,
+        "panel_mode": panel_mode,
+        "fill_qty": qty_value,
+        "fill_price": price_value,
+        "result": result,
+    }
