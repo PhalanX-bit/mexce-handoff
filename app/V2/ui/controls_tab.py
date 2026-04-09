@@ -274,6 +274,7 @@ def _build_preview_df_from_reprice_result(result, *, only_open_orders: bool):
                 "decision_reason": item.get("decision_reason"),
                 "stage": item.get("stage"),
                 "applied": item.get("applied"),
+                "ledger_logged": item.get("ledger_logged"),
             }
         )
 

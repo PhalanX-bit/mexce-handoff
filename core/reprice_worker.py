@@ -12,6 +12,10 @@ from core.action_queue_order import ACTION_QUEUE_EXECUTOR_ORDER_BY
 from core.db import DB_PATH
 from core.reprice_service import RepriceServiceConfig
 from core.reprice_action_once_hardened import reprice_action_once_hardened
+from core.streamlit_services.action_ledger_service import (
+    build_reprice_ledger_note,
+    log_reprice_event,
+)
 from core.symbol_utils import canonical_futures_symbol, symbols_match
 
 
@@ -169,6 +173,40 @@ def list_reprice_candidates(
     return scoped
 
 
+def log_reprice_result(row: Dict[str, Any], result: Dict[str, Any]) -> bool:
+    action_id = int(row["id"])
+    stage = str(result.get("stage") or "UNKNOWN").upper()
+    note = build_reprice_ledger_note(
+        action_id,
+        stage,
+        current_order_price=result.get("current_order_price"),
+        target_price=result.get("target_price"),
+        drift_bps=result.get("drift_bps"),
+        previous_order_id=result.get("previous_order_id"),
+        new_order_id=result.get("new_order_id"),
+        extra=f"reason={str(result.get('decision_reason') or result.get('reason') or '').strip()}",
+    )
+
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    try:
+        inserted = log_reprice_event(
+            conn,
+            created_at=utc_now_iso(),
+            action_id=action_id,
+            symbol=str(row.get("symbol") or ""),
+            stage=stage,
+            side=str(row.get("side") or "").upper() or None,
+            qty=result.get("new_qty") or row.get("qty"),
+            price=result.get("target_price") or result.get("current_order_price"),
+            note=note,
+        )
+        conn.commit()
+        return bool(inserted)
+    finally:
+        conn.close()
+
+
 def run_reprice_pass(
     *,
     target_price_resolver: Callable[[Dict[str, Any]], Optional[float]],
@@ -211,6 +249,11 @@ def run_reprice_pass(
                 conn.close()
 
         result["canonical_symbol"] = row.get("canonical_symbol")
+        try:
+            result["ledger_logged"] = log_reprice_result(row, result)
+        except Exception as exc:
+            result["ledger_logged"] = False
+            result["ledger_error"] = f"{exc.__class__.__name__}: {exc}"
         results.append(result)
 
         if verbose:
