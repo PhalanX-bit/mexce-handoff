@@ -7,6 +7,7 @@ from core.mexc_direct import get_live_market_snapshot
 from core.streamlit_services.common import _to_float_series, risk_flag, suggest_next_action
 from core.streamlit_services.dashboard_service import (
     get_latest_account_snapshot,
+    get_open_lot_summary,
     get_latest_positions_per_symbol_side,
 )
 from core.streamlit_services.table_columns_service import project_df_columns
@@ -170,6 +171,15 @@ def render_dashboard_tab(con) -> None:
             width="stretch",
             hide_index=True,
         )
+
+        df_open_lots = get_open_lot_summary(con)
+        if not df_open_lots.empty:
+            _to_float_series(df_open_lots, "open_lot_rows")
+            _to_float_series(df_open_lots, "qty_remaining_total")
+            _to_float_series(df_open_lots, "min_entry_price")
+            _to_float_series(df_open_lots, "max_entry_price")
+            st.write("### Open lots summary")
+            st.dataframe(df_open_lots, width="stretch", hide_index=True)
 
     losers = project_df_columns(df_agg.nsmallest(5, "total_unrealized"), "dashboard_aggregates")
     winners = project_df_columns(df_agg.nlargest(5, "total_unrealized"), "dashboard_aggregates")

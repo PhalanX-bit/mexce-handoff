@@ -12,6 +12,7 @@ from core.streamlit_services.lots_service import (
     list_done_actions_for_lot_backfill,
     list_lot_realizations,
     list_position_lots,
+    summarize_open_lots_by_symbol,
 )
 
 
@@ -100,9 +101,11 @@ def render_lots_tab(con) -> None:
 
     lots_rows = list_position_lots(con, symbol=lot_symbol_filter, status=lot_status_filter, limit=int(lots_limit))
     realizations_rows = list_lot_realizations(con, symbol=lot_symbol_filter, limit=int(lots_limit))
+    open_lot_summary_rows = summarize_open_lots_by_symbol(con, limit=100)
 
     df_lots = pd.DataFrame(lots_rows) if lots_rows else pd.DataFrame()
     df_real = pd.DataFrame(realizations_rows) if realizations_rows else pd.DataFrame()
+    df_open_lot_summary = pd.DataFrame(open_lot_summary_rows) if open_lot_summary_rows else pd.DataFrame()
 
     current_lot_price = None
     if lot_symbol_filter != "ALL":
@@ -114,7 +117,25 @@ def render_lots_tab(con) -> None:
         int(len(df_lots[df_lots["status"] == "OPEN"])) if not df_lots.empty and "status" in df_lots.columns else 0,
     )
     top2.metric("Realizations", int(len(df_real)) if not df_real.empty else 0)
-    top3.metric("Current price", f"{current_lot_price:.6f}" if current_lot_price is not None else "—")
+    top3.metric("Current price", f"{current_lot_price:.6f}" if current_lot_price is not None else "-")
+
+    if not df_open_lot_summary.empty:
+        for col in ["open_lot_rows", "qty_opened_total", "qty_remaining_total", "min_entry_price", "max_entry_price"]:
+            _to_float_series(df_open_lot_summary, col)
+
+        st.write("### Open lots by symbol")
+        summary_cols = [
+            "symbol",
+            "side",
+            "open_lot_rows",
+            "qty_opened_total",
+            "qty_remaining_total",
+            "min_entry_price",
+            "max_entry_price",
+            "latest_opened_at",
+        ]
+        summary_cols = [c for c in summary_cols if c in df_open_lot_summary.columns]
+        st.dataframe(df_open_lot_summary[summary_cols], width="stretch", hide_index=True)
 
     if not df_lots.empty:
         for col in ["qty_opened", "qty_remaining", "entry_price", "target_roi_pct", "leverage", "target_price"]:
@@ -133,6 +154,10 @@ def render_lots_tab(con) -> None:
             "leverage",
             "opened_at",
             "source_action_id",
+            "source_action_status",
+            "source_panel_mode",
+            "source_order_kind",
+            "source_created_by",
             "source_task_type",
             "source_task_id",
             "status",
@@ -154,6 +179,8 @@ def render_lots_tab(con) -> None:
                     "entry_price",
                     "target_price",
                     "opened_at",
+                    "source_action_id",
+                    "source_action_status",
                     "source_task_type",
                     "source_task_id",
                     "status",

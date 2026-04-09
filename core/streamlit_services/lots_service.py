@@ -11,10 +11,16 @@ from core.fill_registry import (
 
 def list_position_lots(con, symbol: str = "ALL", status: str = "ALL", limit: int = 500):
     sql = """
-        SELECT id, symbol, side, qty_opened, qty_remaining, entry_price,
-               target_roi_pct, leverage, target_price, opened_at,
-               source_action_id, source_task_type, source_task_id, status
-        FROM position_lots
+        SELECT pl.id, pl.symbol, pl.side, pl.qty_opened, pl.qty_remaining, pl.entry_price,
+               pl.target_roi_pct, pl.leverage, pl.target_price, pl.opened_at,
+               pl.source_action_id, pl.source_task_type, pl.source_task_id, pl.status,
+               aq.status AS source_action_status,
+               aq.panel_mode AS source_panel_mode,
+               aq.order_kind AS source_order_kind,
+               aq.created_by AS source_created_by
+        FROM position_lots pl
+        LEFT JOIN action_queue aq
+          ON aq.id = pl.source_action_id
     """
     clauses = []
     params = []
@@ -23,20 +29,20 @@ def list_position_lots(con, symbol: str = "ALL", status: str = "ALL", limit: int
         aliases = build_symbol_aliases(symbol)
         if aliases:
             placeholders = ",".join("?" for _ in aliases)
-            clauses.append(f"UPPER(symbol) IN ({placeholders})")
+            clauses.append(f"UPPER(pl.symbol) IN ({placeholders})")
             params.extend(aliases)
         else:
-            clauses.append("symbol = ?")
+            clauses.append("pl.symbol = ?")
             params.append(symbol)
 
     if status != "ALL":
-        clauses.append("status = ?")
+        clauses.append("pl.status = ?")
         params.append(status)
 
     if clauses:
         sql += " WHERE " + " AND ".join(clauses)
 
-    sql += " ORDER BY id DESC LIMIT ?"
+    sql += " ORDER BY pl.id DESC LIMIT ?"
     params.append(limit)
 
     rows = con.execute(sql, tuple(params)).fetchall()
@@ -172,6 +178,30 @@ def list_done_actions_for_lot_backfill(con, symbol: str = "ALL", limit: int = 10
     params.append(int(limit))
 
     rows = con.execute(sql, tuple(params)).fetchall()
+    return [dict(r) for r in rows]
+
+
+def summarize_open_lots_by_symbol(con, limit: int = 100):
+    rows = con.execute(
+        """
+        SELECT
+            symbol,
+            side,
+            COUNT(*) AS open_lot_rows,
+            SUM(COALESCE(qty_opened, 0)) AS qty_opened_total,
+            SUM(COALESCE(qty_remaining, 0)) AS qty_remaining_total,
+            MIN(entry_price) AS min_entry_price,
+            MAX(entry_price) AS max_entry_price,
+            MAX(opened_at) AS latest_opened_at
+        FROM position_lots
+        WHERE status = 'OPEN'
+          AND COALESCE(qty_remaining, 0) > 0
+        GROUP BY symbol, side
+        ORDER BY latest_opened_at DESC, symbol ASC, side ASC
+        LIMIT ?
+        """,
+        (int(limit),),
+    ).fetchall()
     return [dict(r) for r in rows]
 
 

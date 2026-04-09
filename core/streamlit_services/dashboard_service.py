@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pandas as pd
+
 from core.symbol_utils import build_symbol_aliases
 
 
@@ -153,3 +155,28 @@ def get_latest_ticker_price_for_symbol(con, symbol: str):
         return float(value)
     except Exception:
         return None
+
+
+def get_open_lot_summary(con):
+    rows = con.execute(
+        """
+        SELECT
+            symbol,
+            side,
+            COUNT(*) AS open_lot_rows,
+            SUM(COALESCE(qty_remaining, 0)) AS qty_remaining_total,
+            MIN(entry_price) AS min_entry_price,
+            MAX(entry_price) AS max_entry_price,
+            MAX(opened_at) AS latest_opened_at
+        FROM position_lots
+        WHERE status = 'OPEN'
+          AND COALESCE(qty_remaining, 0) > 0
+        GROUP BY symbol, side
+        ORDER BY latest_opened_at DESC, symbol ASC, side ASC
+        """
+    ).fetchall()
+
+    if not rows:
+        return pd.DataFrame()
+
+    return pd.DataFrame([dict(r) for r in rows])
