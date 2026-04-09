@@ -13,6 +13,9 @@ def canonical_futures_symbol(symbol: str | None) -> Optional[str]:
     value = value.replace(":USDT:USDT", ":USDT")
     value = value.replace("/USDT/USDT", "/USDT")
 
+    if value.endswith("/USDT") and ":USDT" not in value:
+        return f"{value}:USDT"
+
     try:
         return futures_symbol_display(value)
     except Exception:
@@ -22,9 +25,6 @@ def canonical_futures_symbol(symbol: str | None) -> Optional[str]:
         base = value[:-4]
         if base:
             return f"{base}/USDT:USDT"
-
-    if value.endswith("/USDT") and ":USDT" not in value:
-        return f"{value}:USDT"
 
     return value
 
