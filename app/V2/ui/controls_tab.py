@@ -212,6 +212,39 @@ def _render_result(title: str, result) -> None:
     st.code(_pretty(result), language="json")
 
 
+def _build_reconcile_preview_df(result):
+    rows = []
+    for item in (result or {}).get("results", []):
+        fill_registry = item.get("fill_registry") or {}
+        fill_result = fill_registry.get("fill_result") or {}
+
+        rows.append(
+            {
+                "action_id": item.get("action_id"),
+                "symbol": item.get("symbol"),
+                "api_order_id": item.get("api_order_id"),
+                "lifecycle_state": item.get("lifecycle_state"),
+                "lifecycle_reason": item.get("lifecycle_reason"),
+                "deal_qty": item.get("deal_qty"),
+                "resolved_avg_price": item.get("resolved_avg_price"),
+                "queue_updated": item.get("queue_updated"),
+                "fill_applied": fill_registry.get("applied"),
+                "fill_reason": fill_registry.get("reason"),
+                "fill_panel_mode": fill_registry.get("panel_mode"),
+                "fill_price": fill_registry.get("fill_price"),
+                "fill_duplicate": fill_result.get("duplicate"),
+                "fill_lot_id": fill_result.get("lot_id"),
+                "fill_matched_close_qty": fill_result.get("matched_close_qty"),
+                "fill_unmatched_close_qty": fill_result.get("unmatched_close_qty"),
+            }
+        )
+
+    if not rows:
+        return None
+
+    return pd.DataFrame(rows)
+
+
 def _build_preview_df_from_reprice_result(result, *, only_open_orders: bool):
     rows = []
     for item in (result or {}).get("results", []):
@@ -382,6 +415,13 @@ def render_controls_tab(con) -> None:
                 include_null_reconcile_state=include_null_reconcile_state,
                 verbose=verbose,
             )
+            preview_df = _build_reconcile_preview_df(result)
+            if preview_df is not None and not preview_df.empty:
+                st.dataframe(
+                    preview_df,
+                    width="stretch",
+                    hide_index=True,
+                )
             _render_result("Reconcile pass completed.", result)
         except Exception as exc:
             st.error(f"Reconcile pass failed: {exc}")
