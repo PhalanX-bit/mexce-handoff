@@ -279,3 +279,78 @@ def query_action_ledger(
         (*params, int(limit)),
     ).fetchall()
     return [dict(r) for r in rows]
+
+
+def parse_action_ledger_note(note: Optional[str]) -> dict[str, str]:
+    text = str(note or "").strip()
+    if not text:
+        return {}
+
+    parsed: dict[str, str] = {}
+    for part in text.split("|"):
+        token = str(part).strip()
+        if not token or "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        key = str(key).strip()
+        value = str(value).strip()
+        if key:
+            parsed[key] = value
+    return parsed
+
+
+def enrich_action_ledger_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    enriched: list[dict[str, Any]] = []
+    for row in rows:
+        item = dict(row)
+        parsed = parse_action_ledger_note(item.get("note"))
+        item["note_action_id"] = parsed.get("action_id")
+        item["note_status"] = parsed.get("status")
+        item["note_lifecycle_state"] = parsed.get("lifecycle_state")
+        item["note_stage"] = parsed.get("stage")
+        item["note_reason"] = parsed.get("reason")
+        item["note_previous_order_id"] = parsed.get("previous_order_id")
+        item["note_new_order_id"] = parsed.get("new_order_id")
+        enriched.append(item)
+    return enriched
+
+
+def summarize_action_ledger_timeline(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, dict[str, Any]] = {}
+
+    for row in rows:
+        action_id = str(row.get("note_action_id") or "").strip()
+        if not action_id:
+            continue
+
+        current = grouped.setdefault(
+            action_id,
+            {
+                "action_id": action_id,
+                "symbol": row.get("symbol"),
+                "first_at": row.get("created_at"),
+                "last_at": row.get("created_at"),
+                "events": 0,
+                "latest_event_type": row.get("action_type"),
+                "latest_status": row.get("note_status"),
+                "latest_lifecycle_state": row.get("note_lifecycle_state"),
+                "latest_stage": row.get("note_stage"),
+                "latest_reason": row.get("note_reason"),
+            },
+        )
+
+        current["events"] = int(current["events"]) + 1
+        current["symbol"] = current.get("symbol") or row.get("symbol")
+
+        created_at = row.get("created_at")
+        if created_at and (current.get("first_at") is None or str(created_at) < str(current["first_at"])):
+            current["first_at"] = created_at
+        if created_at and (current.get("last_at") is None or str(created_at) > str(current["last_at"])):
+            current["last_at"] = created_at
+            current["latest_event_type"] = row.get("action_type")
+            current["latest_status"] = row.get("note_status")
+            current["latest_lifecycle_state"] = row.get("note_lifecycle_state")
+            current["latest_stage"] = row.get("note_stage")
+            current["latest_reason"] = row.get("note_reason")
+
+    return sorted(grouped.values(), key=lambda x: (str(x.get("last_at") or ""), int(x.get("action_id") or 0)), reverse=True)
