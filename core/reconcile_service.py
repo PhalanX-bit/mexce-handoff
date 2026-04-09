@@ -21,6 +21,10 @@ from core.mexc_direct import (
     list_open_orders_raw,
     list_orders_raw,
 )
+from core.streamlit_services.action_ledger_service import (
+    build_reconcile_ledger_note,
+    log_reconcile_event,
+)
 
 
 def utc_now() -> datetime:
@@ -736,6 +740,33 @@ def apply_fill_registry_from_reconcile(action_row: Dict[str, Any], result: Dict[
     }
 
 
+def log_reconcile_ledger_result(action_row: Dict[str, Any], result: Dict[str, Any]) -> bool:
+    lifecycle_state = str(result.get("lifecycle_state") or "UNKNOWN").upper()
+    action_id = int(action_row["id"])
+    note = build_reconcile_ledger_note(
+        action_id,
+        lifecycle_state,
+        deal_qty=safe_float(result.get("deal_qty")),
+        resolved_avg_price=safe_float(result.get("resolved_avg_price")),
+        extra=f"reason={str(result.get('lifecycle_reason') or '').strip()}",
+    )
+
+    with db_conn() as conn:
+        inserted = log_reconcile_event(
+            conn,
+            created_at=utc_now_iso(),
+            action_id=action_id,
+            symbol=str(action_row.get("symbol") or ""),
+            lifecycle_state=lifecycle_state,
+            side=str(action_row.get("side") or "").upper() or None,
+            qty=safe_float(result.get("deal_qty")) or safe_float(action_row.get("qty")),
+            price=_resolve_fill_price(result, action_row),
+            note=note,
+        )
+        conn.commit()
+    return bool(inserted)
+
+
 def reconcile_action(
     action_id: int,
     *,
@@ -755,6 +786,13 @@ def reconcile_action(
                 "applied": False,
                 "reason": f"{exc.__class__.__name__}: {exc}",
             }
+        try:
+            result["ledger_logged"] = log_reconcile_ledger_result(action_row, result)
+        except Exception as exc:
+            result["ledger_logged"] = False
+            result["ledger_error"] = f"{exc.__class__.__name__}: {exc}"
+    else:
+        result["ledger_logged"] = False
 
     updates: Dict[str, Any] = {}
     if update_action_queue:

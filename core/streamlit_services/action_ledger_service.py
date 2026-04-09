@@ -22,6 +22,27 @@ def build_action_queue_ledger_note(action_id: int, status: str, extra: Optional[
     return base
 
 
+def build_reconcile_ledger_note(
+    action_id: int,
+    lifecycle_state: str,
+    *,
+    deal_qty: Optional[float] = None,
+    resolved_avg_price: Optional[float] = None,
+    extra: Optional[str] = None,
+) -> str:
+    parts = [
+        f"action_id={int(action_id)}",
+        f"lifecycle_state={str(lifecycle_state or '').upper()}",
+    ]
+    if deal_qty is not None:
+        parts.append(f"deal_qty={float(deal_qty)}")
+    if resolved_avg_price is not None:
+        parts.append(f"resolved_avg_price={float(resolved_avg_price)}")
+    if extra:
+        parts.append(str(extra).strip())
+    return " | ".join(parts)
+
+
 def log_action_queue_event(
     con,
     *,
@@ -71,6 +92,32 @@ def log_action_queue_event(
     return True
 
 
+def log_reconcile_event(
+    con,
+    *,
+    created_at: str,
+    action_id: int,
+    symbol: str,
+    lifecycle_state: str,
+    side: Optional[str] = None,
+    qty: Optional[float] = None,
+    price: Optional[float] = None,
+    note: Optional[str] = None,
+) -> bool:
+    event_type = f"RECONCILE_{str(lifecycle_state or 'UNKNOWN').strip().upper()}"
+    return log_action_queue_event(
+        con,
+        created_at=created_at,
+        action_id=action_id,
+        symbol=symbol,
+        event_type=event_type,
+        side=side,
+        qty=qty,
+        price=price,
+        note=note,
+    )
+
+
 def get_recent_actions(con, limit=50):
     rows = con.execute(
         """
@@ -102,8 +149,8 @@ def get_action_ledger_summary(con) -> dict[str, int]:
         """
         SELECT
             COUNT(*) AS total_rows,
-            SUM(CASE WHEN action_type LIKE 'QUEUE_%' OR action_type LIKE 'EXECUTOR_%' THEN 1 ELSE 0 END) AS system_rows,
-            SUM(CASE WHEN action_type NOT LIKE 'QUEUE_%' AND action_type NOT LIKE 'EXECUTOR_%' THEN 1 ELSE 0 END) AS manual_rows
+            SUM(CASE WHEN action_type LIKE 'QUEUE_%' OR action_type LIKE 'EXECUTOR_%' OR action_type LIKE 'RECONCILE_%' THEN 1 ELSE 0 END) AS system_rows,
+            SUM(CASE WHEN action_type NOT LIKE 'QUEUE_%' AND action_type NOT LIKE 'EXECUTOR_%' AND action_type NOT LIKE 'RECONCILE_%' THEN 1 ELSE 0 END) AS manual_rows
         FROM actions_ledger
         """
     ).fetchone()
@@ -139,9 +186,9 @@ def query_action_ledger(
 
     source_norm = str(source or "ALL").strip().upper()
     if source_norm == "SYSTEM":
-        where.append("(action_type LIKE 'QUEUE_%' OR action_type LIKE 'EXECUTOR_%')")
+        where.append("(action_type LIKE 'QUEUE_%' OR action_type LIKE 'EXECUTOR_%' OR action_type LIKE 'RECONCILE_%')")
     elif source_norm == "MANUAL":
-        where.append("(action_type NOT LIKE 'QUEUE_%' AND action_type NOT LIKE 'EXECUTOR_%')")
+        where.append("(action_type NOT LIKE 'QUEUE_%' AND action_type NOT LIKE 'EXECUTOR_%' AND action_type NOT LIKE 'RECONCILE_%')")
 
     where_sql = ""
     if where:

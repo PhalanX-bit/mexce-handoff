@@ -228,6 +228,7 @@ def _build_reconcile_preview_df(result):
                 "deal_qty": item.get("deal_qty"),
                 "resolved_avg_price": item.get("resolved_avg_price"),
                 "queue_updated": item.get("queue_updated"),
+                "ledger_logged": item.get("ledger_logged"),
                 "fill_applied": fill_registry.get("applied"),
                 "fill_reason": fill_registry.get("reason"),
                 "fill_panel_mode": fill_registry.get("panel_mode"),
