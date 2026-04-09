@@ -124,8 +124,8 @@ def render_guards_summary(result: dict) -> None:
     st.write("### Guards")
     c1, c2, c3 = st.columns(3)
     c1.metric("Active queue task", "YES" if guards.get("active_queue_task") else "NO")
-    c2.metric("Active pending LIMIT", "YES" if guards.get("active_pending_limit") else "NO")
-    c3.metric("Active pending CHASE", "YES" if guards.get("active_pending_chase") else "NO")
+    c2.metric("Legacy LIMIT guard", "YES" if guards.get("active_pending_limit") else "NO")
+    c3.metric("Legacy CHASE guard", "YES" if guards.get("active_pending_chase") else "NO")
 
 
 def render_lot_summary(result: dict) -> None:

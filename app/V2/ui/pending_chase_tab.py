@@ -16,8 +16,11 @@ from core.streamlit_services.pending_chase_service import (
 
 
 def render_pending_chase_tab(con) -> None:
-    st.subheader("Pending CHASE tasks (legacy)")
-    st.caption("This tab is legacy/read-only support. New strategy flow should not create CHASE tasks anymore.")
+    st.subheader("Legacy CHASE tracking")
+    st.caption(
+        "Historical support only. "
+        "New V2 strategy flow should not create CHASE tasks anymore."
+    )
 
     counts = get_pending_chase_status_counts(con)
 

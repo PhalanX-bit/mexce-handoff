@@ -18,8 +18,11 @@ from core.streamlit_services.pending_limit_service import (
 
 
 def render_pending_limit_tab(con) -> None:
-    st.subheader("Pending LIMIT tasks")
-    st.caption("Compatibility / tracking layer. New V2 source of truth is Action Queue; this table mainly supports legacy bridge and historical fill tracking.")
+    st.subheader("Legacy LIMIT tracking")
+    st.caption(
+        "Legacy compatibility / historical tracking only. "
+        "Active V2 flow should use Action Queue, API Executor, and Lots instead of this table."
+    )
 
     counts = get_pending_limit_status_counts(con)
     audit = get_pending_limit_audit_counts(con)

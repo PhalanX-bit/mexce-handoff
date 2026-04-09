@@ -98,8 +98,8 @@ def main() -> None:
                 "Queue Health",
                 "Controls",
                 "API Executor",
-                "Pending LIMIT",
-                "Pending CHASE",
+                "Legacy LIMIT",
+                "Legacy CHASE",
                 "Lots",
             ]
         )
