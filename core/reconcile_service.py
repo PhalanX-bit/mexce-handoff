@@ -24,6 +24,7 @@ from core.mexc_direct import (
 from core.streamlit_services.action_ledger_service import (
     build_reconcile_ledger_note,
     log_reconcile_event,
+    parse_action_ledger_note,
 )
 
 
@@ -662,30 +663,90 @@ def build_reconcile_update_payload(result: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def get_prior_reconcile_states_from_ledger(action_id: int) -> list[str]:
+    with db_conn() as conn:
+        rows = conn.execute(
+            """
+            SELECT note
+            FROM actions_ledger
+            WHERE action_type LIKE 'RECONCILE_%'
+              AND note LIKE ?
+            ORDER BY id ASC
+            """,
+            (f"%action_id={int(action_id)}%",),
+        ).fetchall()
+
+    states: list[str] = []
+    for row in rows:
+        parsed = parse_action_ledger_note(row["note"] if isinstance(row, sqlite3.Row) else row[0])
+        state = str(parsed.get("lifecycle_state") or "").strip().upper()
+        if state:
+            states.append(state)
+    return states
+
+
+def infer_reconcile_transition(
+    *,
+    current_state: str,
+    previous_state: str,
+    prior_states: Sequence[str] | None = None,
+) -> tuple[str, str, Optional[str]]:
+    current_state = str(current_state or "").strip().upper()
+    previous_state = str(previous_state or "").strip().upper()
+    prior_signal_states = {str(s or "").strip().upper() for s in (prior_states or []) if str(s or "").strip()}
+    prior_signal_states.discard(current_state)
+
+    saw_open_signal = previous_state == "OPEN" or "OPEN" in prior_signal_states
+    saw_fill_signal = previous_state in {
+        "PARTIALLY_FILLED_OPEN",
+        "FILLED_BY_DEALS_ONLY",
+        "FILLED_CONFIRMED",
+    } or bool(
+        {
+            "PARTIALLY_FILLED_OPEN",
+            "FILLED_BY_DEALS_ONLY",
+            "FILLED_CONFIRMED",
+        }
+        & prior_signal_states
+    )
+
+    if current_state == "NOT_FOUND" and saw_open_signal:
+        return (
+            "OPEN_THEN_NOT_FOUND",
+            "previously_seen_open_now_not_visible",
+            "likely_fill_or_external_close_check_lot_backfill",
+        )
+
+    if current_state == "NOT_FOUND" and saw_fill_signal:
+        return (
+            "FILL_SIGNAL_THEN_NOT_FOUND",
+            "previous_fill_signal_now_not_visible",
+            "strong_manual_backfill_candidate",
+        )
+
+    return current_state, "", None
+
+
 def apply_reconcile_transition_context(
     action_row: Dict[str, Any],
     result: Dict[str, Any],
 ) -> Dict[str, Any]:
     previous_state = str(action_row.get("reconcile_state") or "").strip().upper()
     current_state = str(result.get("lifecycle_state") or "").strip().upper()
+    prior_states = get_prior_reconcile_states_from_ledger(int(action_row["id"]))
 
     adjusted = dict(result)
     adjusted["previous_reconcile_state"] = previous_state or None
-
-    if current_state == "NOT_FOUND" and previous_state == "OPEN":
-        adjusted["lifecycle_state"] = "OPEN_THEN_NOT_FOUND"
-        adjusted["lifecycle_reason"] = "previously_seen_open_now_not_visible"
-        adjusted["manual_backfill_hint"] = "likely_fill_or_external_close_check_lot_backfill"
-    elif current_state == "NOT_FOUND" and previous_state in {
-        "PARTIALLY_FILLED_OPEN",
-        "FILLED_BY_DEALS_ONLY",
-        "FILLED_CONFIRMED",
-    }:
-        adjusted["lifecycle_state"] = "FILL_SIGNAL_THEN_NOT_FOUND"
-        adjusted["lifecycle_reason"] = "previous_fill_signal_now_not_visible"
-        adjusted["manual_backfill_hint"] = "strong_manual_backfill_candidate"
-    else:
-        adjusted["manual_backfill_hint"] = None
+    adjusted["prior_reconcile_states"] = prior_states or None
+    inferred_state, inferred_reason, manual_backfill_hint = infer_reconcile_transition(
+        current_state=current_state,
+        previous_state=previous_state,
+        prior_states=prior_states,
+    )
+    adjusted["lifecycle_state"] = inferred_state
+    if inferred_reason:
+        adjusted["lifecycle_reason"] = inferred_reason
+    adjusted["manual_backfill_hint"] = manual_backfill_hint
 
     return adjusted
 
