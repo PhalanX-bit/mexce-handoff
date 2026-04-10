@@ -3,7 +3,11 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from core.streamlit_services.strategy_simulation_service import simulate_strategy_market
+from core.streamlit_services.strategy_simulation_service import (
+    build_live_market_seed,
+    simulate_market_scenario_pack,
+    simulate_strategy_market,
+)
 from core.streamlit_services.table_columns_service import project_df_columns
 
 
@@ -62,7 +66,55 @@ def _render_dataframe_block(title: str, df: pd.DataFrame, column_profile: str | 
     st.dataframe(display_df, width="stretch", hide_index=True)
 
 
-def render_strategy_simulation_tab() -> None:
+def _render_live_seed(seed: dict) -> None:
+    st.write("### Current live seed")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Current price", f"{float(seed.get('current_price') or 0.0):.6f}" if seed.get("current_price") else "-")
+    c2.metric("Position state", str(seed.get("position_state") or "-"))
+    c3.metric("Gross contracts", f"{float(seed.get('gross_contracts') or 0.0):.2f}")
+    c4.metric("Net contracts", f"{float(seed.get('net_contracts') or 0.0):.2f}")
+
+    d1, d2, d3, d4 = st.columns(4)
+    d1.metric("Long qty", f"{float(seed.get('long_qty') or 0.0):.2f}")
+    d2.metric("Short qty", f"{float(seed.get('short_qty') or 0.0):.2f}")
+    d3.metric("Long entry", f"{float(seed.get('long_entry') or 0.0):.6f}")
+    d4.metric("Short entry", f"{float(seed.get('short_entry') or 0.0):.6f}")
+
+    e1, e2, e3, e4 = st.columns(4)
+    e1.metric("Open lots", int(seed.get("open_lots_count") or 0))
+    e2.metric("Eligible lots", int(seed.get("eligible_lots_count") or 0))
+    e3.metric("Eligible qty", f"{float(seed.get('eligible_lots_qty') or 0.0):.2f}")
+    e4.metric("Ticker ts", str(seed.get("ticker_ts") or "-"))
+
+
+def _render_scenario_pack(pack: dict) -> None:
+    comparison_df = pack.get("comparison_df")
+    best = pack.get("best_scenario") or {}
+    worst = pack.get("worst_scenario") or {}
+
+    st.write("### Three-scenario forecast")
+    if comparison_df is None or comparison_df.empty:
+        st.info("No scenario comparison available.")
+        return
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.success(
+            f"Best scenario: {best.get('scenario_label') or '-'} | "
+            f"PnL={float(best.get('projected_pnl') or 0.0):.4f} | "
+            f"risk={best.get('risk_label') or '-'}"
+        )
+    with c2:
+        st.warning(
+            f"Most stressed scenario: {worst.get('scenario_label') or '-'} | "
+            f"PnL={float(worst.get('projected_pnl') or 0.0):.4f} | "
+            f"risk={worst.get('risk_label') or '-'}"
+        )
+
+    st.dataframe(comparison_df, width="stretch", hide_index=True)
+
+
+def render_strategy_simulation_tab(con) -> None:
     st.subheader("Strategy Simulation")
     st.caption(
         "Offline simulation over synthetic price paths to identify stress regimes, "
@@ -269,7 +321,54 @@ def render_strategy_simulation_tab() -> None:
         key="v2_sim_gross_cap_contracts",
     )
 
-    run_button = st.button("Run simulation", key="v2_sim_run")
+    st.write("### Live market forecast")
+    live_seed = None
+    try:
+        live_seed = build_live_market_seed(con, symbol=symbol)
+        _render_live_seed(live_seed)
+    except Exception as exc:
+        st.info(f"Live seed unavailable: {exc}")
+
+    l1, l2 = st.columns(2)
+    run_pack_button = l1.button("Run 3-scenario forecast", key="v2_sim_run_pack")
+    run_button = l2.button("Run simulation", key="v2_sim_run")
+
+    if run_pack_button:
+        try:
+            pack = simulate_market_scenario_pack(
+                con,
+                symbol=symbol,
+                initial_side=initial_side,
+                steps=int(steps),
+                starting_capital=float(starting_capital),
+                secured_capital=float(secured_capital),
+                leverage=float(leverage),
+                hedge_loss_usdt=float(hedge_loss_usdt),
+                target_roi_pct=float(target_roi_pct),
+                limit_offset_pct=float(limit_offset_pct),
+                open_limit_offset_pct=float(open_limit_offset_pct),
+                rebalance_trigger_pct=float(rebalance_trigger_pct),
+                moderate_imbalance_ratio=float(moderate_imbalance_ratio),
+                extreme_imbalance_ratio=float(extreme_imbalance_ratio),
+                safe_mode_one_contract=bool(safe_mode_one_contract),
+                contract_step=float(contract_step),
+                drift_pct_per_step=float(drift_pct_per_step),
+                oscillation_pct=float(oscillation_pct),
+                fatal_drawdown_pct=float(fatal_drawdown_pct),
+                fatal_margin_ratio_pct=float(fatal_margin_ratio_pct),
+                fatal_gross_multiplier=float(fatal_gross_multiplier),
+                warning_drawdown_pct=float(warning_drawdown_pct),
+                warning_margin_ratio_pct=float(warning_margin_ratio_pct),
+                warning_gross_multiplier=float(warning_gross_multiplier),
+                warning_actions_count=int(warning_actions_count),
+                warning_imbalance_ratio=float(warning_imbalance_ratio),
+                gross_cap_contracts=float(gross_cap_contracts),
+            )
+            _render_scenario_pack(pack)
+            with st.expander("Scenario pack seed JSON", expanded=False):
+                st.json(pack.get("seed") or {})
+        except Exception as exc:
+            st.error(f"3-scenario forecast failed: {exc}")
 
     if not run_button:
         st.info("Set parameters and click 'Run simulation'.")

@@ -120,7 +120,7 @@ def main() -> None:
             render_strategy_tab(con)
 
         with tab_strategy_simulation:
-            render_strategy_simulation_tab()
+            render_strategy_simulation_tab(con)
 
         with tab_queue_health:
             render_queue_health_tab(con)

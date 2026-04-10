@@ -7,6 +7,14 @@ import pandas as pd
 
 from core.close_classifier import classify_close_action
 from core.open_classifier import classify_open_action
+from core.streamlit_services.dashboard_service import (
+    get_latest_positions_for_symbol,
+    get_latest_ticker_for_symbol,
+)
+from core.streamlit_services.lots_service import (
+    compute_eligible_lots_df,
+    get_open_lots_for_symbol,
+)
 from core.streamlit_services.strategy_service import (
     build_open_limit_price,
     compute_imbalance_ratio,
@@ -91,6 +99,221 @@ def _get_winner_side_from_sim(
     if long_ready:
         return "LONG"
     return "SHORT"
+
+
+def _weighted_position_entry(rows: list[dict], side: str) -> tuple[float, float]:
+    side = _normalize_side(side)
+    side_rows = [r for r in rows if str(r.get("side") or "").strip().upper() == side]
+    total_qty = 0.0
+    weighted_num = 0.0
+
+    for row in side_rows:
+        qty = float(row.get("contracts") or 0.0)
+        entry = float(row.get("entry_price") or 0.0)
+        if qty <= 0 or entry <= 0:
+            continue
+        total_qty += qty
+        weighted_num += qty * entry
+
+    weighted_entry = (weighted_num / total_qty) if total_qty > 0 else 0.0
+    return total_qty, weighted_entry
+
+
+def build_live_market_seed(
+    con,
+    *,
+    symbol: str,
+) -> dict[str, Any]:
+    ticker = get_latest_ticker_for_symbol(con, symbol)
+    positions = get_latest_positions_for_symbol(con, symbol)
+
+    current_price = None
+    ticker_ts = None
+    if ticker:
+        ticker_ts = ticker.get("created_at")
+        for key in ("last_price", "mark_price"):
+            try:
+                value = ticker.get(key)
+                if value is not None:
+                    current_price = float(value)
+                    if current_price > 0:
+                        break
+            except Exception:
+                continue
+
+    long_qty, long_entry = _weighted_position_entry(positions, "LONG")
+    short_qty, short_entry = _weighted_position_entry(positions, "SHORT")
+    positions_ts = max((r.get("created_at") for r in positions if r.get("created_at")), default=None)
+
+    open_lot_rows = get_open_lots_for_symbol(con, symbol)
+    df_open_lots = pd.DataFrame(open_lot_rows) if open_lot_rows else pd.DataFrame()
+    eligible_df = (
+        compute_eligible_lots_df(df_open_lots, float(current_price))
+        if not df_open_lots.empty and current_price is not None
+        else pd.DataFrame()
+    )
+
+    return {
+        "symbol": str(symbol or "").strip().upper(),
+        "current_price": float(current_price) if current_price is not None else None,
+        "ticker_ts": ticker_ts,
+        "positions_ts": positions_ts,
+        "long_qty": float(long_qty),
+        "short_qty": float(short_qty),
+        "long_entry": float(long_entry),
+        "short_entry": float(short_entry),
+        "gross_contracts": float(long_qty + short_qty),
+        "net_contracts": float(abs(long_qty - short_qty)),
+        "open_lots_count": int(len(df_open_lots)) if not df_open_lots.empty else 0,
+        "eligible_lots_count": int(len(eligible_df)) if not eligible_df.empty else 0,
+        "eligible_lots_qty": float(eligible_df["qty_remaining"].sum()) if not eligible_df.empty and "qty_remaining" in eligible_df.columns else 0.0,
+        "position_state": (
+            "HEDGED" if long_qty > 0 and short_qty > 0
+            else "ONE_SIDED_LONG" if long_qty > 0
+            else "ONE_SIDED_SHORT" if short_qty > 0
+            else "NO_POSITION"
+        ),
+    }
+
+
+def _classify_projection(summary: dict[str, Any]) -> str:
+    fatal_count = int(summary.get("fatal_count") or 0)
+    warning_count = int(summary.get("warning_count") or 0)
+    projected_pnl = float(summary.get("projected_pnl") or 0.0)
+
+    if fatal_count > 0:
+        return "HIGH_RISK"
+    if warning_count > 0:
+        return "CAUTION"
+    if projected_pnl > 0:
+        return "FAVORABLE"
+    if projected_pnl < 0:
+        return "WEAK"
+    return "NEUTRAL"
+
+
+def simulate_market_scenario_pack(
+    con,
+    *,
+    symbol: str,
+    initial_side: str,
+    steps: int,
+    starting_capital: float,
+    secured_capital: float,
+    leverage: float,
+    hedge_loss_usdt: float,
+    target_roi_pct: float,
+    limit_offset_pct: float,
+    open_limit_offset_pct: float,
+    rebalance_trigger_pct: float,
+    moderate_imbalance_ratio: float,
+    extreme_imbalance_ratio: float,
+    safe_mode_one_contract: bool,
+    contract_step: float,
+    drift_pct_per_step: float = 0.20,
+    oscillation_pct: float = 0.35,
+    fatal_drawdown_pct: float = 50.0,
+    fatal_margin_ratio_pct: float = 80.0,
+    fatal_gross_multiplier: float = 8.0,
+    warning_drawdown_pct: float = 10.0,
+    warning_margin_ratio_pct: float = 25.0,
+    warning_gross_multiplier: float = 4.0,
+    warning_actions_count: int = 50,
+    warning_imbalance_ratio: float = 8.0,
+    gross_cap_contracts: float = 0.0,
+) -> dict[str, Any]:
+    seed = build_live_market_seed(con, symbol=symbol)
+    if seed.get("current_price") is None or float(seed["current_price"]) <= 0:
+        raise ValueError(f"No current ticker snapshot for {symbol}")
+
+    scenarios = [
+        ("UPTREND", "trend_up"),
+        ("DOWNTREND", "trend_down"),
+        ("RANGE", "range"),
+    ]
+
+    pack_rows: list[dict[str, Any]] = []
+    pack_results: dict[str, Any] = {}
+
+    for scenario_label, scenario_name in scenarios:
+        result = simulate_strategy_market(
+            symbol=symbol,
+            initial_side=initial_side,
+            start_price=float(seed["current_price"]),
+            steps=int(steps),
+            scenario=scenario_name,
+            starting_capital=float(starting_capital),
+            secured_capital=float(secured_capital),
+            leverage=float(leverage),
+            hedge_loss_usdt=float(hedge_loss_usdt),
+            target_roi_pct=float(target_roi_pct),
+            limit_offset_pct=float(limit_offset_pct),
+            open_limit_offset_pct=float(open_limit_offset_pct),
+            rebalance_trigger_pct=float(rebalance_trigger_pct),
+            moderate_imbalance_ratio=float(moderate_imbalance_ratio),
+            extreme_imbalance_ratio=float(extreme_imbalance_ratio),
+            safe_mode_one_contract=bool(safe_mode_one_contract),
+            contract_step=float(contract_step),
+            drift_pct_per_step=float(drift_pct_per_step),
+            oscillation_pct=float(oscillation_pct),
+            shock_step=None,
+            shock_pct=0.0,
+            fatal_drawdown_pct=float(fatal_drawdown_pct),
+            fatal_margin_ratio_pct=float(fatal_margin_ratio_pct),
+            fatal_gross_multiplier=float(fatal_gross_multiplier),
+            seed_long_qty=float(seed["long_qty"]),
+            seed_short_qty=float(seed["short_qty"]),
+            seed_long_entry=float(seed["long_entry"]),
+            seed_short_entry=float(seed["short_entry"]),
+            warning_drawdown_pct=float(warning_drawdown_pct),
+            warning_margin_ratio_pct=float(warning_margin_ratio_pct),
+            warning_gross_multiplier=float(warning_gross_multiplier),
+            warning_actions_count=int(warning_actions_count),
+            warning_imbalance_ratio=float(warning_imbalance_ratio),
+            gross_cap_contracts=float(gross_cap_contracts),
+        )
+        summary = dict(result["summary"])
+        projected_pnl = float(summary.get("final_equity") or 0.0) - float(starting_capital)
+        projected_return_pct = (projected_pnl / float(starting_capital) * 100.0) if float(starting_capital) > 0 else 0.0
+        summary["scenario_label"] = scenario_label
+        summary["projected_pnl"] = projected_pnl
+        summary["projected_return_pct"] = projected_return_pct
+        summary["risk_label"] = _classify_projection(summary)
+        pack_rows.append(
+            {
+                "scenario_label": scenario_label,
+                "scenario": summary.get("scenario"),
+                "final_price": float(summary.get("final_price") or 0.0),
+                "final_equity": float(summary.get("final_equity") or 0.0),
+                "projected_pnl": float(projected_pnl),
+                "projected_return_pct": float(projected_return_pct),
+                "actions_count": int(summary.get("actions_count") or 0),
+                "warning_count": int(summary.get("warning_count") or 0),
+                "fatal_count": int(summary.get("fatal_count") or 0),
+                "risk_label": str(summary.get("risk_label") or ""),
+                "first_warning_reason": summary.get("first_warning_reason"),
+                "first_fatal_reason": summary.get("first_fatal_reason"),
+            }
+        )
+        pack_results[scenario_label] = result
+
+    comparison_df = pd.DataFrame(pack_rows)
+    best_row = None if comparison_df.empty else comparison_df.sort_values(
+        ["fatal_count", "warning_count", "projected_pnl"],
+        ascending=[True, True, False],
+    ).iloc[0].to_dict()
+    worst_row = None if comparison_df.empty else comparison_df.sort_values(
+        ["fatal_count", "warning_count", "projected_pnl"],
+        ascending=[False, False, True],
+    ).iloc[0].to_dict()
+
+    return {
+        "seed": seed,
+        "comparison_df": comparison_df,
+        "results_by_label": pack_results,
+        "best_scenario": best_row,
+        "worst_scenario": worst_row,
+    }
 
 
 def _resolve_side_bias(
@@ -701,7 +924,7 @@ def simulate_strategy_market(
         if drawdown_pct >= float(fatal_drawdown_pct):
             fatal_reasons.append(f"DRAWDOWN_GE_{float(fatal_drawdown_pct):.1f}PCT")
         if margin_ratio_est_pct >= float(fatal_margin_ratio_pct):
-            fatal_reasons.append(f"MARGIN_RATIO_GE_{float(fatal_margin_RATIO_pct):.1f}PCT")
+            fatal_reasons.append(f"MARGIN_RATIO_GE_{float(fatal_margin_ratio_pct):.1f}PCT")
         if gross_contracts >= max(1.0, float(fatal_gross_multiplier) * max(1.0, float(starting_capital))):
             fatal_reasons.append("GROSS_CONTRACTS_TOO_LARGE")
         if strategy_state.startswith("HEDGED_RECOVERY_ADD") and imbalance_ratio >= float(extreme_imbalance_ratio) * 2.0:
