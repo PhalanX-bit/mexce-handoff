@@ -502,8 +502,7 @@ def evaluate_strategy_state(
         elif long_contracts > 0 and short_contracts <= 0:
             strategy_state = "ONE_SIDED_LONG"
 
-            one_sided_long_trim_ready = long_ready or not eligible_long_lots_df.empty
-            if close_class in ("LOT_TRIM", "LEG_TRIM", "HARVEST", "DE_RISK") and one_sided_long_trim_ready:
+            if close_class in ("LOT_TRIM", "LEG_TRIM", "HARVEST", "DE_RISK") and not eligible_long_lots_df.empty:
                 decision = build_trim_decision(
                     winner_side="LONG",
                     long_contracts=long_contracts,
@@ -524,6 +523,26 @@ def evaluate_strategy_state(
                 if decision:
                     strategy_state = f"ONE_SIDED_LONG_{close_class}"
                     action_reason = f"{close_class}_TRIM_LONG"
+                else:
+                    strategy_state = f"ONE_SIDED_LONG_{close_class}"
+                    no_action_reason = f"{close_class}_TRIM_SIZE_BELOW_MIN"
+
+            elif close_class in ("LOT_TRIM", "LEG_TRIM", "HARVEST", "DE_RISK") and long_ready:
+                decision = build_trim_decision(
+                    winner_side="LONG",
+                    long_contracts=long_contracts,
+                    short_contracts=short_contracts,
+                    long_target_price=long_target_price,
+                    short_target_price=short_target_price,
+                    trim_winner_pct=float(regime_params["trim_winner_pct"]),
+                    limit_offset_pct=float(limit_offset_pct),
+                    safe_mode_one_contract=bool(safe_mode_one_contract),
+                    contract_step=float(contract_step),
+                    reason_suffix=f"{close_class.lower()} | one-sided leg-target",
+                )
+                if decision:
+                    strategy_state = f"ONE_SIDED_LONG_{close_class}"
+                    action_reason = f"{close_class}_TRIM_LONG_LEG_TARGET"
                 else:
                     strategy_state = f"ONE_SIDED_LONG_{close_class}"
                     no_action_reason = f"{close_class}_TRIM_SIZE_BELOW_MIN"
@@ -556,8 +575,7 @@ def evaluate_strategy_state(
         elif short_contracts > 0 and long_contracts <= 0:
             strategy_state = "ONE_SIDED_SHORT"
 
-            one_sided_short_trim_ready = short_ready or not eligible_short_lots_df.empty
-            if close_class in ("LOT_TRIM", "LEG_TRIM", "HARVEST", "DE_RISK") and one_sided_short_trim_ready:
+            if close_class in ("LOT_TRIM", "LEG_TRIM", "HARVEST", "DE_RISK") and not eligible_short_lots_df.empty:
                 decision = build_trim_decision(
                     winner_side="SHORT",
                     long_contracts=long_contracts,
@@ -578,6 +596,26 @@ def evaluate_strategy_state(
                 if decision:
                     strategy_state = f"ONE_SIDED_SHORT_{close_class}"
                     action_reason = f"{close_class}_TRIM_SHORT"
+                else:
+                    strategy_state = f"ONE_SIDED_SHORT_{close_class}"
+                    no_action_reason = f"{close_class}_TRIM_SIZE_BELOW_MIN"
+
+            elif close_class in ("LOT_TRIM", "LEG_TRIM", "HARVEST", "DE_RISK") and short_ready:
+                decision = build_trim_decision(
+                    winner_side="SHORT",
+                    long_contracts=long_contracts,
+                    short_contracts=short_contracts,
+                    long_target_price=long_target_price,
+                    short_target_price=short_target_price,
+                    trim_winner_pct=float(regime_params["trim_winner_pct"]),
+                    limit_offset_pct=float(limit_offset_pct),
+                    safe_mode_one_contract=bool(safe_mode_one_contract),
+                    contract_step=float(contract_step),
+                    reason_suffix=f"{close_class.lower()} | one-sided leg-target",
+                )
+                if decision:
+                    strategy_state = f"ONE_SIDED_SHORT_{close_class}"
+                    action_reason = f"{close_class}_TRIM_SHORT_LEG_TARGET"
                 else:
                     strategy_state = f"ONE_SIDED_SHORT_{close_class}"
                     no_action_reason = f"{close_class}_TRIM_SIZE_BELOW_MIN"
