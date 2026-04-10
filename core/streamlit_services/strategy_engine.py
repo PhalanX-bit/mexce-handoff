@@ -280,6 +280,24 @@ def _compute_side_balance(long_contracts: float, short_contracts: float) -> tupl
     return "", ""
 
 
+def _distance_to_target(current_last_price, target_price, *, direction: str) -> tuple[float | None, float | None]:
+    try:
+        current = float(current_last_price)
+        target = float(target_price)
+    except Exception:
+        return None, None
+
+    if current <= 0 or target <= 0:
+        return None, None
+
+    distance_abs = current - target
+    if str(direction or "").upper() == "SHORT":
+        distance_abs = target - current
+
+    distance_pct = (distance_abs / target) * 100.0
+    return distance_abs, distance_pct
+
+
 def evaluate_strategy_state(
     *,
     con,
@@ -380,6 +398,17 @@ def evaluate_strategy_state(
         current_last_price is not None
         and short_target_price is not None
         and current_last_price <= short_target_price
+    )
+
+    long_target_distance_abs, long_target_distance_pct = _distance_to_target(
+        current_last_price,
+        long_target_price,
+        direction="LONG",
+    )
+    short_target_distance_abs, short_target_distance_pct = _distance_to_target(
+        current_last_price,
+        short_target_price,
+        direction="SHORT",
     )
 
     imbalance_ratio = compute_imbalance_ratio(long_contracts, short_contracts)
@@ -744,6 +773,12 @@ def evaluate_strategy_state(
             "target_move_pct": target_move_pct,
             "long_target_price": long_target_price,
             "short_target_price": short_target_price,
+            "long_target_distance_abs": long_target_distance_abs,
+            "long_target_distance_pct": long_target_distance_pct,
+            "short_target_distance_abs": short_target_distance_abs,
+            "short_target_distance_pct": short_target_distance_pct,
+            "long_ready": bool(long_ready),
+            "short_ready": bool(short_ready),
             "safe_mode_one_contract": bool(safe_mode_one_contract),
         },
         "imbalance_block": {

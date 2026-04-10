@@ -9,12 +9,12 @@ import streamlit as st
 def fmt_num(value: Any, digits: int = 4) -> str:
     try:
         if value is None:
-            return "—"
+            return "-"
         if isinstance(value, float) and math.isinf(value):
-            return "∞"
+            return "inf"
         return f"{float(value):,.{digits}f}"
     except Exception:
-        return "—"
+        return "-"
 
 
 def fmt_price(value: Any) -> str:
@@ -28,16 +28,34 @@ def fmt_contracts(value: Any) -> str:
 def fmt_pct(value: Any) -> str:
     try:
         if value is None:
-            return "—"
+            return "-"
         if isinstance(value, float) and math.isinf(value):
-            return "∞"
+            return "inf"
         return f"{float(value):.3f}%"
     except Exception:
-        return "—"
+        return "-"
+
+
+def fmt_signed_num(value: Any, digits: int = 6) -> str:
+    try:
+        if value is None:
+            return "-"
+        return f"{float(value):+,.{digits}f}"
+    except Exception:
+        return "-"
+
+
+def fmt_signed_pct(value: Any) -> str:
+    try:
+        if value is None:
+            return "-"
+        return f"{float(value):+.3f}%"
+    except Exception:
+        return "-"
 
 
 def _resolve_reason(action_reason: str, no_action_reason: str) -> str:
-    return action_reason or no_action_reason or "—"
+    return action_reason or no_action_reason or "-"
 
 
 def render_state_banner(strategy_state: str, action_reason: str, no_action_reason: str) -> None:
@@ -59,12 +77,12 @@ def render_state_banner(strategy_state: str, action_reason: str, no_action_reaso
 
 def render_top_summary(result: dict) -> None:
     c1, c2, c3, c4, c5 = st.columns(5)
-    c1.metric("Strategy state", str(result.get("strategy_state") or "—"))
-    c2.metric("Regime", str((result.get("regime_params") or {}).get("regime") or "—"))
+    c1.metric("Strategy state", str(result.get("strategy_state") or "-"))
+    c2.metric("Regime", str((result.get("regime_params") or {}).get("regime") or "-"))
     c3.metric("Last price", fmt_price(result.get("current_last_price")))
     c4.metric(
         "Imbalance ratio",
-        "∞" if result.get("imbalance_ratio") == float("inf") else fmt_num(result.get("imbalance_ratio"), 3),
+        "inf" if result.get("imbalance_ratio") == float("inf") else fmt_num(result.get("imbalance_ratio"), 3),
     )
     c5.metric("Active strategy capital", fmt_num(result.get("active_strategy_capital"), 4))
 
@@ -105,6 +123,17 @@ def render_targets_summary(result: dict) -> None:
     )
     c3.metric("Long target", fmt_price(derived_targets.get("long_target_price")))
     c4.metric("Short target", fmt_price(derived_targets.get("short_target_price")))
+
+    d1, d2, d3, d4 = st.columns(4)
+    d1.metric("Long dist", fmt_signed_num(derived_targets.get("long_target_distance_abs")))
+    d2.metric("Long dist %", fmt_signed_pct(derived_targets.get("long_target_distance_pct")))
+    d3.metric("Short dist", fmt_signed_num(derived_targets.get("short_target_distance_abs")))
+    d4.metric("Short dist %", fmt_signed_pct(derived_targets.get("short_target_distance_pct")))
+
+    st.caption(
+        f"Ready flags: LONG={'YES' if derived_targets.get('long_ready') else 'NO'} | "
+        f"SHORT={'YES' if derived_targets.get('short_ready') else 'NO'}"
+    )
 
 
 def render_sizing_summary(result: dict) -> None:
@@ -152,7 +181,7 @@ def render_decision_box(result: dict) -> None:
     if not decision:
         st.info(
             f"No action. "
-            f"open_class={open_class or '—'} | close_class={close_class or '—'} | "
+            f"open_class={open_class or '-'} | close_class={close_class or '-'} | "
             f"reason={_resolve_reason(action_reason, no_action_reason)}"
         )
         return
@@ -163,4 +192,4 @@ def render_decision_box(result: dict) -> None:
     if note:
         st.caption(note)
 
-    st.caption(f"open_class={open_class or '—'} | close_class={close_class or '—'}")
+    st.caption(f"open_class={open_class or '-'} | close_class={close_class or '-'}")
