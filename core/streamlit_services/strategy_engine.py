@@ -195,6 +195,39 @@ def _get_open_lots_for_aliases(con, aliases: list[str]) -> list[dict]:
     return out
 
 
+def _filter_eligible_lots_by_side(eligible_lots_df: pd.DataFrame, side: str) -> pd.DataFrame:
+    if eligible_lots_df is None or eligible_lots_df.empty:
+        return pd.DataFrame()
+
+    side_norm = _normalize_side(side)
+    return eligible_lots_df[
+        eligible_lots_df["side"].fillna("").astype(str).str.upper() == side_norm
+    ].copy()
+
+
+def _build_close_reason_suffix(
+    *,
+    close_class: str,
+    eligible_lots_df: pd.DataFrame,
+    winner_side: str,
+    one_sided: bool,
+) -> str:
+    eligible_for_side = _filter_eligible_lots_by_side(eligible_lots_df, winner_side)
+    if eligible_for_side.empty:
+        return f"{str(close_class or '').lower()} | {'one-sided ' if one_sided else ''}leg-target"
+
+    eligible_qty = float(eligible_for_side["qty_remaining"].sum()) if "qty_remaining" in eligible_for_side.columns else 0.0
+    lot_ids = []
+    if "id" in eligible_for_side.columns:
+        lot_ids = [str(int(x)) for x in eligible_for_side["id"].tolist()[:5] if x is not None]
+    lot_ids_text = ",".join(lot_ids) if lot_ids else "n/a"
+    return (
+        f"{str(close_class or '').lower()} | "
+        f"{'one-sided ' if one_sided else ''}lot-eligible | "
+        f"eligible_qty={eligible_qty:.4f} | eligible_lot_ids={lot_ids_text}"
+    )
+
+
 def _has_guard_for_aliases(
     con,
     aliases: list[str],
@@ -295,6 +328,10 @@ def evaluate_strategy_state(
 
     eligible_open_lots_count = int(len(eligible_lots_df)) if not eligible_lots_df.empty else 0
     eligible_open_qty = float(eligible_lots_df["qty_remaining"].sum()) if not eligible_lots_df.empty else 0.0
+    eligible_long_lots_df = _filter_eligible_lots_by_side(eligible_lots_df, "LONG")
+    eligible_short_lots_df = _filter_eligible_lots_by_side(eligible_lots_df, "SHORT")
+    eligible_long_lots_count = int(len(eligible_long_lots_df)) if not eligible_long_lots_df.empty else 0
+    eligible_short_lots_count = int(len(eligible_short_lots_df)) if not eligible_short_lots_df.empty else 0
 
     total_equity = float((acc or {}).get("equity") or 0.0)
     active_strategy_capital = max(0.0, total_equity - float(secured_capital))
@@ -465,7 +502,33 @@ def evaluate_strategy_state(
         elif long_contracts > 0 and short_contracts <= 0:
             strategy_state = "ONE_SIDED_LONG"
 
-            if open_class == "HEDGE" and float(sizing["final_rebalance_contracts"]) >= 1:
+            one_sided_long_trim_ready = long_ready or not eligible_long_lots_df.empty
+            if close_class in ("LOT_TRIM", "LEG_TRIM", "HARVEST", "DE_RISK") and one_sided_long_trim_ready:
+                decision = build_trim_decision(
+                    winner_side="LONG",
+                    long_contracts=long_contracts,
+                    short_contracts=short_contracts,
+                    long_target_price=long_target_price,
+                    short_target_price=short_target_price,
+                    trim_winner_pct=float(regime_params["trim_winner_pct"]),
+                    limit_offset_pct=float(limit_offset_pct),
+                    safe_mode_one_contract=bool(safe_mode_one_contract),
+                    contract_step=float(contract_step),
+                    reason_suffix=_build_close_reason_suffix(
+                        close_class=close_class,
+                        eligible_lots_df=eligible_lots_df,
+                        winner_side="LONG",
+                        one_sided=True,
+                    ),
+                )
+                if decision:
+                    strategy_state = f"ONE_SIDED_LONG_{close_class}"
+                    action_reason = f"{close_class}_TRIM_LONG"
+                else:
+                    strategy_state = f"ONE_SIDED_LONG_{close_class}"
+                    no_action_reason = f"{close_class}_TRIM_SIZE_BELOW_MIN"
+
+            elif open_class == "HEDGE" and float(sizing["final_rebalance_contracts"]) >= 1:
                 if gross_cap_blocked:
                     strategy_state = "BLOCKED"
                     no_action_reason = f"BLOCKED_BY_GROSS_CAP ({gross_contracts:.4f} >= {gross_cap_value:.4f})"
@@ -493,7 +556,33 @@ def evaluate_strategy_state(
         elif short_contracts > 0 and long_contracts <= 0:
             strategy_state = "ONE_SIDED_SHORT"
 
-            if open_class == "HEDGE" and float(sizing["final_rebalance_contracts"]) >= 1:
+            one_sided_short_trim_ready = short_ready or not eligible_short_lots_df.empty
+            if close_class in ("LOT_TRIM", "LEG_TRIM", "HARVEST", "DE_RISK") and one_sided_short_trim_ready:
+                decision = build_trim_decision(
+                    winner_side="SHORT",
+                    long_contracts=long_contracts,
+                    short_contracts=short_contracts,
+                    long_target_price=long_target_price,
+                    short_target_price=short_target_price,
+                    trim_winner_pct=float(regime_params["trim_winner_pct"]),
+                    limit_offset_pct=float(limit_offset_pct),
+                    safe_mode_one_contract=bool(safe_mode_one_contract),
+                    contract_step=float(contract_step),
+                    reason_suffix=_build_close_reason_suffix(
+                        close_class=close_class,
+                        eligible_lots_df=eligible_lots_df,
+                        winner_side="SHORT",
+                        one_sided=True,
+                    ),
+                )
+                if decision:
+                    strategy_state = f"ONE_SIDED_SHORT_{close_class}"
+                    action_reason = f"{close_class}_TRIM_SHORT"
+                else:
+                    strategy_state = f"ONE_SIDED_SHORT_{close_class}"
+                    no_action_reason = f"{close_class}_TRIM_SIZE_BELOW_MIN"
+
+            elif open_class == "HEDGE" and float(sizing["final_rebalance_contracts"]) >= 1:
                 if gross_cap_blocked:
                     strategy_state = "BLOCKED"
                     no_action_reason = f"BLOCKED_BY_GROSS_CAP ({gross_contracts:.4f} >= {gross_cap_value:.4f})"
@@ -532,7 +621,12 @@ def evaluate_strategy_state(
                 )
 
                 reason_suffix = (
-                    f"{close_class.lower()} | lot-eligible"
+                    _build_close_reason_suffix(
+                        close_class=close_class,
+                        eligible_lots_df=eligible_lots_df,
+                        winner_side=winner_side,
+                        one_sided=False,
+                    )
                     if lot_trim_ready
                     else f"{close_class.lower()} | leg-target"
                 )
@@ -632,6 +726,8 @@ def evaluate_strategy_state(
             "open_lots_count": int(len(df_open_lots)) if not df_open_lots.empty else 0,
             "eligible_open_lots_count": eligible_open_lots_count,
             "eligible_open_qty": eligible_open_qty,
+            "eligible_long_lots_count": eligible_long_lots_count,
+            "eligible_short_lots_count": eligible_short_lots_count,
         },
         "guards": guards,
         "decision": decision,

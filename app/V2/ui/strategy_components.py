@@ -132,10 +132,12 @@ def render_lot_summary(result: dict) -> None:
     lot_debug = result.get("lot_debug") or {}
 
     st.write("### Lots")
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Open lots", int(lot_debug.get("open_lots_count") or 0))
     c2.metric("Eligible lots", int(lot_debug.get("eligible_open_lots_count") or 0))
     c3.metric("Eligible qty", fmt_contracts(lot_debug.get("eligible_open_qty")))
+    c4.metric("Eligible LONG", int(lot_debug.get("eligible_long_lots_count") or 0))
+    c5.metric("Eligible SHORT", int(lot_debug.get("eligible_short_lots_count") or 0))
 
 
 def render_decision_box(result: dict) -> None:
