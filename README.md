@@ -82,3 +82,9 @@ run_v2_app.bat
 
 The first milestone on this branch is to make V2 the clear active path and
 reduce confusion between the V2 modules and legacy files.
+
+## Current checkpoint
+
+The current stabilization checkpoint is documented in:
+
+- `V2_CHECKPOINT.md`
