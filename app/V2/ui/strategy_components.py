@@ -58,6 +58,26 @@ def _resolve_reason(action_reason: str, no_action_reason: str) -> str:
     return action_reason or no_action_reason or "-"
 
 
+def _resolve_signal_source(decision, result: dict) -> str:
+    if not decision:
+        return "-"
+
+    kind = str(decision[0] or "").upper()
+    if kind != "CLOSE_LIMIT":
+        return "OPEN_LIMIT"
+
+    note = str(decision[4] or "").lower() if len(decision) > 4 else ""
+    if "lot-eligible" in note:
+        return "eligible lots"
+    if "leg-target" in note:
+        return "leg target"
+
+    lot_debug = result.get("lot_debug") or {}
+    if int(lot_debug.get("eligible_open_lots_count") or 0) > 0:
+        return "eligible lots"
+    return "close signal"
+
+
 def render_state_banner(strategy_state: str, action_reason: str, no_action_reason: str) -> None:
     state = str(strategy_state or "UNDEFINED").upper()
     reason = _resolve_reason(action_reason, no_action_reason)
@@ -187,7 +207,9 @@ def render_decision_box(result: dict) -> None:
         return
 
     kind, side, qty, price, note = decision
+    signal_source = _resolve_signal_source(decision, result)
     st.success(f"{kind} | side={side} | qty={fmt_contracts(qty)} | price={fmt_price(price)}")
+    st.caption(f"Signal source: {signal_source}")
 
     if note:
         st.caption(note)
