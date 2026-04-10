@@ -225,6 +225,7 @@ def _build_reconcile_preview_df(result):
                 "api_order_id": item.get("api_order_id"),
                 "lifecycle_state": item.get("lifecycle_state"),
                 "lifecycle_reason": item.get("lifecycle_reason"),
+                "manual_backfill_hint": item.get("manual_backfill_hint"),
                 "deal_qty": item.get("deal_qty"),
                 "resolved_avg_price": item.get("resolved_avg_price"),
                 "queue_updated": item.get("queue_updated"),

@@ -165,7 +165,8 @@ def get_open_lots_for_symbol(con, symbol: str):
 
 def list_done_actions_for_lot_backfill(con, symbol: str = "ALL", limit: int = 100):
     sql = """
-        SELECT id, created_at, symbol, panel_mode, side, qty, limit_price, leverage, api_order_id, status, note
+        SELECT id, created_at, symbol, panel_mode, side, qty, limit_price, leverage, api_order_id, status, note,
+               reconcile_state, reconcile_reason
         FROM action_queue
         WHERE status = 'DONE'
     """
@@ -185,7 +186,17 @@ def list_done_actions_for_lot_backfill(con, symbol: str = "ALL", limit: int = 10
     params.append(int(limit))
 
     rows = con.execute(sql, tuple(params)).fetchall()
-    return [dict(r) for r in rows]
+    out = []
+    for row in rows:
+        item = dict(row)
+        reconcile_state = str(item.get("reconcile_state") or "").strip().upper()
+        item["manual_backfill_candidate"] = reconcile_state in {
+            "OPEN_THEN_NOT_FOUND",
+            "FILL_SIGNAL_THEN_NOT_FOUND",
+            "NOT_FOUND",
+        }
+        out.append(item)
+    return out
 
 
 def summarize_open_lots_by_symbol(con, limit: int = 100):

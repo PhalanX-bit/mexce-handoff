@@ -80,6 +80,11 @@ def render_lots_tab(con) -> None:
     )
     if selected_backfill_row:
         st.dataframe([selected_backfill_row], width="stretch", hide_index=True)
+        if bool(selected_backfill_row.get("manual_backfill_candidate")):
+            st.caption(
+                f"Backfill candidate: reconcile_state={selected_backfill_row.get('reconcile_state') or 'None'} | "
+                f"reason={selected_backfill_row.get('reconcile_reason') or 'None'}"
+            )
         if str(selected_backfill_row.get("panel_mode") or "").upper() == "CLOSE":
             try:
                 preview = preview_close_backfill_from_action_queue(

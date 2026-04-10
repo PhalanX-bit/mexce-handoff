@@ -662,6 +662,34 @@ def build_reconcile_update_payload(result: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def apply_reconcile_transition_context(
+    action_row: Dict[str, Any],
+    result: Dict[str, Any],
+) -> Dict[str, Any]:
+    previous_state = str(action_row.get("reconcile_state") or "").strip().upper()
+    current_state = str(result.get("lifecycle_state") or "").strip().upper()
+
+    adjusted = dict(result)
+    adjusted["previous_reconcile_state"] = previous_state or None
+
+    if current_state == "NOT_FOUND" and previous_state == "OPEN":
+        adjusted["lifecycle_state"] = "OPEN_THEN_NOT_FOUND"
+        adjusted["lifecycle_reason"] = "previously_seen_open_now_not_visible"
+        adjusted["manual_backfill_hint"] = "likely_fill_or_external_close_check_lot_backfill"
+    elif current_state == "NOT_FOUND" and previous_state in {
+        "PARTIALLY_FILLED_OPEN",
+        "FILLED_BY_DEALS_ONLY",
+        "FILLED_CONFIRMED",
+    }:
+        adjusted["lifecycle_state"] = "FILL_SIGNAL_THEN_NOT_FOUND"
+        adjusted["lifecycle_reason"] = "previous_fill_signal_now_not_visible"
+        adjusted["manual_backfill_hint"] = "strong_manual_backfill_candidate"
+    else:
+        adjusted["manual_backfill_hint"] = None
+
+    return adjusted
+
+
 def _resolve_fill_price(result: Dict[str, Any], action_row: Dict[str, Any]) -> Optional[float]:
     for value in (
         result.get("deal_avg_price"),
@@ -777,6 +805,8 @@ def reconcile_action(
         return result
 
     action_row = get_action_by_id(action_id)
+    if action_row:
+        result = apply_reconcile_transition_context(action_row, result)
     fill_registry_result: Dict[str, Any] = {"applied": False, "reason": "action_not_loaded"}
     if action_row:
         try:
