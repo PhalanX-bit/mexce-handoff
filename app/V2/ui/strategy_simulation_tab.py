@@ -86,6 +86,11 @@ def _render_live_seed(seed: dict) -> None:
     e3.metric("Eligible qty", f"{float(seed.get('eligible_lots_qty') or 0.0):.2f}")
     e4.metric("Ticker ts", str(seed.get("ticker_ts") or "-"))
 
+    f1, f2, f3 = st.columns(3)
+    f1.metric("Live equity", f"{float(seed.get('equity') or 0.0):.4f}")
+    f2.metric("Live free margin", f"{float(seed.get('free_margin') or 0.0):.4f}")
+    f3.metric("Account ts", str(seed.get("account_ts") or "-"))
+
 
 def _render_scenario_pack(pack: dict) -> None:
     comparison_df = pack.get("comparison_df")
@@ -96,6 +101,11 @@ def _render_scenario_pack(pack: dict) -> None:
     if comparison_df is None or comparison_df.empty:
         st.info("No scenario comparison available.")
         return
+
+    st.caption(
+        f"Effective starting capital: {float(pack.get('effective_starting_capital') or 0.0):.4f} | "
+        f"contract value multiplier: {float(pack.get('effective_contract_value_multiplier') or 0.0):.6f}"
+    )
 
     c1, c2 = st.columns(2)
     with c1:
@@ -164,6 +174,7 @@ def render_strategy_simulation_tab(con) -> None:
     secured_capital = e2.number_input("Secured capital", min_value=0.0, value=0.0, step=10.0, key="v2_sim_secured_capital")
     leverage = e3.number_input("Leverage", min_value=1.0, value=300.0, step=1.0, key="v2_sim_leverage")
     contract_step = e4.number_input("Contract step", min_value=1.0, value=1.0, step=1.0, key="v2_sim_contract_step")
+    use_live_equity = st.checkbox("Use live equity as starting capital (Recommended)", value=True, key="v2_sim_use_live_equity")
 
     f1, f2, f3, f4 = st.columns(4)
     hedge_loss_usdt = f1.number_input("Hedge trigger (uPnL <=)", value=-8.0, step=1.0, key="v2_sim_hedge_loss_usdt")
@@ -363,6 +374,7 @@ def render_strategy_simulation_tab(con) -> None:
                 warning_actions_count=int(warning_actions_count),
                 warning_imbalance_ratio=float(warning_imbalance_ratio),
                 gross_cap_contracts=float(gross_cap_contracts),
+                use_live_equity=bool(use_live_equity),
             )
             _render_scenario_pack(pack)
             with st.expander("Scenario pack seed JSON", expanded=False):

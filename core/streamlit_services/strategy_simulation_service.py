@@ -8,6 +8,7 @@ import pandas as pd
 from core.close_classifier import classify_close_action
 from core.open_classifier import classify_open_action
 from core.streamlit_services.dashboard_service import (
+    get_latest_account_snapshot,
     get_latest_positions_for_symbol,
     get_latest_ticker_for_symbol,
 )
@@ -41,14 +42,35 @@ def _normalize_side(side: str) -> str:
     return value
 
 
-def _compute_leg_upnl(side: str, qty: float, entry_price: float, last_price: float) -> float:
+def _default_contract_value_multiplier(price: float) -> float:
+    try:
+        price_f = float(price)
+    except Exception:
+        return 1.0
+
+    if price_f >= 10000:
+        return 0.001
+    if price_f >= 1000:
+        return 0.01
+    if price_f >= 100:
+        return 0.1
+    return 1.0
+
+
+def _compute_leg_upnl(
+    side: str,
+    qty: float,
+    entry_price: float,
+    last_price: float,
+    contract_value_multiplier: float = 1.0,
+) -> float:
     if qty <= 0 or entry_price <= 0 or last_price <= 0:
         return 0.0
 
     side = _normalize_side(side)
     if side == "LONG":
-        return (last_price - entry_price) * qty
-    return (entry_price - last_price) * qty
+        return (last_price - entry_price) * qty * float(contract_value_multiplier)
+    return (entry_price - last_price) * qty * float(contract_value_multiplier)
 
 
 def _weighted_entry(old_qty: float, old_entry: float, add_qty: float, add_price: float) -> float:
@@ -126,6 +148,7 @@ def build_live_market_seed(
 ) -> dict[str, Any]:
     ticker = get_latest_ticker_for_symbol(con, symbol)
     positions = get_latest_positions_for_symbol(con, symbol)
+    account = get_latest_account_snapshot(con)
 
     current_price = None
     ticker_ts = None
@@ -158,6 +181,10 @@ def build_live_market_seed(
         "current_price": float(current_price) if current_price is not None else None,
         "ticker_ts": ticker_ts,
         "positions_ts": positions_ts,
+        "account_ts": (account or {}).get("created_at"),
+        "equity": float((account or {}).get("equity") or 0.0),
+        "free_margin": float((account or {}).get("free_margin") or 0.0),
+        "margin_ratio": (account or {}).get("margin_ratio"),
         "long_qty": float(long_qty),
         "short_qty": float(short_qty),
         "long_entry": float(long_entry),
@@ -221,10 +248,13 @@ def simulate_market_scenario_pack(
     warning_actions_count: int = 50,
     warning_imbalance_ratio: float = 8.0,
     gross_cap_contracts: float = 0.0,
+    use_live_equity: bool = True,
+    contract_value_multiplier: float | None = None,
 ) -> dict[str, Any]:
     seed = build_live_market_seed(con, symbol=symbol)
     if seed.get("current_price") is None or float(seed["current_price"]) <= 0:
         raise ValueError(f"No current ticker snapshot for {symbol}")
+    effective_starting_capital = float(seed.get("equity") or 0.0) if bool(use_live_equity) and float(seed.get("equity") or 0.0) > 0 else float(starting_capital)
 
     scenarios = [
         ("UPTREND", "trend_up"),
@@ -242,7 +272,7 @@ def simulate_market_scenario_pack(
             start_price=float(seed["current_price"]),
             steps=int(steps),
             scenario=scenario_name,
-            starting_capital=float(starting_capital),
+            starting_capital=float(effective_starting_capital),
             secured_capital=float(secured_capital),
             leverage=float(leverage),
             hedge_loss_usdt=float(hedge_loss_usdt),
@@ -271,10 +301,11 @@ def simulate_market_scenario_pack(
             warning_actions_count=int(warning_actions_count),
             warning_imbalance_ratio=float(warning_imbalance_ratio),
             gross_cap_contracts=float(gross_cap_contracts),
+            contract_value_multiplier=contract_value_multiplier,
         )
         summary = dict(result["summary"])
-        projected_pnl = float(summary.get("final_equity") or 0.0) - float(starting_capital)
-        projected_return_pct = (projected_pnl / float(starting_capital) * 100.0) if float(starting_capital) > 0 else 0.0
+        projected_pnl = float(summary.get("final_equity") or 0.0) - float(effective_starting_capital)
+        projected_return_pct = (projected_pnl / float(effective_starting_capital) * 100.0) if float(effective_starting_capital) > 0 else 0.0
         summary["scenario_label"] = scenario_label
         summary["projected_pnl"] = projected_pnl
         summary["projected_return_pct"] = projected_return_pct
@@ -309,6 +340,12 @@ def simulate_market_scenario_pack(
 
     return {
         "seed": seed,
+        "effective_starting_capital": float(effective_starting_capital),
+        "effective_contract_value_multiplier": (
+            float(contract_value_multiplier)
+            if contract_value_multiplier is not None
+            else float(_default_contract_value_multiplier(float(seed["current_price"])))
+        ),
         "comparison_df": comparison_df,
         "results_by_label": pack_results,
         "best_scenario": best_row,
@@ -536,6 +573,7 @@ def simulate_strategy_market(
     warning_actions_count: int = 50,
     warning_imbalance_ratio: float = 8.0,
     gross_cap_contracts: float = 0.0,
+    contract_value_multiplier: float | None = None,
 ) -> dict[str, Any]:
     symbol = str(symbol or "").strip().upper()
     initial_side = _normalize_side(initial_side)
@@ -548,6 +586,11 @@ def simulate_strategy_market(
         oscillation_pct=float(oscillation_pct),
         shock_step=shock_step,
         shock_pct=float(shock_pct),
+    )
+    contract_multiplier = (
+        float(contract_value_multiplier)
+        if contract_value_multiplier is not None
+        else float(_default_contract_value_multiplier(float(start_price)))
     )
 
     regime_params = get_strategy_regime_params(float(starting_capital), float(secured_capital))
@@ -565,10 +608,10 @@ def simulate_strategy_market(
         target_roi_pct=float(target_roi_pct),
     )
 
-    initial_total_upnl = _compute_leg_upnl("LONG", long_qty, long_entry, float(start_price)) + _compute_leg_upnl(
-        "SHORT", short_qty, short_entry, float(start_price)
+    baseline_seed_upnl = _compute_leg_upnl("LONG", long_qty, long_entry, float(start_price), contract_multiplier) + _compute_leg_upnl(
+        "SHORT", short_qty, short_entry, float(start_price), contract_multiplier
     )
-    initial_equity = float(starting_capital) + float(initial_total_upnl)
+    initial_equity = float(starting_capital)
 
     peak_equity = float(initial_equity)
     min_equity = float(initial_equity)
@@ -584,11 +627,12 @@ def simulate_strategy_market(
     gross_cap_block_events = 0
 
     for step_idx, current_last_price in enumerate(price_series, start=1):
-        long_upnl = _compute_leg_upnl("LONG", long_qty, long_entry, current_last_price)
-        short_upnl = _compute_leg_upnl("SHORT", short_qty, short_entry, current_last_price)
+        long_upnl = _compute_leg_upnl("LONG", long_qty, long_entry, current_last_price, contract_multiplier)
+        short_upnl = _compute_leg_upnl("SHORT", short_qty, short_entry, current_last_price, contract_multiplier)
         total_upnl = long_upnl + short_upnl
+        incremental_upnl = float(total_upnl) - float(baseline_seed_upnl)
 
-        equity = float(starting_capital) + float(total_upnl)
+        equity = float(starting_capital) + float(incremental_upnl)
         peak_equity = max(peak_equity, equity)
         min_equity = min(min_equity, equity)
 
@@ -912,7 +956,7 @@ def simulate_strategy_market(
 
         gross_contracts = float(long_qty + short_qty)
         net_contracts = float(abs(long_qty - short_qty))
-        margin_used_est = (gross_contracts * current_last_price / float(leverage)) if leverage > 0 else 0.0
+        margin_used_est = (gross_contracts * current_last_price * contract_multiplier / float(leverage)) if leverage > 0 else 0.0
         margin_ratio_est_pct = (margin_used_est / equity * 100.0) if equity > 0 else 999999.0
         drawdown_pct = ((peak_equity - equity) / peak_equity * 100.0) if peak_equity > 0 else 0.0
 
@@ -965,8 +1009,10 @@ def simulate_strategy_market(
             "long_upnl": long_upnl,
             "short_upnl": short_upnl,
             "total_upnl": total_upnl,
+            "incremental_upnl": incremental_upnl,
             "margin_used_est": margin_used_est,
             "margin_ratio_est_pct": margin_ratio_est_pct,
+            "contract_value_multiplier": contract_multiplier,
             "imbalance_ratio": imbalance_ratio,
             "strategy_state": strategy_state,
             "action_reason": action_reason,
@@ -1019,6 +1065,8 @@ def simulate_strategy_market(
             "start_price": float(start_price),
             "final_price": float(price_series[-1]) if price_series else float(start_price),
             "starting_capital": float(starting_capital),
+            "baseline_seed_upnl": float(baseline_seed_upnl),
+            "contract_value_multiplier": float(contract_multiplier),
             "secured_capital": float(secured_capital),
             "leverage": float(leverage),
             "seed_long_qty": float(seed_long_qty),
