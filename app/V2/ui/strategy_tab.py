@@ -7,9 +7,11 @@ import streamlit as st
 
 from app.V2.ui.strategy_components import (
     render_decision_box,
+    render_decision_flow,
     render_guards_summary,
     render_legs_summary,
     render_lot_summary,
+    render_post_action_review,
     render_sizing_summary,
     render_state_banner,
     render_targets_summary,
@@ -377,6 +379,8 @@ def render_strategy_tab(con) -> None:
 
     render_guards_summary(result)
     render_decision_box(result)
+    render_decision_flow(result)
+    render_post_action_review(result)
     _render_eligible_lots(result)
 
     decision = result["decision"]

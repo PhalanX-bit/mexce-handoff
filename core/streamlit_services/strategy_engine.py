@@ -298,6 +298,156 @@ def _distance_to_target(current_last_price, target_price, *, direction: str) -> 
     return distance_abs, distance_pct
 
 
+def _build_decision_steps(
+    *,
+    strategy_state: str,
+    current_last_price,
+    long_contracts: float,
+    short_contracts: float,
+    eligible_open_lots_count: int,
+    eligible_open_qty: float,
+    guards: dict,
+    open_class,
+    close_class,
+    long_ready: bool,
+    short_ready: bool,
+    decision,
+    action_reason: str,
+    no_action_reason: str,
+) -> list[dict[str, Any]]:
+    steps: list[dict[str, Any]] = []
+    steps.append(
+        {
+            "step": 1,
+            "stage": "SNAPSHOT",
+            "summary": f"last_price={float(current_last_price or 0.0):.6f} | LONG={float(long_contracts):.4f} | SHORT={float(short_contracts):.4f}",
+        }
+    )
+    steps.append(
+        {
+            "step": 2,
+            "stage": "TARGETS_AND_LOTS",
+            "summary": (
+                f"long_ready={'YES' if long_ready else 'NO'} | short_ready={'YES' if short_ready else 'NO'} | "
+                f"eligible_lots={int(eligible_open_lots_count)} | eligible_qty={float(eligible_open_qty):.4f}"
+            ),
+        }
+    )
+    steps.append(
+        {
+            "step": 3,
+            "stage": "GUARDS",
+            "summary": (
+                f"active_queue={'YES' if guards.get('active_queue_task') else 'NO'} | "
+                f"legacy_limit={'YES' if guards.get('active_pending_limit') else 'NO'} | "
+                f"legacy_chase={'YES' if guards.get('active_pending_chase') else 'NO'}"
+            ),
+        }
+    )
+    steps.append(
+        {
+            "step": 4,
+            "stage": "SIGNAL",
+            "summary": f"open_class={open_class or '-'} | close_class={close_class or '-'} | state={strategy_state or '-'}",
+        }
+    )
+    steps.append(
+        {
+            "step": 5,
+            "stage": "DECISION",
+            "summary": (
+                f"{decision[0]} | side={decision[1]} | qty={float(decision[2]):.4f} | price={float(decision[3]):.6f}"
+                if decision
+                else f"NO_ACTION | reason={action_reason or no_action_reason or '-'}"
+            ),
+        }
+    )
+    return steps
+
+
+def _build_post_action_review(
+    *,
+    strategy_state: str,
+    long_contracts: float,
+    short_contracts: float,
+    gross_contracts: float,
+    imbalance_ratio: float,
+    eligible_open_lots_count: int,
+    eligible_open_qty: float,
+    gross_cap_enabled: bool,
+    gross_cap_value: float,
+    decision,
+    action_reason: str,
+    no_action_reason: str,
+) -> dict[str, Any]:
+    next_long = float(long_contracts)
+    next_short = float(short_contracts)
+    decision_kind = None
+    decision_side = None
+    decision_qty = 0.0
+    if decision:
+        decision_kind = str(decision[0] or "").upper()
+        decision_side = str(decision[1] or "").upper()
+        decision_qty = float(decision[2] or 0.0)
+
+        if decision_kind == "OPEN_LIMIT":
+            if decision_side == "LONG":
+                next_long += decision_qty
+            elif decision_side == "SHORT":
+                next_short += decision_qty
+        elif decision_kind == "CLOSE_LIMIT":
+            if decision_side == "LONG":
+                next_long = max(0.0, next_long - decision_qty)
+            elif decision_side == "SHORT":
+                next_short = max(0.0, next_short - decision_qty)
+
+    next_gross = float(next_long + next_short)
+    next_net = float(abs(next_long - next_short))
+    next_state = (
+        "HEDGED" if next_long > 0 and next_short > 0
+        else "ONE_SIDED_LONG" if next_long > 0
+        else "ONE_SIDED_SHORT" if next_short > 0
+        else "FLAT"
+    )
+
+    risks: list[str] = []
+    opportunities: list[str] = []
+
+    if gross_cap_enabled and next_gross >= float(gross_cap_value):
+        risks.append("Gross cap remains tight after this step.")
+    if next_state.startswith("ONE_SIDED"):
+        risks.append(f"Post-action state stays {next_state.lower()}, so adverse move risk remains directional.")
+    if float(imbalance_ratio) == float("inf") or float(imbalance_ratio) >= 3.0:
+        risks.append("Current imbalance is elevated and can reduce strategy flexibility.")
+    if not decision:
+        risks.append(f"No action taken: {action_reason or no_action_reason or 'no clear signal'}.")
+
+    if decision_kind == "CLOSE_LIMIT":
+        opportunities.append("This decision aims to realize profit or de-risk current exposure.")
+    if decision_kind == "OPEN_LIMIT":
+        opportunities.append("This decision improves balance or adds hedge coverage.")
+    if eligible_open_lots_count > 0:
+        opportunities.append(f"{int(eligible_open_lots_count)} eligible lots ({float(eligible_open_qty):.4f} qty) can support profit-taking.")
+    if next_state == "HEDGED":
+        opportunities.append("Post-action state remains hedged, which supports smoother range behavior.")
+    if not opportunities:
+        opportunities.append("No immediate profit-taking edge detected yet; wait for target or lot signal.")
+
+    return {
+        "current_state": str(strategy_state or "-"),
+        "decision_kind": decision_kind or "NO_ACTION",
+        "decision_side": decision_side or "-",
+        "decision_qty": float(decision_qty),
+        "next_long_contracts": float(next_long),
+        "next_short_contracts": float(next_short),
+        "next_gross_contracts": float(next_gross),
+        "next_net_contracts": float(next_net),
+        "next_position_state": next_state,
+        "risks": risks,
+        "opportunities": opportunities,
+    }
+
+
 def evaluate_strategy_state(
     *,
     con,
@@ -816,4 +966,34 @@ def evaluate_strategy_state(
         "lot_trim_ready": lot_trim_ready,
         "leg_trim_ready": leg_trim_ready,
         "cooldown_left": cooldown_left,
+        "decision_steps": _build_decision_steps(
+            strategy_state=strategy_state,
+            current_last_price=current_last_price,
+            long_contracts=long_contracts,
+            short_contracts=short_contracts,
+            eligible_open_lots_count=eligible_open_lots_count,
+            eligible_open_qty=eligible_open_qty,
+            guards=guards,
+            open_class=open_class,
+            close_class=close_class,
+            long_ready=bool(long_ready),
+            short_ready=bool(short_ready),
+            decision=decision,
+            action_reason=action_reason,
+            no_action_reason=no_action_reason,
+        ),
+        "post_action_review": _build_post_action_review(
+            strategy_state=strategy_state,
+            long_contracts=long_contracts,
+            short_contracts=short_contracts,
+            gross_contracts=gross_contracts,
+            imbalance_ratio=imbalance_ratio,
+            eligible_open_lots_count=eligible_open_lots_count,
+            eligible_open_qty=eligible_open_qty,
+            gross_cap_enabled=bool(gross_cap_enabled),
+            gross_cap_value=float(gross_cap_value) if gross_cap_enabled else 0.0,
+            decision=decision,
+            action_reason=action_reason,
+            no_action_reason=no_action_reason,
+        ),
     }

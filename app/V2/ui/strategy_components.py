@@ -215,3 +215,50 @@ def render_decision_box(result: dict) -> None:
         st.caption(note)
 
     st.caption(f"open_class={open_class or '-'} | close_class={close_class or '-'}")
+
+
+def render_decision_flow(result: dict) -> None:
+    steps = result.get("decision_steps") or []
+    st.write("### Decision flow")
+    if not steps:
+        st.info("No decision flow available.")
+        return
+
+    st.dataframe(steps, width="stretch", hide_index=True)
+
+
+def render_post_action_review(result: dict) -> None:
+    review = result.get("post_action_review") or {}
+    st.write("### Post-action review")
+    if not review:
+        st.info("No post-action review available.")
+        return
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Decision kind", str(review.get("decision_kind") or "-"))
+    c2.metric("Decision side", str(review.get("decision_side") or "-"))
+    c3.metric("Decision qty", fmt_contracts(review.get("decision_qty")))
+    c4.metric("Next state", str(review.get("next_position_state") or "-"))
+
+    d1, d2, d3, d4 = st.columns(4)
+    d1.metric("Next LONG", fmt_contracts(review.get("next_long_contracts")))
+    d2.metric("Next SHORT", fmt_contracts(review.get("next_short_contracts")))
+    d3.metric("Next gross", fmt_contracts(review.get("next_gross_contracts")))
+    d4.metric("Next net", fmt_contracts(review.get("next_net_contracts")))
+
+    risks = review.get("risks") or []
+    opportunities = review.get("opportunities") or []
+
+    st.write("Risks")
+    if risks:
+        for item in risks:
+            st.warning(str(item))
+    else:
+        st.success("No immediate risk flags.")
+
+    st.write("Opportunities")
+    if opportunities:
+        for item in opportunities:
+            st.info(str(item))
+    else:
+        st.info("No immediate opportunity signals.")
