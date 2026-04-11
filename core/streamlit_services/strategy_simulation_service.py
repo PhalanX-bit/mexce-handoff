@@ -219,6 +219,72 @@ def _classify_projection(summary: dict[str, Any]) -> str:
     return "NEUTRAL"
 
 
+def _build_scenario_pack_verdict(comparison_df: pd.DataFrame) -> dict[str, Any]:
+    if comparison_df is None or comparison_df.empty:
+        return {
+            "bias": "UNKNOWN",
+            "range_resilience": "UNKNOWN",
+            "downside_fragility": "UNKNOWN",
+            "main_risk": "No scenario data.",
+            "main_opportunity": "No scenario data.",
+        }
+
+    by_label = {
+        str(row.get("scenario_label") or "").upper(): dict(row)
+        for row in comparison_df.to_dict("records")
+    }
+    up = by_label.get("UPTREND", {})
+    down = by_label.get("DOWNTREND", {})
+    rng = by_label.get("RANGE", {})
+
+    up_pnl = float(up.get("projected_pnl") or 0.0)
+    down_pnl = float(down.get("projected_pnl") or 0.0)
+    range_pnl = float(rng.get("projected_pnl") or 0.0)
+    down_fatal = int(down.get("fatal_count") or 0)
+    range_abs = abs(range_pnl)
+
+    if up_pnl > 0 and down_pnl < 0:
+        bias = "BULLISH"
+    elif up_pnl < 0 and down_pnl > 0:
+        bias = "BEARISH"
+    else:
+        bias = "NEUTRAL"
+
+    if range_abs <= 0.05 * max(1.0, abs(up_pnl), abs(down_pnl)):
+        range_resilience = "HIGH"
+    elif range_abs <= 0.15 * max(1.0, abs(up_pnl), abs(down_pnl)):
+        range_resilience = "MODERATE"
+    else:
+        range_resilience = "LOW"
+
+    if down_fatal > 0 or down_pnl < 0:
+        downside_fragility = "HIGH" if down_fatal > 0 else "MODERATE"
+    else:
+        downside_fragility = "LOW"
+
+    if down_fatal > 0:
+        main_risk = f"Downtrend can break the structure into fatal stress ({str(down.get('first_fatal_reason') or 'unknown reason')})."
+    elif down_pnl < 0:
+        main_risk = "Downtrend remains the weakest path for the current structure."
+    else:
+        main_risk = "No major downside stress signal from the current scenario pack."
+
+    if up_pnl > 0:
+        main_opportunity = "Upside continuation is the strongest profit path for the current setup."
+    elif range_pnl >= 0:
+        main_opportunity = "Range behavior is the most stable path for the current setup."
+    else:
+        main_opportunity = "No clear positive edge stands out from the current scenario pack."
+
+    return {
+        "bias": bias,
+        "range_resilience": range_resilience,
+        "downside_fragility": downside_fragility,
+        "main_risk": main_risk,
+        "main_opportunity": main_opportunity,
+    }
+
+
 def simulate_market_scenario_pack(
     con,
     *,
@@ -347,6 +413,7 @@ def simulate_market_scenario_pack(
             else float(_default_contract_value_multiplier(float(seed["current_price"])))
         ),
         "comparison_df": comparison_df,
+        "verdict": _build_scenario_pack_verdict(comparison_df),
         "results_by_label": pack_results,
         "best_scenario": best_row,
         "worst_scenario": worst_row,

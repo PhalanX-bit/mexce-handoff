@@ -96,6 +96,7 @@ def _render_scenario_pack(pack: dict) -> None:
     comparison_df = pack.get("comparison_df")
     best = pack.get("best_scenario") or {}
     worst = pack.get("worst_scenario") or {}
+    verdict = pack.get("verdict") or {}
 
     st.write("### Three-scenario forecast")
     if comparison_df is None or comparison_df.empty:
@@ -106,6 +107,14 @@ def _render_scenario_pack(pack: dict) -> None:
         f"Effective starting capital: {float(pack.get('effective_starting_capital') or 0.0):.4f} | "
         f"contract value multiplier: {float(pack.get('effective_contract_value_multiplier') or 0.0):.6f}"
     )
+
+    v1, v2, v3 = st.columns(3)
+    v1.metric("Bias", str(verdict.get("bias") or "-"))
+    v2.metric("Range resilience", str(verdict.get("range_resilience") or "-"))
+    v3.metric("Downside fragility", str(verdict.get("downside_fragility") or "-"))
+
+    st.info(f"Main opportunity: {verdict.get('main_opportunity') or '-'}")
+    st.warning(f"Main risk: {verdict.get('main_risk') or '-'}")
 
     c1, c2 = st.columns(2)
     with c1:
