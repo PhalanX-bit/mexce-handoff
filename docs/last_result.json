@@ -1,0 +1,57 @@
+{
+  "task_id": "2026-04-25-003",
+  "updated_at": "2026-04-25T13:56:57+03:00",
+  "status_kind": "last_result",
+  "status": "completed",
+  "title": "Supervised approval readiness snapshot",
+  "result_type": "dry_operational_inspection",
+  "command": "python scripts/supervised_batch_plan.py --symbols AT/USDT:USDT --symbol-limit 1 --max-actions-per-symbol 10 --no-write --json",
+  "summary": "Current batch snapshot is not approval-ready. One OPEN_LIMIT LONG candidate exists, but it is blocked by profitable-lot and lot-entry-spacing guards. No live exchange action was taken.",
+  "readiness_state": "BLOCKED",
+  "reason": "lot_entry_spacing_block: nearest_lot=6 distance_bps=4.80142191713717 min_bps=5.0",
+  "current_candidate": {
+    "symbol": "AT/USDT:USDT",
+    "candidate_type": "OPEN_LIMIT",
+    "side": "LONG",
+    "qty": 1.0,
+    "intended_price": 0.16323834,
+    "decision_id": "3dbe371213dd8efe",
+    "source": "scripts/supervised_batch_plan.py -> core/supervised_batch_plan.py -> core/supervised_strategy_runner.py -> core/streamlit_services/strategy_engine.py"
+  },
+  "active_guards": {
+    "live_exchange_action_taken": false,
+    "live_confirmation_required": true,
+    "batch_ready_count": 0,
+    "batch_blocked_count": 1,
+    "candidate_safety": "PASS",
+    "profit_guard_enabled": true,
+    "profit_guard_blocked": true,
+    "profitable_lots": 1,
+    "target_lots": 0,
+    "nearest_target_gap_bps": 389.8114131765872,
+    "lot_spacing_ok": false,
+    "nearest_lot_id": 6,
+    "nearest_lot_distance_bps": 4.80142191713717,
+    "min_lot_entry_distance_bps": 5.0,
+    "active_queue_task": false,
+    "active_pending_limit": false,
+    "active_pending_chase": false,
+    "gross_cap_check": "PASS post_gross=403.00 cap=420.00",
+    "price_distance_check": "PASS vs_last=-5.00 bps",
+    "open_lots": 7,
+    "strategy_gross": 402.0
+  },
+  "market": {
+    "symbol": "AT/USDT:USDT",
+    "price": 0.16332,
+    "bid": 0.16195,
+    "ask": 0.16365,
+    "mark": 0.16273,
+    "ticker_created_at": "2026-04-25T10:56:38.360000+00:00"
+  },
+  "next_live_action": "none",
+  "operator_summary": "Do not proceed to live approval now. The candidate is structurally valid but currently blocked by over-clustering/profitable-lot protections.",
+  "unclear_items": [
+    "The market price and readiness state can change after this check."
+  ]
+}
