@@ -1,6 +1,6 @@
 {
   "project": "MEXC Monitor V2",
-  "updated_at": "2026-04-26T00:28:43+03:00",
+  "updated_at": "2026-04-26T00:31:46+03:00",
   "status_kind": "project_status",
   "mode": "supervised_live_development",
   "current_focus": "Token-gated supervised live trading path with 1-contract actions.",
@@ -60,21 +60,21 @@
     "secrets_or_credentials_in_handoff_files": false
   },
   "current_operational_state": {
-    "checked_at": "2026-04-26T00:28:43+03:00",
+    "checked_at": "2026-04-26T00:31:46+03:00",
     "symbol": "AT/USDT:USDT",
     "readiness_state": "BLOCKED",
-    "reason": "profitable_lot_open_block: profitable_lots=4 target_reached=0 nearest_target_gap_bps=337.2768809016159",
-    "price": 0.16415,
+    "reason": "profitable_lot_open_block: profitable_lots=5 target_reached=0 nearest_target_gap_bps=279.66317319925",
+    "price": 0.16507,
     "open_lots": 7,
-    "profitable_lots": 4,
+    "profitable_lots": 5,
     "target_lots": 0,
-    "nearest_target_gap_bps": 337.2768809016159,
+    "nearest_target_gap_bps": 279.66317319925,
     "batch_ready_count": 0,
     "batch_blocked_count": 1,
     "candidate_type": "OPEN_LIMIT",
     "candidate_side": "LONG",
     "candidate_qty": 1.0,
-    "candidate_price": 0.164067925,
+    "candidate_price": 0.164987465,
     "blocking_guards": [
       "PROFITABLE_LOTS_PRESENT"
     ],
