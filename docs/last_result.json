@@ -1,6 +1,6 @@
 {
   "task_id": "2026-04-26-002",
-  "updated_at": "2026-04-26T00:31:46+03:00",
+  "updated_at": "2026-04-26T00:36:14+03:00",
   "status_kind": "last_result",
   "status": "completed",
   "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
@@ -8,14 +8,14 @@
   "command": "python scripts/supervised_batch_plan.py --symbols AT/USDT:USDT --symbol-limit 1 --max-actions-per-symbol 10 --no-write --json",
   "summary": "Current BLOCKED state remains active. Lot-entry spacing has released, but profitable-lot guard still blocks new OPEN_LIMIT. No live exchange action was taken.",
   "readiness_state": "BLOCKED",
-  "reason": "profitable_lot_open_block: profitable_lots=5 target_reached=0 nearest_target_gap_bps=279.66317319925",
+  "reason": "profitable_lot_open_block: profitable_lots=4 target_reached=0 nearest_target_gap_bps=341.68698196002015",
   "current_candidate": {
     "symbol": "AT/USDT:USDT",
     "candidate_type": "OPEN_LIMIT",
     "side": "LONG",
     "qty": 1.0,
-    "intended_price": 0.164987465,
-    "decision_id": "2fe5d1941abe607b",
+    "intended_price": 0.16399796000000003,
+    "decision_id": "de4f514972671812",
     "source": "scripts/supervised_batch_plan.py -> core/supervised_batch_plan.py -> core/supervised_strategy_runner.py -> core/streamlit_services/strategy_engine.py"
   },
   "active_guards": {
@@ -26,12 +26,12 @@
     "candidate_safety": "PASS",
     "profit_guard_enabled": true,
     "profit_guard_blocked": true,
-    "profitable_lots": 5,
+    "profitable_lots": 4,
     "target_lots": 0,
-    "nearest_target_gap_bps": 279.66317319925,
+    "nearest_target_gap_bps": 341.68698196002015,
     "lot_spacing_ok": true,
-    "nearest_lot_id": 1,
-    "nearest_lot_distance_bps": 18.062116704110558,
+    "nearest_lot_id": 7,
+    "nearest_lot_distance_bps": 13.919521279845334,
     "min_lot_entry_distance_bps": 5.0,
     "active_queue_task": false,
     "active_pending_limit": false,
@@ -43,16 +43,16 @@
   },
   "market": {
     "symbol": "AT/USDT:USDT",
-    "price": 0.16507,
-    "bid": 0.16396,
+    "price": 0.16408,
+    "bid": 0.16387,
     "ask": 0.16535,
-    "mark": 0.16467,
-    "ticker_created_at": "2026-04-25T21:31:34.560000+00:00"
+    "mark": 0.16465,
+    "ticker_created_at": "2026-04-25T21:36:05.440000+00:00"
   },
   "ready_transition_condition": "State can move from BLOCKED to READY only when the OPEN_LIMIT candidate still passes safety checks, profitable-lot guard no longer blocks, and lot-entry spacing is at least 5.0 bps from the nearest existing lot, or a close/trim priority takes over.",
   "waiting_correct_next_action": true,
   "next_live_action": "none",
-  "operator_summary": "Waiting is the correct no-code action. readiness_state did not move from BLOCKED, profitable_lots increased to 5, batch_ready_count is 0, lot spacing is OK, and next_live_action remains none.",
+  "operator_summary": "Waiting is the correct no-code action. readiness_state did not move from BLOCKED, profitable_lots is 4, batch_ready_count is 0, lot spacing is OK, and next_live_action remains none.",
   "unclear_items": [
     "The market price and readiness state can change after this check."
   ]
