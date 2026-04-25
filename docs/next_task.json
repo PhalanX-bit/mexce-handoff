@@ -1,11 +1,11 @@
 {
-  "task_id": "2026-04-25-004",
-  "updated_at": "2026-04-25T14:47:58+03:00",
+  "task_id": "2026-04-25-005",
+  "updated_at": "2026-04-25T23:38:23+03:00",
   "status_kind": "next_task",
   "status": "pending",
-  "title": "Determine BLOCKED state cause for AT/USDT:USDT",
-  "task_type": "read_only_blocking_analysis",
-  "objective": "Determine whether the current BLOCKED state for AT/USDT:USDT is likely temporary market-state blocking or structural blocking from current profitable-lot / lot-spacing conditions.",
+  "title": "Monitor AT/USDT:USDT BLOCKED to READY transition",
+  "task_type": "read_only_monitoring_task",
+  "objective": "Monitor AT/USDT:USDT for transition from BLOCKED to READY by watching profitable-lot guard release or close/trim priority takeover.",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "live_exchange_action_allowed": false,
@@ -16,10 +16,11 @@
   },
   "suggested_command": "python scripts/supervised_batch_plan.py --symbols AT/USDT:USDT --symbol-limit 1 --max-actions-per-symbol 10 --no-write --json",
   "expected_result": {
-    "current_blocking_components": "list concrete blockers currently returned by the dry snapshot",
-    "ready_transition_condition": "what exact condition must change for state to move from BLOCKED to READY",
-    "waiting_correct_next_action": "true/false with short reason",
-    "no_code_conclusion": "A concise no-code conclusion; no live action"
+    "state_changed_from_blocked": "true/false",
+    "profitable_lots_current_count": "integer count from dry snapshot",
+    "batch_ready_count_gt_zero": "true/false",
+    "next_action_remains_none": "true/false",
+    "no_code_operator_conclusion": "short no-code conclusion"
   },
   "write_result_to": "last_result.json",
   "append_summary_to": "task_history.json"
