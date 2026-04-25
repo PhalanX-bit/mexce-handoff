@@ -1,0 +1,41 @@
+{
+  "updated_at": "2026-04-25T13:56:57+03:00",
+  "status_kind": "short_history",
+  "items": [
+    {
+      "task_id": "2026-04-25-003",
+      "title": "Supervised approval readiness snapshot",
+      "status": "completed",
+      "completed_at": "2026-04-25T13:56:57+03:00",
+      "result_summary": "Current OPEN_LIMIT LONG candidate is blocked: profitable_lots=1 and nearest lot spacing is 4.80 bps under the 5.0 bps minimum; no live action."
+    },
+    {
+      "task_id": "2026-04-25-002",
+      "title": "Run read-only supervised condition check",
+      "status": "completed",
+      "completed_at": "2026-04-25T11:20:36+03:00",
+      "result_summary": "READY_OPEN_OR_CLOSE for AT/USDT:USDT; batch ready=1, blocked=0, no live exchange action taken."
+    },
+    {
+      "task_id": "2026-04-25-001",
+      "title": "Create minimal static handoff workflow",
+      "status": "completed",
+      "completed_at": "2026-04-25T11:11:55+03:00",
+      "result_summary": "Four static handoff files refreshed and helper script added."
+    },
+    {
+      "task_id": "previous-live-supervised-work",
+      "title": "Build supervised live path and guards",
+      "status": "completed",
+      "completed_at": "2026-04-25T11:11:55+03:00",
+      "result_summary": "Direct API execution, reconcile, lots, gross cap, lot spacing, profitable-lot block, reprice approval, and token-gated live flow are present in code."
+    },
+    {
+      "task_id": "previous-project-status-review",
+      "title": "Technical project status review",
+      "status": "completed",
+      "completed_at": "2026-04-25T11:11:55+03:00",
+      "result_summary": "Current architecture, Streamlit tabs, live path, strategy engine, MEXC direct API, database state, simulation, and known risks summarized from code."
+    }
+  ]
+}

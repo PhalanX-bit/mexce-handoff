@@ -1,0 +1,25 @@
+{
+  "task_id": "2026-04-25-002",
+  "updated_at": "2026-04-25T11:11:55+03:00",
+  "status_kind": "next_task",
+  "status": "pending",
+  "title": "Run read-only supervised condition check",
+  "task_type": "read_only_operational_check",
+  "objective": "Capture the current supervised readiness state before any live exchange action.",
+  "scope": {
+    "symbol": "AT/USDT:USDT",
+    "live_exchange_action_allowed": false,
+    "code_changes_allowed": false,
+    "ui_changes_allowed": false,
+    "database_schema_changes_allowed": false,
+    "secrets_allowed": false
+  },
+  "suggested_command": "python scripts/supervised_condition_monitor.py --symbols AT/USDT:USDT --max-items 10",
+  "expected_result": {
+    "readiness_state": "WAIT_* or READY_*",
+    "active_guards": "list concrete guards currently blocking or allowing action",
+    "next_live_action": "none unless monitor returns a READY state and operator confirms"
+  },
+  "write_result_to": "last_result.json",
+  "append_summary_to": "task_history.json"
+}
