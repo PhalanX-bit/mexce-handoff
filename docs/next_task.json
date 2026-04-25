@@ -1,11 +1,11 @@
 {
   "task_id": "2026-04-25-005",
-  "updated_at": "2026-04-25T23:41:05+03:00",
+  "updated_at": "2026-04-25T23:43:15+03:00",
   "status_kind": "next_task",
   "status": "pending",
-  "title": "Monitor AT/USDT:USDT BLOCKED to READY transition",
+  "title": "Monitor AT/USDT:USDT profitable-lot guard release",
   "task_type": "read_only_monitoring_task",
-  "objective": "Monitor AT/USDT:USDT for transition from BLOCKED to READY by watching profitable-lot guard release or close/trim priority takeover.",
+  "objective": "Monitor AT/USDT:USDT for release of profitable-lot guard and transition from BLOCKED to READY.",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "live_exchange_action_allowed": false,
@@ -16,10 +16,10 @@
   },
   "suggested_command": "python scripts/supervised_batch_plan.py --symbols AT/USDT:USDT --symbol-limit 1 --max-actions-per-symbol 10 --no-write --json",
   "expected_result": {
-    "state_changed_from_blocked": "true/false",
+    "readiness_state_changed_from_blocked": "true/false",
     "profitable_lots_current_count": "integer count from dry snapshot",
     "batch_ready_count_gt_zero": "true/false",
-    "next_action_remains_none": "true/false",
+    "next_live_action_remains_none": "true/false",
     "no_code_operator_conclusion": "short no-code conclusion"
   },
   "write_result_to": "last_result.json",
