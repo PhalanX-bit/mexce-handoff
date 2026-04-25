@@ -1,6 +1,6 @@
 {
   "task_id": "2026-04-26-002",
-  "updated_at": "2026-04-26T00:22:45+03:00",
+  "updated_at": "2026-04-26T00:25:44+03:00",
   "status_kind": "last_result",
   "status": "completed",
   "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
@@ -8,14 +8,14 @@
   "command": "python scripts/supervised_batch_plan.py --symbols AT/USDT:USDT --symbol-limit 1 --max-actions-per-symbol 10 --no-write --json",
   "summary": "Current BLOCKED state remains active. Lot-entry spacing has released, but profitable-lot guard still blocks new OPEN_LIMIT. No live exchange action was taken.",
   "readiness_state": "BLOCKED",
-  "reason": "profitable_lot_open_block: profitable_lots=4 target_reached=0 nearest_target_gap_bps=350.5184823716001",
+  "reason": "profitable_lot_open_block: profitable_lots=4 target_reached=0 nearest_target_gap_bps=345.4700646262661",
   "current_candidate": {
     "symbol": "AT/USDT:USDT",
     "candidate_type": "OPEN_LIMIT",
     "side": "LONG",
     "qty": 1.0,
-    "intended_price": 0.16385803000000002,
-    "decision_id": "068cb9affbe7793c",
+    "intended_price": 0.16393799,
+    "decision_id": "0bc61d29cdfd00c6",
     "source": "scripts/supervised_batch_plan.py -> core/supervised_batch_plan.py -> core/supervised_strategy_runner.py -> core/streamlit_services/strategy_engine.py"
   },
   "active_guards": {
@@ -28,10 +28,10 @@
     "profit_guard_blocked": true,
     "profitable_lots": 4,
     "target_lots": 0,
-    "nearest_target_gap_bps": 350.5184823716001,
+    "nearest_target_gap_bps": 345.4700646262661,
     "lot_spacing_ok": true,
     "nearest_lot_id": 7,
-    "nearest_lot_distance_bps": 5.375221347012072,
+    "nearest_lot_distance_bps": 10.257678451487251,
     "min_lot_entry_distance_bps": 5.0,
     "active_queue_task": false,
     "active_pending_limit": false,
@@ -43,11 +43,11 @@
   },
   "market": {
     "symbol": "AT/USDT:USDT",
-    "price": 0.16394,
-    "bid": 0.16388,
+    "price": 0.16402,
+    "bid": 0.16386,
     "ask": 0.16535,
-    "mark": 0.16454,
-    "ticker_created_at": "2026-04-25T21:22:33.644000+00:00"
+    "mark": 0.16457,
+    "ticker_created_at": "2026-04-25T21:25:31.755000+00:00"
   },
   "ready_transition_condition": "State can move from BLOCKED to READY only when the OPEN_LIMIT candidate still passes safety checks, profitable-lot guard no longer blocks, and lot-entry spacing is at least 5.0 bps from the nearest existing lot, or a close/trim priority takes over.",
   "waiting_correct_next_action": true,
