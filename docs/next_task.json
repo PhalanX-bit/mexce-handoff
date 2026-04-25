@@ -1,11 +1,11 @@
 {
-  "task_id": "2026-04-25-005",
-  "updated_at": "2026-04-25T23:47:18+03:00",
+  "task_id": "2026-04-25-006",
+  "updated_at": "2026-04-25T23:49:47+03:00",
   "status_kind": "next_task",
   "status": "pending",
-  "title": "Monitor AT/USDT:USDT profitable-lot guard release",
+  "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
   "task_type": "read_only_monitoring_task",
-  "objective": "Monitor AT/USDT:USDT for release of profitable-lot guard and transition from BLOCKED to READY.",
+  "objective": "Monitor AT/USDT:USDT for profitable-lot guard release and first transition from BLOCKED to READY.",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "live_exchange_action_allowed": false,
