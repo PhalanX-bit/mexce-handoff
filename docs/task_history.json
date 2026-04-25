@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T00:20:09+03:00",
+  "updated_at": "2026-04-26T00:22:45+03:00",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:22:45+03:00",
+      "result_summary": "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 5.38 bps; next live action remains none."
+    },
     {
       "task_id": "2026-04-26-002",
       "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
