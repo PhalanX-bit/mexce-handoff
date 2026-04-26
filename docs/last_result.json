@@ -1,24 +1,20 @@
 {
-  "task_id": "2026-04-26-014",
-  "updated_at": "2026-04-26T14:27:18Z",
+  "task_id": "2026-04-26-015",
+  "updated_at": "2026-04-26T14:42:52Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Create limited auto_submit mode for 1-symbol supervised automation bridge",
-  "result_type": "code_change_and_guarded_live_preflight",
+  "title": "Pre-live safety validation for limited auto_submit",
+  "result_type": "safety_validation",
   "scope": {
     "symbol": "AT/USDT:USDT",
-    "allowed_symbols": [
-      "AT/USDT:USDT"
-    ],
-    "max_qty_contracts": 1,
-    "order_type": "LIMIT only",
     "code_changes_made": true,
+    "code_change_reason": "Added hard allowlist fail-closed check for the one-symbol automation bridge.",
     "ui_changes_made": false,
     "database_schema_changes_made": false,
-    "broad_refactor_made": false,
+    "strategy_logic_changed": false,
     "action_queue_writes": false,
-    "api_executor_called": false,
-    "mexc_direct_direct_submit_called": false,
+    "api_executor_live_execution": false,
+    "mexc_direct_submit_cancel_called": false,
     "live_exchange_action_taken": false
   },
   "changed_files": [
@@ -30,68 +26,67 @@
     "docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py",
     "python scripts\\automation_read_only_runner.py --help",
+    "python -m py_compile scripts\\automation_read_only_runner.py",
+    "python scripts\\automation_read_only_runner.py --mode auto_submit --once --json",
+    "python scripts\\automation_read_only_runner.py --symbol BTC/USDT:USDT --mode auto_submit --once --json",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode no_such_mode --once --json",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live"
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live",
+    "python -c <qty/market validator check>",
+    "python -c <action_queue hygiene query>",
+    "python -c <contract precision/min qty query>",
+    "python -c <reconcile signature check>"
   ],
-  "implementation": {
-    "modes": [
-      "read_only",
-      "auto_enqueue",
-      "auto_submit"
-    ],
-    "live_flag_required_for_submit": true,
-    "auto_submit_path": "action_queue -> core/api_executor.process_one_action -> core/reconcile_service.reconcile_action",
-    "direct_mexc_submit_from_runner": false,
-    "cancel_replace_chase_supported": false,
-    "auto_submit_limited_to_open_limit": true,
-    "strategy_audit_note_added_for_future_executor_guard": true
+  "fail_closed_tests": {
+    "missing_symbol": "argparse error; required --symbol; no submit",
+    "wrong_symbol": "ValueError: symbol not allowlisted; no planning/queue/submit",
+    "unknown_mode": "argparse invalid choice; no submit",
+    "auto_submit_without_live": "BLOCKED; submit_allowed=false; actual_submit=false; actual_queue_write=false",
+    "auto_submit_with_live_under_blocked": "BLOCKED; live_exchange_action_allowed=false; actual_submit=false; actual_queue_write=false",
+    "qty_gt_1_validation": "fail closed: qty_above_auto_submit_limit",
+    "market_validation": "fail closed: market_or_non_limit_order_forbidden"
   },
-  "preflight_without_live": {
-    "mode": "auto_submit",
-    "symbol": "AT/USDT:USDT",
-    "readiness_state": "BLOCKED",
-    "blockers": [
-      "PROFITABLE_LOTS_PRESENT"
-    ],
-    "decision": "blocked",
-    "submit_allowed": false,
-    "actual_submit": false,
-    "actual_queue_write": false,
-    "enqueued_action_id": null,
-    "submitted_action_id": null,
-    "reconcile_run": false
+  "action_queue_hygiene": {
+    "total_actions": 8,
+    "pending": 0,
+    "arm": 0,
+    "armed": 0,
+    "running": 0,
+    "at_usdt_actions": 8,
+    "other_symbol_actions": 0,
+    "failed_canceled_done": "DONE=8; FAILED=0; CANCELED=0",
+    "conflict_risk": "none from active queue; no pending/armed/running actions"
   },
-  "live_with_live_flag": {
-    "mode": "auto_submit",
+  "precision_min_qty": {
     "symbol": "AT/USDT:USDT",
-    "readiness_state": "BLOCKED",
-    "blockers": [
-      "PROFITABLE_LOTS_PRESENT"
-    ],
-    "decision": "blocked",
-    "submit_allowed": false,
-    "actual_submit": false,
-    "actual_queue_write": false,
-    "enqueued_action_id": null,
-    "submitted_action_id": null,
-    "api_order_id": null,
-    "reconcile_run": false,
-    "live_exchange_action_allowed": false
+    "raw_symbol": "AT_USDT",
+    "price_tick": null,
+    "qty_step": null,
+    "min_qty": null,
+    "price_precision": null,
+    "qty_precision": null,
+    "max_leverage": 50,
+    "qty_1_valid": true,
+    "preview_limit_price": 0.16459766,
+    "rounded_limit_price": 0.16459766,
+    "rounding_valid": true,
+    "order_type": "LIMIT",
+    "note": "contract meta fell back to local/symbol state where tick/step were unavailable; current normalization still validates qty=1 and LIMIT price > 0."
+  },
+  "reconcile_readiness": {
+    "checked": true,
+    "result": "reconcile_action import/signature available",
+    "limitation": "No safe no-action reconcile probe exists without an action_id; no reconcile call was made."
   },
   "safety_confirmation": {
-    "submit_without_live": false,
-    "submit_under_blocked": false,
-    "max_qty_contracts": 1,
-    "order_type": "LIMIT only",
-    "market_orders": false,
-    "cancel_replace_chase": false,
-    "second_submit_same_run": false,
+    "exchange_submits": false,
+    "action_queue_writes": false,
+    "cancels_replaces": false,
+    "api_executor_live_execution": false,
     "db_schema_changes": false,
     "ui_changes": false,
-    "trading_logic_broad_changes": false
+    "strategy_logic_changes": false
   },
-  "next_task_status": "paused",
-  "summary": "Added guarded auto_submit mode. Current AT/USDT:USDT remains BLOCKED by PROFITABLE_LOTS_PRESENT, so both preflight and --live verification made no queue write, no executor call, and no exchange submit."
+  "summary": "Pre-live safety validation completed. Fail-closed CLI checks passed, hard one-symbol allowlist added, current BLOCKED state prevents queue writes and submits even with --live, queue is clean, and qty=1/LIMIT validation passes."
 }
