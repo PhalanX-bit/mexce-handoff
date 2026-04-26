@@ -1,59 +1,73 @@
 {
-  "task_id": "2026-04-26-002",
-  "updated_at": "2026-04-26T00:36:14+03:00",
+  "task_id": "2026-04-26-003",
+  "updated_at": "2026-04-26T07:57:35+03:00",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-  "result_type": "read_only_blocking_analysis",
-  "command": "python scripts/supervised_batch_plan.py --symbols AT/USDT:USDT --symbol-limit 1 --max-actions-per-symbol 10 --no-write --json",
-  "summary": "Current BLOCKED state remains active. Lot-entry spacing has released, but profitable-lot guard still blocks new OPEN_LIMIT. No live exchange action was taken.",
-  "readiness_state": "BLOCKED",
-  "reason": "profitable_lot_open_block: profitable_lots=4 target_reached=0 nearest_target_gap_bps=341.68698196002015",
-  "current_candidate": {
+  "title": "Minimal path from supervised flow to limited automation",
+  "result_type": "design_status_output",
+  "scope": {
     "symbol": "AT/USDT:USDT",
-    "candidate_type": "OPEN_LIMIT",
-    "side": "LONG",
-    "qty": 1.0,
-    "intended_price": 0.16399796000000003,
-    "decision_id": "de4f514972671812",
-    "source": "scripts/supervised_batch_plan.py -> core/supervised_batch_plan.py -> core/supervised_strategy_runner.py -> core/streamlit_services/strategy_engine.py"
-  },
-  "active_guards": {
+    "code_changes_made": false,
+    "ui_changes_made": false,
+    "database_schema_changes_made": false,
     "live_exchange_action_taken": false,
-    "live_confirmation_required": true,
-    "batch_ready_count": 0,
-    "batch_blocked_count": 1,
-    "candidate_safety": "PASS",
-    "profit_guard_enabled": true,
-    "profit_guard_blocked": true,
-    "profitable_lots": 4,
-    "target_lots": 0,
-    "nearest_target_gap_bps": 341.68698196002015,
-    "lot_spacing_ok": true,
-    "nearest_lot_id": 7,
-    "nearest_lot_distance_bps": 13.919521279845334,
-    "min_lot_entry_distance_bps": 5.0,
-    "active_queue_task": false,
-    "active_pending_limit": false,
-    "active_pending_chase": false,
-    "gross_cap_check": "PASS post_gross=403.00 cap=420.00",
-    "price_distance_check": "PASS vs_last=-5.00 bps",
-    "open_lots": 7,
-    "strategy_gross": 402.0
+    "approval_token_used": false
   },
-  "market": {
-    "symbol": "AT/USDT:USDT",
-    "price": 0.16408,
-    "bid": 0.16387,
-    "ask": 0.16535,
-    "mark": 0.16465,
-    "ticker_created_at": "2026-04-25T21:36:05.440000+00:00"
+  "summary": "Shortest safe path is to add an automated read-only runner first, then promote the same loop to auto-enqueue, and only later allow token/config-gated auto-submit for one symbol, one contract, LIMIT only.",
+  "current_starting_point": {
+    "starts_from": "Existing supervised batch planning flow that produces READY/BLOCKED candidates without writing when run with --no-write.",
+    "automation_ready_parts": [
+      "strategy_engine decision generation",
+      "supervised_batch_plan dry planning",
+      "queue/executor path already used by supervised live flow",
+      "direct MEXC LIMIT execution helpers",
+      "reconcile/fill_registry/lots state update path"
+    ]
   },
-  "ready_transition_condition": "State can move from BLOCKED to READY only when the OPEN_LIMIT candidate still passes safety checks, profitable-lot guard no longer blocks, and lot-entry spacing is at least 5.0 bps from the nearest existing lot, or a close/trim priority takes over.",
-  "waiting_correct_next_action": true,
-  "next_live_action": "none",
-  "operator_summary": "Waiting is the correct no-code action. readiness_state did not move from BLOCKED, profitable_lots is 4, batch_ready_count is 0, lot spacing is OK, and next_live_action remains none.",
-  "unclear_items": [
-    "The market price and readiness state can change after this check."
-  ]
+  "minimal_automation_path": [
+    "Step 1: read_only loop runs supervised_batch_plan for one symbol on a timer and records readiness/guards only.",
+    "Step 2: auto_enqueue only writes READY candidates into action_queue, still no exchange submit.",
+    "Step 3: auto_submit allows one symbol, one contract, LIMIT only, after queue/reconcile guards pass."
+  ],
+  "exact_modules_needed": [
+    {
+      "module": "scripts/supervised_batch_plan.py",
+      "role": "CLI entry for repeated read-only planning."
+    },
+    {
+      "module": "core/supervised_batch_plan.py",
+      "role": "Batch candidate assembly and READY/BLOCKED output."
+    },
+    {
+      "module": "core/supervised_strategy_runner.py",
+      "role": "Single-symbol strategy proposal and safety evaluation."
+    },
+    {
+      "module": "core/streamlit_services/queue_service.py",
+      "role": "Minimal auto_enqueue target once read-only loop is proven."
+    },
+    {
+      "module": "core/api_executor.py",
+      "role": "Existing queue-to-direct-API executor for later auto_submit mode."
+    }
+  ],
+  "required_flags_modes": [
+    "read_only: no DB writes except optional external status log, no queue writes, no exchange action.",
+    "auto_enqueue: enqueue READY candidates only, no executor submit.",
+    "auto_submit: execute queued LIMIT action for allowlisted symbol only."
+  ],
+  "hard_safety_rules": [
+    "Allowlist exactly one symbol at first.",
+    "Force qty=1 contract.",
+    "LIMIT only; no MARKET orders.",
+    "Respect gross cap before enqueue and before submit.",
+    "Block new OPEN when profitable-lot guard blocks.",
+    "Require lot-entry spacing guard to pass.",
+    "Require no active queue/pending LIMIT/pending CHASE conflict.",
+    "Reconcile after every submitted action before any next submit."
+  ],
+  "no_code_conclusion": {
+    "next_code_step": "A) automated read-only runner",
+    "reason": "It proves timing, logging, readiness transitions, and guard stability without queue writes or exchange risk."
+  }
 }
