@@ -1,67 +1,134 @@
 {
-  "task_id": "2026-04-26-010",
-  "updated_at": "2026-04-26T09:25:30+03:00",
+  "task_id": "2026-04-26-011",
+  "updated_at": "2026-04-26T09:31:00+03:00",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Validate real READY to auto_enqueue write when state becomes READY",
-  "result_type": "operational_validation",
+  "title": "Diagnose profitable_lot_open_block for AT/USDT:USDT",
+  "result_type": "read_only_diagnostic",
   "scope": {
     "symbol": "AT/USDT:USDT",
-    "code_changes_made": false,
+    "code_changes_made": true,
+    "diagnostic_script_added": true,
     "ui_changes_made": false,
     "database_schema_changes_made": false,
+    "strategy_logic_changed": false,
     "api_executor_called": false,
     "mexc_direct_submit_cancel_called": false,
-    "live_exchange_action_taken": false,
-    "normal_auto_enqueue_write_attempted": false
+    "action_queue_writes": false,
+    "live_exchange_action_taken": false
   },
+  "changed_files": [
+    "scripts/diagnose_profitable_lot_block.py",
+    "last_result.json",
+    "task_history.json",
+    "docs/last_result.json",
+    "docs/task_history.json",
+    "docs/handoff_manifest.json"
+  ],
   "commands_run": [
-    "python -c \"from core.reconcile_service import db_conn ... select count(*) from action_queue\"",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --once --json",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_enqueue --once --json --preview-intent",
+    "python scripts\\supervised_lot_risk_report.py --symbol AT/USDT:USDT --side LONG --json",
+    "python -m py_compile scripts\\diagnose_profitable_lot_block.py",
+    "python scripts\\diagnose_profitable_lot_block.py --symbol AT/USDT:USDT --json",
     "python -c \"from core.reconcile_service import db_conn ... select count(*) from action_queue\""
   ],
-  "state": {
+  "guard_state": {
     "readiness_state": "BLOCKED",
-    "blockers": [
-      "PROFITABLE_LOTS_PRESENT"
-    ],
+    "blocker": "PROFITABLE_LOTS_PRESENT",
+    "profitable_lots": 4,
+    "target_reached_lots": 0,
     "candidate_exists": true,
     "preview_payload_exists": true,
-    "ready_count": 0,
-    "blocked_count": 1
+    "current_price_used": 0.16467,
+    "nearest_target_gap_bps": 304.6335094431289
   },
-  "blocked_result": {
-    "action_queue_count_before": 8,
-    "action_queue_count_after": 8,
-    "actual_queue_write": false,
-    "enqueued_action_id": null,
-    "reason": "profitable_lot_open_block: profitable_lots=4 target_reached=0 nearest_target_gap_bps=342.94770206022207"
+  "profitable_lots": [
+    {
+      "lot_id": 4,
+      "symbol": "AT/USDT:USDT",
+      "side": "LONG",
+      "status": "OPEN",
+      "entry_price": 0.16366,
+      "current_price_used": 0.16467,
+      "qty_contracts": 1.0,
+      "roi_pct": 30.856654038861386,
+      "opened_at": "2026-04-25T05:44:14+00:00",
+      "target_price": 0.1702064,
+      "target_reached": false,
+      "classification_reason": "roi_pct > 0 from lot_risk_guard.lot_roi_pct(side, entry_price, current_price, leverage)"
+    },
+    {
+      "lot_id": 5,
+      "symbol": "AT/USDT:USDT",
+      "side": "LONG",
+      "status": "OPEN",
+      "entry_price": 0.16333,
+      "current_price_used": 0.16467,
+      "qty_contracts": 1.0,
+      "roi_pct": 41.02124533153762,
+      "opened_at": "2026-04-25T06:14:33+00:00",
+      "target_price": 0.16986320000000002,
+      "target_reached": false,
+      "classification_reason": "roi_pct > 0 from lot_risk_guard.lot_roi_pct(side, entry_price, current_price, leverage)"
+    },
+    {
+      "lot_id": 6,
+      "symbol": "AT/USDT:USDT",
+      "side": "LONG",
+      "status": "OPEN",
+      "entry_price": 0.16316,
+      "current_price_used": 0.16467,
+      "qty_contracts": 1.0,
+      "roi_pct": 46.273596469723316,
+      "opened_at": "2026-04-25T06:33:16+00:00",
+      "target_price": 0.16968640000000001,
+      "target_reached": false,
+      "classification_reason": "roi_pct > 0 from lot_risk_guard.lot_roi_pct(side, entry_price, current_price, leverage)"
+    },
+    {
+      "lot_id": 7,
+      "symbol": "AT/USDT:USDT",
+      "side": "LONG",
+      "status": "OPEN",
+      "entry_price": 0.16377,
+      "current_price_used": 0.16467,
+      "qty_contracts": 1.0,
+      "roi_pct": 27.47755999267301,
+      "opened_at": "2026-04-25T07:26:32+00:00",
+      "target_price": 0.1703208,
+      "target_reached": false,
+      "classification_reason": "roi_pct > 0 from lot_risk_guard.lot_roi_pct(side, entry_price, current_price, leverage)"
+    }
+  ],
+  "blocking_rule": {
+    "guard_name": "PROFITABLE_LOTS_PRESENT",
+    "condition": "block_new_open_when_profitable_lots is true AND candidate kind is OPEN_LIMIT AND profitable_count > 0",
+    "hard_or_configurable": "configurable",
+    "config_field": "block_new_open_when_profitable_lots",
+    "defined_in": "config/supervised_strategy.json and core/supervised_batch_plan.py::build_batch_candidate using core/lot_risk_guard.py::build_lot_profit_report"
   },
-  "preview_payload_summary": {
-    "symbol": "AT/USDT:USDT",
-    "panel_mode": "OPEN",
-    "intent": "open",
-    "side": "LONG",
-    "order_type": "limit",
-    "order_kind": "LIMIT",
-    "qty": 1.0,
-    "qty_unit": "contracts",
-    "limit_price": 0.16397797000000003,
-    "reduce_only": 0,
-    "status": "ARMED",
-    "enqueue_allowed_now": false,
-    "blocked_by_guards": true,
-    "live_exchange_action_allowed": false
+  "queue_order_context": {
+    "active_pending_armed_running_actions": 0,
+    "done_reconcile_open_orders": 0,
+    "pending_close_actions": 0,
+    "exchange_open_orders_count": 0,
+    "pending_close_or_realization_flow": false,
+    "action_queue_count_after_diagnostic": 8
+  },
+  "operational_interpretation": {
+    "why_blocked": "The candidate is a new OPEN_LIMIT LONG while 4 existing LONG lots are already profitable; the configured guard prevents expanding into a symbol that has profitable lots waiting for target/trim handling.",
+    "condition_to_become_ready": "profitable_count must become 0 for the candidate side or the strategy must produce a close/trim candidate that takes priority; target_reached_lots is currently 0.",
+    "manual_action_needed": false,
+    "safest_next_step": "Wait; no close/submit/cancel action was indicated by the current guard state."
   },
   "safety_confirmation": {
-    "code_changes": false,
+    "action_queue_writes": false,
     "exchange_submits": false,
     "cancels_replaces": false,
     "api_executor_called": false,
-    "action_executed": false,
+    "strategy_logic_changed": false,
     "ui_schema_changes": false
   },
-  "next_task_status": "paused",
-  "operator_summary": "Real READY auto_enqueue write was not attempted because the live state is still BLOCKED by profitable lots. Queue count stayed unchanged at 8."
+  "next_task_status": "paused"
 }

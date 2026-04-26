@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T09:25:30+03:00",
+  "updated_at": "2026-04-26T09:31:00+03:00",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-011",
+      "title": "Diagnose profitable_lot_open_block for AT/USDT:USDT",
+      "status": "completed",
+      "completed_at": "2026-04-26T09:31:00+03:00",
+      "result_summary": "Identified profitable lots 4, 5, 6, and 7 as OPEN LONG lots with positive ROI; target not reached, no active queue/open orders/pending close flow, and no exchange action taken."
+    },
     {
       "task_id": "2026-04-26-010",
       "title": "Validate real READY to auto_enqueue write when state becomes READY",
