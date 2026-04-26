@@ -1,7 +1,7 @@
 {
   "handoff_version": 2,
-  "updated_at": "2026-04-26T14:29:55Z",
-  "source_commit": "8af87fa",
+  "updated_at": "2026-04-26T14:34:26Z",
+  "source_commit": "c82f661",
   "public_base_url": "https://phalanx-bit.github.io/mexce-handoff/",
   "authoritative_source": "GitHub Pages public URL",
   "files": {
@@ -9,36 +9,36 @@
       "root_sha256": "8659d3b3927125fb87b33b6b00b54ad5c27f075da36b4f291f243a98357f5018",
       "docs_sha256": "8659d3b3927125fb87b33b6b00b54ad5c27f075da36b4f291f243a98357f5018",
       "sha256": "8659d3b3927125fb87b33b6b00b54ad5c27f075da36b4f291f243a98357f5018",
-      "public_sha256": null,
+      "public_sha256": "8659d3b3927125fb87b33b6b00b54ad5c27f075da36b4f291f243a98357f5018",
       "root_matches_docs": true,
-      "public_verified": false,
+      "public_verified": true,
       "public_url": "https://phalanx-bit.github.io/mexce-handoff/project_status.json"
     },
     "next_task.json": {
       "root_sha256": "3bbce5a82537169de942d5166441fa080aa5d6ffc9ae550937ea8f957047530a",
       "docs_sha256": "3bbce5a82537169de942d5166441fa080aa5d6ffc9ae550937ea8f957047530a",
       "sha256": "3bbce5a82537169de942d5166441fa080aa5d6ffc9ae550937ea8f957047530a",
-      "public_sha256": null,
+      "public_sha256": "3bbce5a82537169de942d5166441fa080aa5d6ffc9ae550937ea8f957047530a",
       "root_matches_docs": true,
-      "public_verified": false,
+      "public_verified": true,
       "public_url": "https://phalanx-bit.github.io/mexce-handoff/next_task.json"
     },
     "last_result.json": {
-      "root_sha256": "90ef70af354ffd6d28af4e9c983f3c044b81f4fac41fff0b06f185f79083c2ae",
-      "docs_sha256": "90ef70af354ffd6d28af4e9c983f3c044b81f4fac41fff0b06f185f79083c2ae",
-      "sha256": "90ef70af354ffd6d28af4e9c983f3c044b81f4fac41fff0b06f185f79083c2ae",
-      "public_sha256": null,
+      "root_sha256": "0671d5be4a8f8c08ba6fb752ac3d73726ae68684195a16e35233baeaa47c1c1d",
+      "docs_sha256": "0671d5be4a8f8c08ba6fb752ac3d73726ae68684195a16e35233baeaa47c1c1d",
+      "sha256": "0671d5be4a8f8c08ba6fb752ac3d73726ae68684195a16e35233baeaa47c1c1d",
+      "public_sha256": "0671d5be4a8f8c08ba6fb752ac3d73726ae68684195a16e35233baeaa47c1c1d",
       "root_matches_docs": true,
-      "public_verified": false,
+      "public_verified": true,
       "public_url": "https://phalanx-bit.github.io/mexce-handoff/last_result.json"
     },
     "task_history.json": {
-      "root_sha256": "78bce386eaa2bdcedab3694c34b877d42ddf450368212157edeeb0c5a6397b3d",
-      "docs_sha256": "78bce386eaa2bdcedab3694c34b877d42ddf450368212157edeeb0c5a6397b3d",
-      "sha256": "78bce386eaa2bdcedab3694c34b877d42ddf450368212157edeeb0c5a6397b3d",
-      "public_sha256": null,
+      "root_sha256": "9c5f142d5230be6aed3693415ba7e6b146b3b9626423b19a1bc306daf10bf05e",
+      "docs_sha256": "9c5f142d5230be6aed3693415ba7e6b146b3b9626423b19a1bc306daf10bf05e",
+      "sha256": "9c5f142d5230be6aed3693415ba7e6b146b3b9626423b19a1bc306daf10bf05e",
+      "public_sha256": "9c5f142d5230be6aed3693415ba7e6b146b3b9626423b19a1bc306daf10bf05e",
       "root_matches_docs": true,
-      "public_verified": false,
+      "public_verified": true,
       "public_url": "https://phalanx-bit.github.io/mexce-handoff/task_history.json"
     }
   },
@@ -56,9 +56,9 @@
   },
   "public_status": {
     "project_status.json": null,
-    "next_task.json": null,
-    "last_result.json": null,
+    "next_task.json": "paused task_id=none",
+    "last_result.json": "completed task_id=2026-04-26-014",
     "task_history.json": null
   },
-  "overall_public_verified": false
+  "overall_public_verified": true
 }
