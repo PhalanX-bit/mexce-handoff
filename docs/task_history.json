@@ -1,188 +1,188 @@
-﻿{
-    "updated_at":  "2026-04-26T14:27:18Z",
-    "status_kind":  "short_history",
-    "items":  [
-                  {
-                      "task_id":  "2026-04-26-014",
-                      "title":  "Create limited auto_submit mode for 1-symbol supervised automation bridge",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T14:27:18Z",
-                      "result_summary":  "Added guarded auto_submit mode with --live gate; current BLOCKED state prevented queue write, executor call, and exchange submit."
-                  },
-                  {
-                      "task_id":  "2026-04-26-013",
-                      "title":  "Watch for first actionable transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T10:04:00+03:00",
-                      "result_summary":  "Classification is STILL_BLOCKED_WAIT: profitable_lots=5, target_reached_lots=0, eligible_lots=0, no close/trim candidate, no queue conflicts, and no queue/exchange action taken."
-                  },
-                  {
-                      "task_id":  "2026-04-26-012",
-                      "title":  "Diagnose harvest / close candidate logic for profitable lots",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T09:49:00+03:00",
-                      "result_summary":  "Close/trim logic exists, but current lots are only profitable, not target-eligible: target_reached_lots=0, eligible_lots=0, long_ready=false, so strategy returns OPEN_LIMIT HEDGE which is then blocked by profitable-lot guard."
-                  },
-                  {
-                      "task_id":  "2026-04-26-011",
-                      "title":  "Diagnose profitable_lot_open_block for AT/USDT:USDT",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T09:31:00+03:00",
-                      "result_summary":  "Identified profitable lots 4, 5, 6, and 7 as OPEN LONG lots with positive ROI; target not reached, no active queue/open orders/pending close flow, and no exchange action taken."
-                  },
-                  {
-                      "task_id":  "2026-04-26-010",
-                      "title":  "Validate real READY to auto_enqueue write when state becomes READY",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T09:25:30+03:00",
-                      "result_summary":  "Live state was still BLOCKED by PROFITABLE_LOTS_PRESENT, so normal auto_enqueue write was not attempted; preview payload exists and action_queue count stayed 8."
-                  },
-                  {
-                      "task_id":  "2026-04-26-009",
-                      "title":  "Validate auto_enqueue READY path without exchange submit",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T09:20:30+03:00",
-                      "result_summary":  "Added --preview-intent to auto_enqueue mode; preview shows the exact OPEN LIMIT queue payload while actual_queue_write=false and action_queue count stayed unchanged at 8."
-                  },
-                  {
-                      "task_id":  "2026-04-26-008",
-                      "title":  "Create auto-enqueue mode for 1-symbol supervised automation bridge",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T08:51:30+03:00",
-                      "result_summary":  "Extended scripts/automation_read_only_runner.py with auto_enqueue mode; current AT/USDT:USDT state remains BLOCKED, so actual_queue_write=false and action_queue count stayed unchanged at 8."
-                  },
-                  {
-                      "task_id":  "2026-04-26-007",
-                      "title":  "Create automated read-only runner for 1-symbol supervised automation bridge",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T08:38:11+03:00",
-                      "result_summary":  "Added scripts/automation_read_only_runner.py; verified --once --json for AT/USDT:USDT in read_only mode with no queue writes and no exchange actions."
-                  },
-                  {
-                      "task_id":  "2026-04-26-006",
-                      "title":  "Create Handoff Protocol v2 with public verification manifest",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T08:18:00+03:00",
-                      "result_summary":  "Added manifest-based public verification for handoff files; public Pages is authoritative for operational handoff decisions."
-                  },
-                  {
-                      "task_id":  "2026-04-26-005",
-                      "title":  "Plan shortest safe path to limited automation",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T08:10:36+03:00",
-                      "result_summary":  "No-code plan completed; recommended next code step is automated read-only runner, not auto-enqueue."
-                  },
-                  {
-                      "task_id":  "2026-04-26-003",
-                      "title":  "Design minimal path from supervised flow to limited automation",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T07:57:35+03:00",
-                      "result_summary":  "No-code design output completed; next code step should be automated read-only runner before auto-enqueue or auto-submit."
-                  },
-                  {
-                      "task_id":  "2026-04-26-002",
-                      "title":  "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T00:36:14+03:00",
-                      "result_summary":  "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 13.92 bps; next live action remains none."
-                  },
-                  {
-                      "task_id":  "2026-04-26-002",
-                      "title":  "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T00:31:46+03:00",
-                      "result_summary":  "Still BLOCKED: profitable_lots increased to 5, batch_ready=0, lot spacing remains OK at 18.06 bps; next live action remains none."
-                  },
-                  {
-                      "task_id":  "2026-04-26-002",
-                      "title":  "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T00:28:43+03:00",
-                      "result_summary":  "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 18.19 bps; next live action remains none."
-                  },
-                  {
-                      "task_id":  "2026-04-26-002",
-                      "title":  "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T00:25:44+03:00",
-                      "result_summary":  "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 10.26 bps; next live action remains none."
-                  },
-                  {
-                      "task_id":  "2026-04-26-002",
-                      "title":  "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T00:22:45+03:00",
-                      "result_summary":  "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 5.38 bps; next live action remains none."
-                  },
-                  {
-                      "task_id":  "2026-04-26-002",
-                      "title":  "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T00:20:09+03:00",
-                      "result_summary":  "Still BLOCKED: lot spacing released at 26.85 bps, but profitable_lots=4 keeps batch_ready=0; next live action remains none."
-                  },
-                  {
-                      "task_id":  "2026-04-26-002",
-                      "title":  "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T00:15:54+03:00",
-                      "result_summary":  "Still BLOCKED: profitable_lots=4, batch_ready=0, and lot spacing remains slightly too close at 4.76 bps; next live action remains none."
-                  },
-                  {
-                      "task_id":  "2026-04-26-002",
-                      "title":  "Monitor AT/USDT:USDT first BLOCKED to READY transition",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-26T00:10:39+03:00",
-                      "result_summary":  "Still BLOCKED: profitable_lots=4, batch_ready=0, and lot spacing is too close at 2.56 bps; next live action remains none."
-                  },
-                  {
-                      "task_id":  "2026-04-25-004-rerun",
-                      "title":  "Re-run BLOCKED state cause check for AT/USDT:USDT",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-25T23:31:51+03:00",
-                      "result_summary":  "BLOCKED remains active: lot spacing is OK at 5.99 bps, but profitable_lots=4 still blocks new OPEN_LIMIT; waiting remains correct."
-                  },
-                  {
-                      "task_id":  "2026-04-25-004",
-                      "title":  "Determine BLOCKED state cause for AT/USDT:USDT",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-25T23:27:37+03:00",
-                      "result_summary":  "BLOCKED remains active: lot spacing is OK at 7.21 bps, but profitable_lots=4 blocks new OPEN_LIMIT; waiting is the correct no-code action."
-                  },
-                  {
-                      "task_id":  "2026-04-25-003",
-                      "title":  "Supervised approval readiness snapshot",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-25T13:56:57+03:00",
-                      "result_summary":  "Current OPEN_LIMIT LONG candidate is blocked: profitable_lots=1 and nearest lot spacing is 4.80 bps under the 5.0 bps minimum; no live action."
-                  },
-                  {
-                      "task_id":  "2026-04-25-002",
-                      "title":  "Run read-only supervised condition check",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-25T11:20:36+03:00",
-                      "result_summary":  "READY_OPEN_OR_CLOSE for AT/USDT:USDT; batch ready=1, blocked=0, no live exchange action taken."
-                  },
-                  {
-                      "task_id":  "2026-04-25-001",
-                      "title":  "Create minimal static handoff workflow",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-25T11:11:55+03:00",
-                      "result_summary":  "Four static handoff files refreshed and helper script added."
-                  },
-                  {
-                      "task_id":  "previous-live-supervised-work",
-                      "title":  "Build supervised live path and guards",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-25T11:11:55+03:00",
-                      "result_summary":  "Direct API execution, reconcile, lots, gross cap, lot spacing, profitable-lot block, reprice approval, and token-gated live flow are present in code."
-                  },
-                  {
-                      "task_id":  "previous-project-status-review",
-                      "title":  "Technical project status review",
-                      "status":  "completed",
-                      "completed_at":  "2026-04-25T11:11:55+03:00",
-                      "result_summary":  "Current architecture, Streamlit tabs, live path, strategy engine, MEXC direct API, database state, simulation, and known risks summarized from code."
-                  }
-              ]
+{
+  "updated_at": "2026-04-26T14:27:18Z",
+  "status_kind": "short_history",
+  "items": [
+    {
+      "task_id": "2026-04-26-014",
+      "title": "Create limited auto_submit mode for 1-symbol supervised automation bridge",
+      "status": "completed",
+      "completed_at": "2026-04-26T14:27:18Z",
+      "result_summary": "Added guarded auto_submit mode with --live gate; current BLOCKED state prevented queue write, executor call, and exchange submit."
+    },
+    {
+      "task_id": "2026-04-26-013",
+      "title": "Watch for first actionable transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T10:04:00+03:00",
+      "result_summary": "Classification is STILL_BLOCKED_WAIT: profitable_lots=5, target_reached_lots=0, eligible_lots=0, no close/trim candidate, no queue conflicts, and no queue/exchange action taken."
+    },
+    {
+      "task_id": "2026-04-26-012",
+      "title": "Diagnose harvest / close candidate logic for profitable lots",
+      "status": "completed",
+      "completed_at": "2026-04-26T09:49:00+03:00",
+      "result_summary": "Close/trim logic exists, but current lots are only profitable, not target-eligible: target_reached_lots=0, eligible_lots=0, long_ready=false, so strategy returns OPEN_LIMIT HEDGE which is then blocked by profitable-lot guard."
+    },
+    {
+      "task_id": "2026-04-26-011",
+      "title": "Diagnose profitable_lot_open_block for AT/USDT:USDT",
+      "status": "completed",
+      "completed_at": "2026-04-26T09:31:00+03:00",
+      "result_summary": "Identified profitable lots 4, 5, 6, and 7 as OPEN LONG lots with positive ROI; target not reached, no active queue/open orders/pending close flow, and no exchange action taken."
+    },
+    {
+      "task_id": "2026-04-26-010",
+      "title": "Validate real READY to auto_enqueue write when state becomes READY",
+      "status": "completed",
+      "completed_at": "2026-04-26T09:25:30+03:00",
+      "result_summary": "Live state was still BLOCKED by PROFITABLE_LOTS_PRESENT, so normal auto_enqueue write was not attempted; preview payload exists and action_queue count stayed 8."
+    },
+    {
+      "task_id": "2026-04-26-009",
+      "title": "Validate auto_enqueue READY path without exchange submit",
+      "status": "completed",
+      "completed_at": "2026-04-26T09:20:30+03:00",
+      "result_summary": "Added --preview-intent to auto_enqueue mode; preview shows the exact OPEN LIMIT queue payload while actual_queue_write=false and action_queue count stayed unchanged at 8."
+    },
+    {
+      "task_id": "2026-04-26-008",
+      "title": "Create auto-enqueue mode for 1-symbol supervised automation bridge",
+      "status": "completed",
+      "completed_at": "2026-04-26T08:51:30+03:00",
+      "result_summary": "Extended scripts/automation_read_only_runner.py with auto_enqueue mode; current AT/USDT:USDT state remains BLOCKED, so actual_queue_write=false and action_queue count stayed unchanged at 8."
+    },
+    {
+      "task_id": "2026-04-26-007",
+      "title": "Create automated read-only runner for 1-symbol supervised automation bridge",
+      "status": "completed",
+      "completed_at": "2026-04-26T08:38:11+03:00",
+      "result_summary": "Added scripts/automation_read_only_runner.py; verified --once --json for AT/USDT:USDT in read_only mode with no queue writes and no exchange actions."
+    },
+    {
+      "task_id": "2026-04-26-006",
+      "title": "Create Handoff Protocol v2 with public verification manifest",
+      "status": "completed",
+      "completed_at": "2026-04-26T08:18:00+03:00",
+      "result_summary": "Added manifest-based public verification for handoff files; public Pages is authoritative for operational handoff decisions."
+    },
+    {
+      "task_id": "2026-04-26-005",
+      "title": "Plan shortest safe path to limited automation",
+      "status": "completed",
+      "completed_at": "2026-04-26T08:10:36+03:00",
+      "result_summary": "No-code plan completed; recommended next code step is automated read-only runner, not auto-enqueue."
+    },
+    {
+      "task_id": "2026-04-26-003",
+      "title": "Design minimal path from supervised flow to limited automation",
+      "status": "completed",
+      "completed_at": "2026-04-26T07:57:35+03:00",
+      "result_summary": "No-code design output completed; next code step should be automated read-only runner before auto-enqueue or auto-submit."
+    },
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:36:14+03:00",
+      "result_summary": "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 13.92 bps; next live action remains none."
+    },
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:31:46+03:00",
+      "result_summary": "Still BLOCKED: profitable_lots increased to 5, batch_ready=0, lot spacing remains OK at 18.06 bps; next live action remains none."
+    },
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:28:43+03:00",
+      "result_summary": "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 18.19 bps; next live action remains none."
+    },
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:25:44+03:00",
+      "result_summary": "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 10.26 bps; next live action remains none."
+    },
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:22:45+03:00",
+      "result_summary": "Still BLOCKED: profitable_lots=4, batch_ready=0, lot spacing remains OK at 5.38 bps; next live action remains none."
+    },
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:20:09+03:00",
+      "result_summary": "Still BLOCKED: lot spacing released at 26.85 bps, but profitable_lots=4 keeps batch_ready=0; next live action remains none."
+    },
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:15:54+03:00",
+      "result_summary": "Still BLOCKED: profitable_lots=4, batch_ready=0, and lot spacing remains slightly too close at 4.76 bps; next live action remains none."
+    },
+    {
+      "task_id": "2026-04-26-002",
+      "title": "Monitor AT/USDT:USDT first BLOCKED to READY transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T00:10:39+03:00",
+      "result_summary": "Still BLOCKED: profitable_lots=4, batch_ready=0, and lot spacing is too close at 2.56 bps; next live action remains none."
+    },
+    {
+      "task_id": "2026-04-25-004-rerun",
+      "title": "Re-run BLOCKED state cause check for AT/USDT:USDT",
+      "status": "completed",
+      "completed_at": "2026-04-25T23:31:51+03:00",
+      "result_summary": "BLOCKED remains active: lot spacing is OK at 5.99 bps, but profitable_lots=4 still blocks new OPEN_LIMIT; waiting remains correct."
+    },
+    {
+      "task_id": "2026-04-25-004",
+      "title": "Determine BLOCKED state cause for AT/USDT:USDT",
+      "status": "completed",
+      "completed_at": "2026-04-25T23:27:37+03:00",
+      "result_summary": "BLOCKED remains active: lot spacing is OK at 7.21 bps, but profitable_lots=4 blocks new OPEN_LIMIT; waiting is the correct no-code action."
+    },
+    {
+      "task_id": "2026-04-25-003",
+      "title": "Supervised approval readiness snapshot",
+      "status": "completed",
+      "completed_at": "2026-04-25T13:56:57+03:00",
+      "result_summary": "Current OPEN_LIMIT LONG candidate is blocked: profitable_lots=1 and nearest lot spacing is 4.80 bps under the 5.0 bps minimum; no live action."
+    },
+    {
+      "task_id": "2026-04-25-002",
+      "title": "Run read-only supervised condition check",
+      "status": "completed",
+      "completed_at": "2026-04-25T11:20:36+03:00",
+      "result_summary": "READY_OPEN_OR_CLOSE for AT/USDT:USDT; batch ready=1, blocked=0, no live exchange action taken."
+    },
+    {
+      "task_id": "2026-04-25-001",
+      "title": "Create minimal static handoff workflow",
+      "status": "completed",
+      "completed_at": "2026-04-25T11:11:55+03:00",
+      "result_summary": "Four static handoff files refreshed and helper script added."
+    },
+    {
+      "task_id": "previous-live-supervised-work",
+      "title": "Build supervised live path and guards",
+      "status": "completed",
+      "completed_at": "2026-04-25T11:11:55+03:00",
+      "result_summary": "Direct API execution, reconcile, lots, gross cap, lot spacing, profitable-lot block, reprice approval, and token-gated live flow are present in code."
+    },
+    {
+      "task_id": "previous-project-status-review",
+      "title": "Technical project status review",
+      "status": "completed",
+      "completed_at": "2026-04-25T11:11:55+03:00",
+      "result_summary": "Current architecture, Streamlit tabs, live path, strategy engine, MEXC direct API, database state, simulation, and known risks summarized from code."
+    }
+  ]
 }

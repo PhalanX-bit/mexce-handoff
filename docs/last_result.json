@@ -1,97 +1,97 @@
-﻿{
-    "task_id":  "2026-04-26-014",
-    "updated_at":  "2026-04-26T14:27:18Z",
-    "status_kind":  "last_result",
-    "status":  "completed",
-    "title":  "Create limited auto_submit mode for 1-symbol supervised automation bridge",
-    "result_type":  "code_change_and_guarded_live_preflight",
-    "scope":  {
-                  "symbol":  "AT/USDT:USDT",
-                  "allowed_symbols":  [
-                                          "AT/USDT:USDT"
-                                      ],
-                  "max_qty_contracts":  1,
-                  "order_type":  "LIMIT only",
-                  "code_changes_made":  true,
-                  "ui_changes_made":  false,
-                  "database_schema_changes_made":  false,
-                  "broad_refactor_made":  false,
-                  "action_queue_writes":  false,
-                  "api_executor_called":  false,
-                  "mexc_direct_direct_submit_called":  false,
-                  "live_exchange_action_taken":  false
-              },
-    "changed_files":  [
-                          "scripts/automation_read_only_runner.py",
-                          "last_result.json",
-                          "task_history.json",
-                          "docs/last_result.json",
-                          "docs/task_history.json",
-                          "docs/handoff_manifest.json"
-                      ],
-    "commands_run":  [
-                         "python -m py_compile scripts\\automation_read_only_runner.py",
-                         "python scripts\\automation_read_only_runner.py --help",
-                         "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json",
-                         "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live"
-                     ],
-    "implementation":  {
-                           "modes":  [
-                                         "read_only",
-                                         "auto_enqueue",
-                                         "auto_submit"
-                                     ],
-                           "live_flag_required_for_submit":  true,
-                           "auto_submit_path":  "action_queue -\u003e core/api_executor.process_one_action -\u003e core/reconcile_service.reconcile_action",
-                           "direct_mexc_submit_from_runner":  false,
-                           "cancel_replace_chase_supported":  false,
-                           "auto_submit_limited_to_open_limit":  true,
-                           "strategy_audit_note_added_for_future_executor_guard":  true
-                       },
-    "preflight_without_live":  {
-                                   "mode":  "auto_submit",
-                                   "symbol":  "AT/USDT:USDT",
-                                   "readiness_state":  "BLOCKED",
-                                   "blockers":  [
-                                                    "PROFITABLE_LOTS_PRESENT"
-                                                ],
-                                   "decision":  "blocked",
-                                   "submit_allowed":  false,
-                                   "actual_submit":  false,
-                                   "actual_queue_write":  false,
-                                   "enqueued_action_id":  null,
-                                   "submitted_action_id":  null,
-                                   "reconcile_run":  false
-                               },
-    "live_with_live_flag":  {
-                                "mode":  "auto_submit",
-                                "symbol":  "AT/USDT:USDT",
-                                "readiness_state":  "BLOCKED",
-                                "blockers":  [
-                                                 "PROFITABLE_LOTS_PRESENT"
-                                             ],
-                                "decision":  "blocked",
-                                "submit_allowed":  false,
-                                "actual_submit":  false,
-                                "actual_queue_write":  false,
-                                "enqueued_action_id":  null,
-                                "submitted_action_id":  null,
-                                "api_order_id":  null,
-                                "reconcile_run":  false,
-                                "live_exchange_action_allowed":  false
-                            },
-    "safety_confirmation":  {
-                                "submit_without_live":  false,
-                                "submit_under_blocked":  false,
-                                "max_qty_contracts":  1,
-                                "order_type":  "LIMIT only",
-                                "market_orders":  false,
-                                "cancel_replace_chase":  false,
-                                "second_submit_same_run":  false,
-                                "db_schema_changes":  false,
-                                "ui_changes":  false,
-                                "trading_logic_broad_changes":  false
-                            },
-    "next_task_status":  "paused",
-    "summary":  "Added guarded auto_submit mode. Current AT/USDT:USDT remains BLOCKED by PROFITABLE_LOTS_PRESENT, so both preflight and --live verification made no queue write, no executor call, and no exchange submit."
+{
+  "task_id": "2026-04-26-014",
+  "updated_at": "2026-04-26T14:27:18Z",
+  "status_kind": "last_result",
+  "status": "completed",
+  "title": "Create limited auto_submit mode for 1-symbol supervised automation bridge",
+  "result_type": "code_change_and_guarded_live_preflight",
+  "scope": {
+    "symbol": "AT/USDT:USDT",
+    "allowed_symbols": [
+      "AT/USDT:USDT"
+    ],
+    "max_qty_contracts": 1,
+    "order_type": "LIMIT only",
+    "code_changes_made": true,
+    "ui_changes_made": false,
+    "database_schema_changes_made": false,
+    "broad_refactor_made": false,
+    "action_queue_writes": false,
+    "api_executor_called": false,
+    "mexc_direct_direct_submit_called": false,
+    "live_exchange_action_taken": false
+  },
+  "changed_files": [
+    "scripts/automation_read_only_runner.py",
+    "last_result.json",
+    "task_history.json",
+    "docs/last_result.json",
+    "docs/task_history.json",
+    "docs/handoff_manifest.json"
+  ],
+  "commands_run": [
+    "python -m py_compile scripts\\automation_read_only_runner.py",
+    "python scripts\\automation_read_only_runner.py --help",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live"
+  ],
+  "implementation": {
+    "modes": [
+      "read_only",
+      "auto_enqueue",
+      "auto_submit"
+    ],
+    "live_flag_required_for_submit": true,
+    "auto_submit_path": "action_queue -> core/api_executor.process_one_action -> core/reconcile_service.reconcile_action",
+    "direct_mexc_submit_from_runner": false,
+    "cancel_replace_chase_supported": false,
+    "auto_submit_limited_to_open_limit": true,
+    "strategy_audit_note_added_for_future_executor_guard": true
+  },
+  "preflight_without_live": {
+    "mode": "auto_submit",
+    "symbol": "AT/USDT:USDT",
+    "readiness_state": "BLOCKED",
+    "blockers": [
+      "PROFITABLE_LOTS_PRESENT"
+    ],
+    "decision": "blocked",
+    "submit_allowed": false,
+    "actual_submit": false,
+    "actual_queue_write": false,
+    "enqueued_action_id": null,
+    "submitted_action_id": null,
+    "reconcile_run": false
+  },
+  "live_with_live_flag": {
+    "mode": "auto_submit",
+    "symbol": "AT/USDT:USDT",
+    "readiness_state": "BLOCKED",
+    "blockers": [
+      "PROFITABLE_LOTS_PRESENT"
+    ],
+    "decision": "blocked",
+    "submit_allowed": false,
+    "actual_submit": false,
+    "actual_queue_write": false,
+    "enqueued_action_id": null,
+    "submitted_action_id": null,
+    "api_order_id": null,
+    "reconcile_run": false,
+    "live_exchange_action_allowed": false
+  },
+  "safety_confirmation": {
+    "submit_without_live": false,
+    "submit_under_blocked": false,
+    "max_qty_contracts": 1,
+    "order_type": "LIMIT only",
+    "market_orders": false,
+    "cancel_replace_chase": false,
+    "second_submit_same_run": false,
+    "db_schema_changes": false,
+    "ui_changes": false,
+    "trading_logic_broad_changes": false
+  },
+  "next_task_status": "paused",
+  "summary": "Added guarded auto_submit mode. Current AT/USDT:USDT remains BLOCKED by PROFITABLE_LOTS_PRESENT, so both preflight and --live verification made no queue write, no executor call, and no exchange submit."
 }
