@@ -1,12 +1,11 @@
 {
-  "task_id": "2026-04-26-004",
-  "updated_at": "2026-04-26T08:00:56+03:00",
+  "task_id": "none",
+  "updated_at": "2026-04-26T08:10:36+03:00",
   "status_kind": "next_task",
-  "status": "pending",
-  "title": "Reduced cadence BLOCKED vs READY monitoring for AT/USDT:USDT",
-  "task_type": "read_only_monitoring_task",
-  "objective": "Re-check AT/USDT:USDT BLOCKED vs READY state on a reduced monitoring cadence and report only if profitable-lot guard releases or readiness changes materially.",
-  "description": "Use a 60 min proposed cadence while profitable-lot guard keeps the symbol BLOCKED. Avoid repeated short-interval checks unless readiness_state changes, profitable_lots changes materially, or batch_ready_count becomes greater than zero.",
+  "status": "paused",
+  "title": "No pending repetitive monitoring task",
+  "task_type": "coordination_state",
+  "objective": "Repetitive monitoring for the current BLOCKED state is paused. Do not prepare another monitoring task for the same BLOCKED condition unless operational state changes materially.",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "live_exchange_action_allowed": false,
@@ -15,14 +14,10 @@
     "database_schema_changes_allowed": false,
     "secrets_allowed": false
   },
-  "suggested_command": "python scripts/supervised_batch_plan.py --symbols AT/USDT:USDT --symbol-limit 1 --max-actions-per-symbol 10 --no-write --json",
+  "suggested_command": null,
   "expected_result": {
-    "readiness_state_changed": "true/false",
-    "profitable_lots_current_count": "integer count from dry snapshot",
-    "batch_ready_count_gt_zero": "true/false",
-    "next_live_action_remains_none": "true/false",
-    "no_code_operator_conclusion": "short no-code conclusion",
-    "recommendation_for_reduced_check_cadence": "60 min while profitable-lot guard remains the only blocker"
+    "next_action": "Wait for explicit new task or material operational state change.",
+    "monitoring_status": "paused"
   },
   "write_result_to": "last_result.json",
   "append_summary_to": "task_history.json"
