@@ -1,24 +1,23 @@
 {
-  "task_id": "2026-04-26-017",
-  "updated_at": "2026-04-26T15:03:38Z",
+  "task_id": "2026-04-26-018",
+  "updated_at": "2026-04-26T15:11:41Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add read-only watcher and live confirmation hardening",
-  "result_type": "operational_hardening",
+  "title": "Add minimal Streamlit controls for automation runner",
+  "result_type": "ui_operational_control",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "code_changes_made": true,
-    "ui_changes_made": false,
+    "ui_changes_made": true,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
-    "target_roi_changed": false,
+    "api_executor_changed": false,
+    "mexc_direct_changed": false,
     "action_queue_writes": false,
-    "api_executor_live_execution": false,
-    "mexc_direct_submit_cancel_called": false,
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
     "last_result.json",
     "task_history.json",
     "docs/last_result.json",
@@ -26,65 +25,68 @@
     "docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python scripts\\automation_read_only_runner.py --help",
     "python -m py_compile scripts\\automation_read_only_runner.py",
+    "python -m py_compile app\\V2\\streamlit_app.py",
+    "python -m py_compile app\\V2\\ui\\controls_tab.py",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --once --json",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode read_only --watch --interval-sec 1 --max-iterations 2 --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live --confirm-live",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live --confirm-live --confirm-symbol AT/USDT:USDT",
     "python -c <action_queue status count>"
   ],
-  "watcher_test": {
-    "iterations": 2,
+  "ui_panel": {
+    "location_tab": "Controls",
+    "panel_name": "Limited Automation Control",
+    "buttons_added": [
+      "Check state",
+      "Auto-submit preflight",
+      "Read-only watcher sample",
+      "Protected LIVE submit"
+    ],
+    "symbol_handling": "fixed disabled AT/USDT:USDT",
+    "live_button_protection": "requires clean preflight in same UI session plus four confirmations; calls runner with --live --confirm-live --confirm-symbol AT/USDT:USDT"
+  },
+  "check_state_result": {
     "readiness_state": "BLOCKED",
     "blockers": [
       "PROFITABLE_LOTS_PRESENT"
     ],
-    "actionable_transition": false,
-    "transition_type": "NONE",
+    "decision": "blocked",
     "actual_queue_write": false,
     "actual_submit": false
   },
-  "live_confirmation_tests": {
-    "live_only": {
-      "decision": "live_confirmation_missing",
-      "actual_submit": false,
-      "actual_queue_write": false
-    },
-    "live_confirm_live_only": {
-      "decision": "live_confirmation_missing",
-      "actual_submit": false,
-      "actual_queue_write": false
-    },
-    "live_confirm_live_and_symbol": {
-      "readiness_state": "BLOCKED",
-      "decision": "blocked",
-      "actual_submit": false,
-      "actual_queue_write": false,
-      "reason": "blocked_by_PROFITABLE_LOTS_PRESENT_and_LOT_ENTRY_SPACING"
-    }
+  "preflight_result": {
+    "submit_allowed": false,
+    "decision": "blocked",
+    "actual_submit": false,
+    "actual_queue_write": false
+  },
+  "watcher_sample": {
+    "iterations": 2,
+    "actionable_transition": false,
+    "actual_queue_write": false,
+    "actual_submit": false
+  },
+  "live_protection": {
+    "requires_preflight_success": true,
+    "requires_confirmations": true,
+    "requires_confirm_symbol": true,
+    "disabled_refuses_under_blocked": true,
+    "actual_submit_under_current_state": false
   },
   "queue_after_tests": {
     "total": 8,
     "by_status": {
       "DONE": 8
-    },
-    "active_pending_armed_running": 0
-  },
-  "implementation": {
-    "watch_mode": "--watch is read_only only; emits JSONL status and stops on actionable transition or max iterations",
-    "live_confirmation": "--live requires --confirm-live and --confirm-symbol AT/USDT:USDT before any queue write/submit path can proceed",
-    "live_missing_behavior": "decision=live_confirmation_missing; actual_submit=false; actual_queue_write=false"
+    }
   },
   "safety_confirmation": {
-    "watcher_queue_writes": false,
-    "watcher_exchange_submits": false,
-    "live_submit_without_confirm_flags": false,
-    "live_submit_under_blocked": false,
-    "cancel_replace_chase": false,
+    "ui_direct_mexc_direct_submit": false,
+    "api_executor_bypassed": false,
+    "exchange_submits_during_test": false,
+    "action_queue_writes_during_blocked": false,
     "db_schema_changes": false,
-    "ui_changes": false,
-    "strategy_logic_changes": false
+    "strategy_logic_changes": false,
+    "broad_ui_redesign": false
   },
-  "summary": "Added read-only watcher mode and hardened auto_submit live path with mandatory --confirm-live and --confirm-symbol AT/USDT:USDT. Watcher wrote no queue actions and made no submits; live confirmation tests all failed closed or remained blocked."
+  "summary": "Added a minimal Limited Automation Control panel to the Controls tab. It invokes the existing automation runner via subprocess for read-only check, preflight, watcher sample, and protected live submit. Current BLOCKED state produced no queue writes and no submits."
 }

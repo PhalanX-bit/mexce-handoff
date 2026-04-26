@@ -1,7 +1,7 @@
 {
   "handoff_version": 2,
-  "updated_at": "2026-04-26T15:04:49Z",
-  "source_commit": "b2fcd24",
+  "updated_at": "2026-04-26T15:11:54Z",
+  "source_commit": "18f92fc",
   "public_base_url": "https://phalanx-bit.github.io/mexce-handoff/",
   "authoritative_source": "GitHub Pages public URL",
   "files": {
@@ -9,56 +9,56 @@
       "root_sha256": "8659d3b3927125fb87b33b6b00b54ad5c27f075da36b4f291f243a98357f5018",
       "docs_sha256": "8659d3b3927125fb87b33b6b00b54ad5c27f075da36b4f291f243a98357f5018",
       "sha256": "8659d3b3927125fb87b33b6b00b54ad5c27f075da36b4f291f243a98357f5018",
-      "public_sha256": "8659d3b3927125fb87b33b6b00b54ad5c27f075da36b4f291f243a98357f5018",
+      "public_sha256": null,
       "root_matches_docs": true,
-      "public_verified": true,
+      "public_verified": false,
       "public_url": "https://phalanx-bit.github.io/mexce-handoff/project_status.json"
     },
     "next_task.json": {
       "root_sha256": "3bbce5a82537169de942d5166441fa080aa5d6ffc9ae550937ea8f957047530a",
       "docs_sha256": "3bbce5a82537169de942d5166441fa080aa5d6ffc9ae550937ea8f957047530a",
       "sha256": "3bbce5a82537169de942d5166441fa080aa5d6ffc9ae550937ea8f957047530a",
-      "public_sha256": "3bbce5a82537169de942d5166441fa080aa5d6ffc9ae550937ea8f957047530a",
+      "public_sha256": null,
       "root_matches_docs": true,
-      "public_verified": true,
+      "public_verified": false,
       "public_url": "https://phalanx-bit.github.io/mexce-handoff/next_task.json"
     },
     "last_result.json": {
-      "root_sha256": "978a762220314426f925c9058a0f79c12806cba7a887f86578dbd109385ee05a",
-      "docs_sha256": "978a762220314426f925c9058a0f79c12806cba7a887f86578dbd109385ee05a",
-      "sha256": "978a762220314426f925c9058a0f79c12806cba7a887f86578dbd109385ee05a",
-      "public_sha256": "978a762220314426f925c9058a0f79c12806cba7a887f86578dbd109385ee05a",
+      "root_sha256": "eb5a8db65bffd10359bfd776e81099770bbb1e94161e6fc3ef50f1c573caa6ce",
+      "docs_sha256": "eb5a8db65bffd10359bfd776e81099770bbb1e94161e6fc3ef50f1c573caa6ce",
+      "sha256": "eb5a8db65bffd10359bfd776e81099770bbb1e94161e6fc3ef50f1c573caa6ce",
+      "public_sha256": null,
       "root_matches_docs": true,
-      "public_verified": true,
+      "public_verified": false,
       "public_url": "https://phalanx-bit.github.io/mexce-handoff/last_result.json"
     },
     "task_history.json": {
-      "root_sha256": "b3ab45c057eda4c2f43db41e1e811d0483efd416b8eaa55ddeb40accd946e493",
-      "docs_sha256": "b3ab45c057eda4c2f43db41e1e811d0483efd416b8eaa55ddeb40accd946e493",
-      "sha256": "b3ab45c057eda4c2f43db41e1e811d0483efd416b8eaa55ddeb40accd946e493",
-      "public_sha256": "b3ab45c057eda4c2f43db41e1e811d0483efd416b8eaa55ddeb40accd946e493",
+      "root_sha256": "1ee745288ec7d807325aad4872d53704d41fd0cd416ed51efb1b51466af500ee",
+      "docs_sha256": "1ee745288ec7d807325aad4872d53704d41fd0cd416ed51efb1b51466af500ee",
+      "sha256": "1ee745288ec7d807325aad4872d53704d41fd0cd416ed51efb1b51466af500ee",
+      "public_sha256": null,
       "root_matches_docs": true,
-      "public_verified": true,
+      "public_verified": false,
       "public_url": "https://phalanx-bit.github.io/mexce-handoff/task_history.json"
     }
   },
   "root_status": {
     "project_status.json": null,
     "next_task.json": "paused task_id=none",
-    "last_result.json": "completed task_id=2026-04-26-017",
+    "last_result.json": "completed task_id=2026-04-26-018",
     "task_history.json": null
   },
   "docs_status": {
     "project_status.json": null,
     "next_task.json": "paused task_id=none",
-    "last_result.json": "completed task_id=2026-04-26-017",
+    "last_result.json": "completed task_id=2026-04-26-018",
     "task_history.json": null
   },
   "public_status": {
     "project_status.json": null,
-    "next_task.json": "paused task_id=none",
-    "last_result.json": "completed task_id=2026-04-26-017",
+    "next_task.json": null,
+    "last_result.json": null,
     "task_history.json": null
   },
-  "overall_public_verified": true
+  "overall_public_verified": false
 }

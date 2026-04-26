@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T15:03:38Z",
+  "updated_at": "2026-04-26T15:11:41Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-018",
+      "title": "Add minimal Streamlit controls for automation runner",
+      "status": "completed",
+      "completed_at": "2026-04-26T15:11:41Z",
+      "result_summary": "Added Limited Automation Control panel in Controls tab using runner subprocess; read-only/preflight/watcher controls work and protected live requires clean preflight plus confirmations."
+    },
     {
       "task_id": "2026-04-26-017",
       "title": "Add read-only watcher and live confirmation hardening",
