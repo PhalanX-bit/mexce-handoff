@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T09:49:00+03:00",
+  "updated_at": "2026-04-26T10:04:00+03:00",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-013",
+      "title": "Watch for first actionable transition",
+      "status": "completed",
+      "completed_at": "2026-04-26T10:04:00+03:00",
+      "result_summary": "Classification is STILL_BLOCKED_WAIT: profitable_lots=5, target_reached_lots=0, eligible_lots=0, no close/trim candidate, no queue conflicts, and no queue/exchange action taken."
+    },
     {
       "task_id": "2026-04-26-012",
       "title": "Diagnose harvest / close candidate logic for profitable lots",

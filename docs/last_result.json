@@ -1,20 +1,20 @@
 {
-  "task_id": "2026-04-26-012",
-  "updated_at": "2026-04-26T09:49:00+03:00",
+  "task_id": "2026-04-26-013",
+  "updated_at": "2026-04-26T10:04:00+03:00",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Diagnose harvest / close candidate logic for profitable lots",
-  "result_type": "read_only_diagnostic",
+  "title": "Watch for first actionable transition",
+  "result_type": "read_only_observation",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "code_changes_made": false,
     "ui_changes_made": false,
     "database_schema_changes_made": false,
-    "strategy_logic_changed": false,
-    "guard_logic_changed": false,
+    "strategy_config_changed": false,
+    "target_roi_changed": false,
+    "action_queue_writes": false,
     "api_executor_called": false,
     "mexc_direct_submit_cancel_called": false,
-    "action_queue_writes": false,
     "live_exchange_action_taken": false
   },
   "changed_files": [
@@ -29,88 +29,67 @@
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_enqueue --once --json --preview-intent",
     "python scripts\\supervised_lot_risk_report.py --symbol AT/USDT:USDT --side LONG --json",
     "python scripts\\diagnose_profitable_lot_block.py --symbol AT/USDT:USDT --json",
-    "python scripts\\supervised_strategy_step.py --symbol AT/USDT:USDT --json --include-raw --no-audit-log",
-    "python -c \"from core.reconcile_service import db_conn ... select count(*) from action_queue\""
+    "python scripts\\supervised_strategy_step.py --symbol AT/USDT:USDT --json --include-raw --no-audit-log"
   ],
-  "profitable_lots_summary": {
-    "count": 4,
-    "side": "LONG",
-    "qty_contracts_each": 1.0,
-    "entry_price_range": [
-      0.16316,
-      0.16377
+  "strategy_state": {
+    "readiness_state": "BLOCKED",
+    "blockers": [
+      "PROFITABLE_LOTS_PRESENT",
+      "LOT_ENTRY_SPACING"
     ],
-    "current_price_used": 0.16458,
-    "roi_pct_range": [
-      24.72980399340554,
-      43.51556754106413
-    ],
-    "oldest_opened_at": "2026-04-25T05:44:14+00:00",
-    "newest_opened_at": "2026-04-25T07:26:32+00:00"
+    "candidate_exists": true,
+    "candidate_type": "OPEN_LIMIT",
+    "decision": "blocked",
+    "enqueue_allowed_now": false,
+    "actual_queue_write": false,
+    "strategy_decision_kind": "OPEN_LIMIT",
+    "strategy_decision_side": "LONG"
   },
-  "harvest_close_thresholds": {
-    "take_profit_threshold": "Per-lot target_price derived from target_roi_pct; no separate take_profit field found in supervised config.",
-    "harvest_threshold": "Portfolio harvest scan exists, but current portfolio_harvest_context has harvest_scan_active=false and confirmed_harvest_ready=false.",
-    "close_profitable_lot_threshold": "Lot close eligibility requires target reached, not merely roi_pct > 0.",
-    "trim_threshold": "regime_params.trim_winner_pct=10.0 in RECOVERY; safe_mode_one_contract makes actual trim size 1 contract once close is eligible.",
-    "roi_target_pct": 200.0,
-    "price_target": "LONG lot eligible when current_price >= lot.target_price; current nearest target gap is about 310 bps.",
-    "cooldown_age_condition": "cooldown_left=0.0; no minimum lot age condition found in supervised close eligibility.",
-    "opposite_hedge_condition": "Close logic can run in hedged state; current LONG=8, SHORT=394. Opposite leg exists, but target readiness is false.",
-    "gross_net_exposure_condition": "gross_cap passes: gross=402, cap=420. Imbalance is high at 49.25 and open_class=HEDGE.",
-    "close_priority_over_open": "Close branch is evaluated before open branch when lot_trim_ready or leg_trim_ready; currently both are false."
-  },
-  "why_no_close_candidate_now": {
-    "current_roi_pct_range": [
-      24.72980399340554,
-      43.51556754106413
-    ],
-    "required_roi_or_price_threshold": "target_roi_pct=200.0; target_move_pct=4.0% at 50x leverage; lot target prices around 0.1696864-0.1703208",
-    "gap_to_threshold": "nearest_target_gap_bps about 310; target_reached_lots=0",
-    "blocked_by_cooldown_age": false,
-    "blocked_by_missing_opposite_leg": false,
-    "blocked_by_config_mode": "No. Close logic is implemented, but eligibility is target-based and current lots are below target.",
-    "close_logic_implemented_in_supervised_flow": true,
-    "strategy_trace": {
-      "state": "HEDGED_HEDGE",
-      "open_class": "HEDGE",
-      "close_class": "LEG_TRIM",
-      "lot_trim_ready": false,
-      "leg_trim_ready": false,
-      "long_ready": false,
-      "short_ready": false,
-      "eligible_lots": 0,
-      "decision_kind": "OPEN_LIMIT",
-      "decision_side": "LONG",
-      "decision_note": "auto: hedge LONG | regime=RECOVERY | ratio=49.250"
-    }
-  },
-  "strategy_decision_trace": {
-    "file_function": "core/streamlit_services/strategy_engine.py::evaluate_strategy_state via core/supervised_strategy_runner.py::prepare_strategy_step",
-    "decision_input": "live ticker, live positions, position_lots, portfolio priority summary, config parameters",
-    "decision_output": "OPEN_LIMIT LONG qty=1 at 0.164587665; later blocked by supervised_batch_plan profitable-lot guard",
-    "reason_open_candidate_remains_blocked_instead_of_close": "Close branch requires lot_trim_ready or leg_trim_ready. compute_eligible_lots_df marks lots eligible only at target_price; all profitable lots have positive ROI but target_reached=false."
+  "lot_state": {
+    "profitable_lots": 5,
+    "eligible_lots": 0,
+    "target_reached_lots": 0,
+    "highest_roi_lot": 6,
+    "highest_roi_pct": 49.33807305712185,
+    "nearest_target_lot": 6,
+    "current_price_used": 0.16477,
+    "nearest_target_price": 0.16968640000000001,
+    "gap_to_target_bps": 298.3795593858115,
+    "lot_trim_ready": false,
+    "leg_trim_ready": false
   },
   "queue_order_context": {
+    "active_pending_armed_running_actions": 0,
+    "open_orders": 0,
     "close_actions_in_queue": 0,
-    "close_open_orders": 0,
-    "lot_realizations_markers": 0,
-    "conflicts": 0,
-    "action_queue_count_after_diagnostic": 8
+    "conflicts": 0
   },
-  "operational_interpretation": {
-    "is_no_close_currently_correct": true,
-    "condition_to_generate_close_harvest": "At least one LONG lot reaches its target_price / 200% ROI target, or portfolio harvest scan becomes active and confirmed/micro harvest ready.",
-    "wait_vs_code_change": "With current code/config, this is a wait state. Future code change may be considered only if the intended policy is to harvest earlier than the 200% lot target.",
-    "safest_next_step": "Wait; do not close manually from this diagnostic state."
+  "transition_classification": {
+    "result": "STILL_BLOCKED_WAIT",
+    "reason": "profitable_lots > 0, target_reached_lots=0, eligible_lots=0, no close/trim candidate, and OPEN_LIMIT remains blocked by profitable-lot plus lot-spacing guards."
+  },
+  "preview_payloads": {
+    "close_preview_payload": null,
+    "enqueue_preview_payload": {
+      "symbol": "AT/USDT:USDT",
+      "panel_mode": "OPEN",
+      "intent": "open",
+      "side": "LONG",
+      "order_type": "limit",
+      "qty": 1.0,
+      "limit_price": 0.16463764,
+      "reduce_only": 0,
+      "enqueue_allowed_now": false
+    }
   },
   "safety_confirmation": {
+    "code_changes": false,
     "action_queue_writes": false,
     "exchange_submits": false,
     "cancels_replaces": false,
     "api_executor_called": false,
-    "strategy_logic_changed": false,
-    "ui_schema_changes": false
+    "ui_schema_changes": false,
+    "strategy_config_changes": false
   },
   "next_task_status": "paused"
 }
