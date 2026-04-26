@@ -1,24 +1,24 @@
 {
-  "task_id": "2026-04-26-015",
-  "updated_at": "2026-04-26T14:42:52Z",
+  "task_id": "2026-04-26-016",
+  "updated_at": "2026-04-26T14:51:43Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Pre-live safety validation for limited auto_submit",
-  "result_type": "safety_validation",
+  "title": "Read-only contract meta validation for AT/USDT:USDT",
+  "result_type": "read_only_meta_validation",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "code_changes_made": true,
-    "code_change_reason": "Added hard allowlist fail-closed check for the one-symbol automation bridge.",
+    "code_change_reason": "Added read-only reporting script only; no execution behavior changed.",
     "ui_changes_made": false,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
     "action_queue_writes": false,
-    "api_executor_live_execution": false,
+    "api_executor_called": false,
     "mexc_direct_submit_cancel_called": false,
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
+    "scripts/validate_contract_meta.py",
     "last_result.json",
     "task_history.json",
     "docs/last_result.json",
@@ -26,67 +26,69 @@
     "docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python scripts\\automation_read_only_runner.py --help",
-    "python -m py_compile scripts\\automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --mode auto_submit --once --json",
-    "python scripts\\automation_read_only_runner.py --symbol BTC/USDT:USDT --mode auto_submit --once --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode no_such_mode --once --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live",
-    "python -c <qty/market validator check>",
-    "python -c <action_queue hygiene query>",
-    "python -c <contract precision/min qty query>",
-    "python -c <reconcile signature check>"
+    "python -m py_compile scripts\\validate_contract_meta.py",
+    "python scripts\\validate_contract_meta.py --symbol AT/USDT:USDT --preview-price 0.16305843 --json",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json"
   ],
-  "fail_closed_tests": {
-    "missing_symbol": "argparse error; required --symbol; no submit",
-    "wrong_symbol": "ValueError: symbol not allowlisted; no planning/queue/submit",
-    "unknown_mode": "argparse invalid choice; no submit",
-    "auto_submit_without_live": "BLOCKED; submit_allowed=false; actual_submit=false; actual_queue_write=false",
-    "auto_submit_with_live_under_blocked": "BLOCKED; live_exchange_action_allowed=false; actual_submit=false; actual_queue_write=false",
-    "qty_gt_1_validation": "fail closed: qty_above_auto_submit_limit",
-    "market_validation": "fail closed: market_or_non_limit_order_forbidden"
-  },
-  "action_queue_hygiene": {
-    "total_actions": 8,
-    "pending": 0,
-    "arm": 0,
-    "armed": 0,
-    "running": 0,
-    "at_usdt_actions": 8,
-    "other_symbol_actions": 0,
-    "failed_canceled_done": "DONE=8; FAILED=0; CANCELED=0",
-    "conflict_risk": "none from active queue; no pending/armed/running actions"
-  },
-  "precision_min_qty": {
-    "symbol": "AT/USDT:USDT",
+  "symbol_normalization": {
+    "input_symbol": "AT/USDT:USDT",
     "raw_symbol": "AT_USDT",
-    "price_tick": null,
-    "qty_step": null,
-    "min_qty": null,
-    "price_precision": null,
-    "qty_precision": null,
-    "max_leverage": 50,
-    "qty_1_valid": true,
-    "preview_limit_price": 0.16459766,
-    "rounded_limit_price": 0.16459766,
-    "rounding_valid": true,
-    "order_type": "LIMIT",
-    "note": "contract meta fell back to local/symbol state where tick/step were unavailable; current normalization still validates qty=1 and LIMIT price > 0."
+    "exchange_symbol_recognized": true
   },
-  "reconcile_readiness": {
-    "checked": true,
-    "result": "reconcile_action import/signature available",
-    "limitation": "No safe no-action reconcile probe exists without an action_id; no reconcile call was made."
+  "live_contract_meta": {
+    "price_tick": 1e-05,
+    "priceUnit": 1e-05,
+    "qty_step": 1,
+    "volUnit": 1,
+    "min_qty": 1,
+    "minVol": 1,
+    "price_precision": 5,
+    "priceScale": 5,
+    "qty_precision": 0,
+    "volScale": 0,
+    "max_leverage": 50,
+    "maxLeverage": 50,
+    "contract_size": 1,
+    "contractSize": 1,
+    "api_allowed": true,
+    "detail_source": "live_contract_detail_all_symbols"
+  },
+  "market_snapshot": {
+    "lastPrice": 0.16349,
+    "bid1": 0.16305,
+    "ask1": 0.16474,
+    "fairPrice": 0.16364,
+    "indexPrice": 0.16364,
+    "timestamp": 1777215070757
+  },
+  "validation": {
+    "qty_1_valid": true,
+    "preview_limit_price": 0.16305843,
+    "raw_preview_price_valid_for_tick": false,
+    "rounded_limit_price": 0.16305,
+    "price_valid_for_tick": true,
+    "price_valid_for_precision": true,
+    "limit_order_format_valid": true,
+    "formatted_price": "0.16305",
+    "formatted_vol": "1",
+    "precision_error_risk": false
+  },
+  "runner_integration": {
+    "why_previous_report_had_null_meta": "Previous report used get_contract_meta(symbol); AT_USDT symbol-specific contract detail can miss the row and fall back to symbols_state/null fields. All-symbol live contract detail does include AT_USDT.",
+    "runner_submit_path_uses_live_meta": false,
+    "runner_submit_path_fallback": "Submit formatting falls back to live ticker precision for price and integer volume formatting when get_contract_meta lacks tick/scale.",
+    "reporting_fix_needed": true,
+    "reporting_fix_added": true,
+    "execution_behavior_changed": false
   },
   "safety_confirmation": {
     "exchange_submits": false,
     "action_queue_writes": false,
     "cancels_replaces": false,
-    "api_executor_live_execution": false,
+    "api_executor_called": false,
     "db_schema_changes": false,
     "ui_changes": false,
     "strategy_logic_changes": false
   },
-  "summary": "Pre-live safety validation completed. Fail-closed CLI checks passed, hard one-symbol allowlist added, current BLOCKED state prevents queue writes and submits even with --live, queue is clean, and qty=1/LIMIT validation passes."
+  "summary": "Live contract detail confirms AT_USDT supports qty=1 LIMIT orders: priceUnit=0.00001, volUnit=1, minVol=1, priceScale=5, volScale=0, maxLeverage=50. Preview price 0.16305843 formats to valid 0.16305 with no precision error risk."
 }
