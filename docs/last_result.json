@@ -1,13 +1,16 @@
 {
-  "task_id": "2026-04-26-007",
-  "updated_at": "2026-04-26T08:38:11+03:00",
+  "task_id": "2026-04-26-008",
+  "updated_at": "2026-04-26T08:51:30+03:00",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Create automated read-only runner for 1-symbol supervised automation bridge",
+  "title": "Create auto-enqueue mode for 1-symbol supervised automation bridge",
   "result_type": "implementation_verification",
   "scope": {
     "symbol": "AT/USDT:USDT",
-    "mode": "read_only",
+    "modes": [
+      "read_only",
+      "auto_enqueue"
+    ],
     "code_changes_made": true,
     "ui_changes_made": false,
     "database_schema_changes_made": false,
@@ -15,8 +18,7 @@
     "strategy_logic_changed": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false,
-    "automation_runner_created": true,
-    "auto_enqueue_created": false,
+    "auto_enqueue_created": true,
     "auto_submit_created": false,
     "live_exchange_action_taken": false,
     "approval_token_used": false
@@ -32,9 +34,16 @@
   "commands_run": [
     "python scripts\\automation_read_only_runner.py --help",
     "python -m py_compile scripts\\automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --once --json"
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --once --json",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_enqueue --once --json",
+    "python -c \"from core.reconcile_service import db_conn ... select count(*) from action_queue\""
   ],
-  "sample_output_summary": {
+  "queue_write_verification": {
+    "action_queue_count_before_auto_enqueue": 8,
+    "action_queue_count_after_auto_enqueue": 8,
+    "action_queue_writes_under_blocked": false
+  },
+  "read_only_sample": {
     "mode": "read_only",
     "symbol": "AT/USDT:USDT",
     "readiness_state": "BLOCKED",
@@ -46,20 +55,38 @@
     "candidate_kind": "OPEN_LIMIT",
     "candidate_side": "LONG",
     "candidate_qty": 1.0,
-    "candidate_price": 0.16413789,
+    "candidate_price": 0.16445773,
+    "actual_queue_write": false,
     "live_exchange_action_allowed": false,
-    "queue_write_allowed": false,
-    "ready_count": 0,
-    "blocked_count": 1
+    "queue_write_allowed": false
+  },
+  "auto_enqueue_sample": {
+    "mode": "auto_enqueue",
+    "symbol": "AT/USDT:USDT",
+    "readiness_state": "BLOCKED",
+    "blockers": [
+      "PROFITABLE_LOTS_PRESENT"
+    ],
+    "decision": "blocked",
+    "candidate_exists": true,
+    "candidate_kind": "OPEN_LIMIT",
+    "candidate_side": "LONG",
+    "candidate_qty": 1.0,
+    "candidate_price": 0.16441775000000003,
+    "queue_write_allowed": true,
+    "actual_queue_write": false,
+    "enqueued_action_id": null,
+    "live_exchange_action_allowed": false
   },
   "safety_confirmation": {
-    "action_queue_writes": false,
+    "action_queue_writes_under_blocked": false,
     "exchange_submits": false,
     "cancels_replaces": false,
     "db_schema_changes": false,
     "ui_changes": false,
-    "trading_logic_changes": false
+    "trading_logic_changes": false,
+    "read_only_mode_preserved": true
   },
   "next_task_status": "paused",
-  "no_code_conclusion": "The first automation bridge step now exists as a read-only one-symbol runner. It observes READY/BLOCKED and guards without queue writes or exchange actions."
+  "no_code_conclusion": "The one-symbol runner now supports auto_enqueue mode. In the current BLOCKED state it does not write to action_queue; when READY and all guards pass, it is constrained to enqueue exactly one ARMED LIMIT action and still never submits to the exchange."
 }

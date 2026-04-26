@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T08:38:11+03:00",
+  "updated_at": "2026-04-26T08:51:30+03:00",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-008",
+      "title": "Create auto-enqueue mode for 1-symbol supervised automation bridge",
+      "status": "completed",
+      "completed_at": "2026-04-26T08:51:30+03:00",
+      "result_summary": "Extended scripts/automation_read_only_runner.py with auto_enqueue mode; current AT/USDT:USDT state remains BLOCKED, so actual_queue_write=false and action_queue count stayed unchanged at 8."
+    },
     {
       "task_id": "2026-04-26-007",
       "title": "Create automated read-only runner for 1-symbol supervised automation bridge",
