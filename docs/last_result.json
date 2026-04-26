@@ -1,80 +1,42 @@
 {
-  "task_id": "2026-04-26-009",
-  "updated_at": "2026-04-26T09:20:30+03:00",
+  "task_id": "2026-04-26-010",
+  "updated_at": "2026-04-26T09:25:30+03:00",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Validate auto_enqueue READY path without exchange submit",
-  "result_type": "implementation_verification",
+  "title": "Validate real READY to auto_enqueue write when state becomes READY",
+  "result_type": "operational_validation",
   "scope": {
     "symbol": "AT/USDT:USDT",
-    "mode": "auto_enqueue",
-    "preview_intent_added": true,
-    "code_changes_made": true,
+    "code_changes_made": false,
     "ui_changes_made": false,
     "database_schema_changes_made": false,
-    "trading_logic_changed": false,
-    "strategy_logic_changed": false,
-    "api_executor_changed": false,
-    "mexc_direct_changed": false,
-    "auto_submit_created": false,
+    "api_executor_called": false,
+    "mexc_direct_submit_cancel_called": false,
     "live_exchange_action_taken": false,
-    "approval_token_used": false
+    "normal_auto_enqueue_write_attempted": false
   },
-  "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "last_result.json",
-    "task_history.json",
-    "docs/last_result.json",
-    "docs/task_history.json",
-    "docs/handoff_manifest.json"
-  ],
   "commands_run": [
-    "python scripts\\automation_read_only_runner.py --help",
-    "python -m py_compile scripts\\automation_read_only_runner.py",
+    "python -c \"from core.reconcile_service import db_conn ... select count(*) from action_queue\"",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --once --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_enqueue --once --json",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_enqueue --once --json --preview-intent",
     "python -c \"from core.reconcile_service import db_conn ... select count(*) from action_queue\""
   ],
-  "queue_write_verification": {
-    "action_queue_count_before_preview_intent": 8,
-    "action_queue_count_after_preview_intent": 8,
-    "action_queue_writes_under_blocked": false,
-    "preview_intent_action_queue_writes": false
-  },
-  "normal_auto_enqueue_sample": {
-    "mode": "auto_enqueue",
-    "symbol": "AT/USDT:USDT",
+  "state": {
     "readiness_state": "BLOCKED",
     "blockers": [
       "PROFITABLE_LOTS_PRESENT"
     ],
-    "decision": "blocked",
     "candidate_exists": true,
-    "candidate_kind": "OPEN_LIMIT",
-    "candidate_side": "LONG",
-    "candidate_qty": 1.0,
-    "candidate_price": 0.16403794,
-    "actual_queue_write": false,
-    "enqueued_action_id": null,
-    "live_exchange_action_allowed": false
-  },
-  "preview_intent_sample": {
-    "mode": "auto_enqueue",
-    "symbol": "AT/USDT:USDT",
-    "readiness_state": "BLOCKED",
-    "blockers": [
-      "PROFITABLE_LOTS_PRESENT"
-    ],
-    "decision": "blocked",
-    "candidate_exists": true,
-    "enqueue_allowed_now": false,
-    "blocked_by_guards": true,
-    "preview_intent": true,
     "preview_payload_exists": true,
+    "ready_count": 0,
+    "blocked_count": 1
+  },
+  "blocked_result": {
+    "action_queue_count_before": 8,
+    "action_queue_count_after": 8,
     "actual_queue_write": false,
     "enqueued_action_id": null,
-    "live_exchange_action_allowed": false
+    "reason": "profitable_lot_open_block: profitable_lots=4 target_reached=0 nearest_target_gap_bps=342.94770206022207"
   },
   "preview_payload_summary": {
     "symbol": "AT/USDT:USDT",
@@ -85,22 +47,21 @@
     "order_kind": "LIMIT",
     "qty": 1.0,
     "qty_unit": "contracts",
-    "limit_price": 0.163987965,
+    "limit_price": 0.16397797000000003,
     "reduce_only": 0,
     "status": "ARMED",
-    "reason": "auto: hedge LONG | regime=RECOVERY | ratio=49.250"
+    "enqueue_allowed_now": false,
+    "blocked_by_guards": true,
+    "live_exchange_action_allowed": false
   },
   "safety_confirmation": {
-    "action_queue_writes_under_blocked": false,
-    "preview_intent_action_queue_writes": false,
+    "code_changes": false,
     "exchange_submits": false,
     "cancels_replaces": false,
-    "db_schema_changes": false,
-    "ui_changes": false,
-    "trading_logic_changes": false,
-    "read_only_mode_preserved": true,
-    "auto_enqueue_normal_mode_preserved": true
+    "api_executor_called": false,
+    "action_executed": false,
+    "ui_schema_changes": false
   },
   "next_task_status": "paused",
-  "no_code_conclusion": "auto_enqueue now has a preview-intent path that exposes the exact safe LIMIT queue intent without writing to action_queue. Current state remains BLOCKED by profitable lots, so no queue write or exchange action occurred."
+  "operator_summary": "Real READY auto_enqueue write was not attempted because the live state is still BLOCKED by profitable lots. Queue count stayed unchanged at 8."
 }
