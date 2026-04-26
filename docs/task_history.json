@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T09:31:00+03:00",
+  "updated_at": "2026-04-26T09:49:00+03:00",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-012",
+      "title": "Diagnose harvest / close candidate logic for profitable lots",
+      "status": "completed",
+      "completed_at": "2026-04-26T09:49:00+03:00",
+      "result_summary": "Close/trim logic exists, but current lots are only profitable, not target-eligible: target_reached_lots=0, eligible_lots=0, long_ready=false, so strategy returns OPEN_LIMIT HEDGE which is then blocked by profitable-lot guard."
+    },
     {
       "task_id": "2026-04-26-011",
       "title": "Diagnose profitable_lot_open_block for AT/USDT:USDT",

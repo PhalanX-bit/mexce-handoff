@@ -1,24 +1,23 @@
 {
-  "task_id": "2026-04-26-011",
-  "updated_at": "2026-04-26T09:31:00+03:00",
+  "task_id": "2026-04-26-012",
+  "updated_at": "2026-04-26T09:49:00+03:00",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Diagnose profitable_lot_open_block for AT/USDT:USDT",
+  "title": "Diagnose harvest / close candidate logic for profitable lots",
   "result_type": "read_only_diagnostic",
   "scope": {
     "symbol": "AT/USDT:USDT",
-    "code_changes_made": true,
-    "diagnostic_script_added": true,
+    "code_changes_made": false,
     "ui_changes_made": false,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
+    "guard_logic_changed": false,
     "api_executor_called": false,
     "mexc_direct_submit_cancel_called": false,
     "action_queue_writes": false,
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "scripts/diagnose_profitable_lot_block.py",
     "last_result.json",
     "task_history.json",
     "docs/last_result.json",
@@ -29,98 +28,81 @@
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --once --json",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_enqueue --once --json --preview-intent",
     "python scripts\\supervised_lot_risk_report.py --symbol AT/USDT:USDT --side LONG --json",
-    "python -m py_compile scripts\\diagnose_profitable_lot_block.py",
     "python scripts\\diagnose_profitable_lot_block.py --symbol AT/USDT:USDT --json",
+    "python scripts\\supervised_strategy_step.py --symbol AT/USDT:USDT --json --include-raw --no-audit-log",
     "python -c \"from core.reconcile_service import db_conn ... select count(*) from action_queue\""
   ],
-  "guard_state": {
-    "readiness_state": "BLOCKED",
-    "blocker": "PROFITABLE_LOTS_PRESENT",
-    "profitable_lots": 4,
-    "target_reached_lots": 0,
-    "candidate_exists": true,
-    "preview_payload_exists": true,
-    "current_price_used": 0.16467,
-    "nearest_target_gap_bps": 304.6335094431289
+  "profitable_lots_summary": {
+    "count": 4,
+    "side": "LONG",
+    "qty_contracts_each": 1.0,
+    "entry_price_range": [
+      0.16316,
+      0.16377
+    ],
+    "current_price_used": 0.16458,
+    "roi_pct_range": [
+      24.72980399340554,
+      43.51556754106413
+    ],
+    "oldest_opened_at": "2026-04-25T05:44:14+00:00",
+    "newest_opened_at": "2026-04-25T07:26:32+00:00"
   },
-  "profitable_lots": [
-    {
-      "lot_id": 4,
-      "symbol": "AT/USDT:USDT",
-      "side": "LONG",
-      "status": "OPEN",
-      "entry_price": 0.16366,
-      "current_price_used": 0.16467,
-      "qty_contracts": 1.0,
-      "roi_pct": 30.856654038861386,
-      "opened_at": "2026-04-25T05:44:14+00:00",
-      "target_price": 0.1702064,
-      "target_reached": false,
-      "classification_reason": "roi_pct > 0 from lot_risk_guard.lot_roi_pct(side, entry_price, current_price, leverage)"
-    },
-    {
-      "lot_id": 5,
-      "symbol": "AT/USDT:USDT",
-      "side": "LONG",
-      "status": "OPEN",
-      "entry_price": 0.16333,
-      "current_price_used": 0.16467,
-      "qty_contracts": 1.0,
-      "roi_pct": 41.02124533153762,
-      "opened_at": "2026-04-25T06:14:33+00:00",
-      "target_price": 0.16986320000000002,
-      "target_reached": false,
-      "classification_reason": "roi_pct > 0 from lot_risk_guard.lot_roi_pct(side, entry_price, current_price, leverage)"
-    },
-    {
-      "lot_id": 6,
-      "symbol": "AT/USDT:USDT",
-      "side": "LONG",
-      "status": "OPEN",
-      "entry_price": 0.16316,
-      "current_price_used": 0.16467,
-      "qty_contracts": 1.0,
-      "roi_pct": 46.273596469723316,
-      "opened_at": "2026-04-25T06:33:16+00:00",
-      "target_price": 0.16968640000000001,
-      "target_reached": false,
-      "classification_reason": "roi_pct > 0 from lot_risk_guard.lot_roi_pct(side, entry_price, current_price, leverage)"
-    },
-    {
-      "lot_id": 7,
-      "symbol": "AT/USDT:USDT",
-      "side": "LONG",
-      "status": "OPEN",
-      "entry_price": 0.16377,
-      "current_price_used": 0.16467,
-      "qty_contracts": 1.0,
-      "roi_pct": 27.47755999267301,
-      "opened_at": "2026-04-25T07:26:32+00:00",
-      "target_price": 0.1703208,
-      "target_reached": false,
-      "classification_reason": "roi_pct > 0 from lot_risk_guard.lot_roi_pct(side, entry_price, current_price, leverage)"
+  "harvest_close_thresholds": {
+    "take_profit_threshold": "Per-lot target_price derived from target_roi_pct; no separate take_profit field found in supervised config.",
+    "harvest_threshold": "Portfolio harvest scan exists, but current portfolio_harvest_context has harvest_scan_active=false and confirmed_harvest_ready=false.",
+    "close_profitable_lot_threshold": "Lot close eligibility requires target reached, not merely roi_pct > 0.",
+    "trim_threshold": "regime_params.trim_winner_pct=10.0 in RECOVERY; safe_mode_one_contract makes actual trim size 1 contract once close is eligible.",
+    "roi_target_pct": 200.0,
+    "price_target": "LONG lot eligible when current_price >= lot.target_price; current nearest target gap is about 310 bps.",
+    "cooldown_age_condition": "cooldown_left=0.0; no minimum lot age condition found in supervised close eligibility.",
+    "opposite_hedge_condition": "Close logic can run in hedged state; current LONG=8, SHORT=394. Opposite leg exists, but target readiness is false.",
+    "gross_net_exposure_condition": "gross_cap passes: gross=402, cap=420. Imbalance is high at 49.25 and open_class=HEDGE.",
+    "close_priority_over_open": "Close branch is evaluated before open branch when lot_trim_ready or leg_trim_ready; currently both are false."
+  },
+  "why_no_close_candidate_now": {
+    "current_roi_pct_range": [
+      24.72980399340554,
+      43.51556754106413
+    ],
+    "required_roi_or_price_threshold": "target_roi_pct=200.0; target_move_pct=4.0% at 50x leverage; lot target prices around 0.1696864-0.1703208",
+    "gap_to_threshold": "nearest_target_gap_bps about 310; target_reached_lots=0",
+    "blocked_by_cooldown_age": false,
+    "blocked_by_missing_opposite_leg": false,
+    "blocked_by_config_mode": "No. Close logic is implemented, but eligibility is target-based and current lots are below target.",
+    "close_logic_implemented_in_supervised_flow": true,
+    "strategy_trace": {
+      "state": "HEDGED_HEDGE",
+      "open_class": "HEDGE",
+      "close_class": "LEG_TRIM",
+      "lot_trim_ready": false,
+      "leg_trim_ready": false,
+      "long_ready": false,
+      "short_ready": false,
+      "eligible_lots": 0,
+      "decision_kind": "OPEN_LIMIT",
+      "decision_side": "LONG",
+      "decision_note": "auto: hedge LONG | regime=RECOVERY | ratio=49.250"
     }
-  ],
-  "blocking_rule": {
-    "guard_name": "PROFITABLE_LOTS_PRESENT",
-    "condition": "block_new_open_when_profitable_lots is true AND candidate kind is OPEN_LIMIT AND profitable_count > 0",
-    "hard_or_configurable": "configurable",
-    "config_field": "block_new_open_when_profitable_lots",
-    "defined_in": "config/supervised_strategy.json and core/supervised_batch_plan.py::build_batch_candidate using core/lot_risk_guard.py::build_lot_profit_report"
+  },
+  "strategy_decision_trace": {
+    "file_function": "core/streamlit_services/strategy_engine.py::evaluate_strategy_state via core/supervised_strategy_runner.py::prepare_strategy_step",
+    "decision_input": "live ticker, live positions, position_lots, portfolio priority summary, config parameters",
+    "decision_output": "OPEN_LIMIT LONG qty=1 at 0.164587665; later blocked by supervised_batch_plan profitable-lot guard",
+    "reason_open_candidate_remains_blocked_instead_of_close": "Close branch requires lot_trim_ready or leg_trim_ready. compute_eligible_lots_df marks lots eligible only at target_price; all profitable lots have positive ROI but target_reached=false."
   },
   "queue_order_context": {
-    "active_pending_armed_running_actions": 0,
-    "done_reconcile_open_orders": 0,
-    "pending_close_actions": 0,
-    "exchange_open_orders_count": 0,
-    "pending_close_or_realization_flow": false,
+    "close_actions_in_queue": 0,
+    "close_open_orders": 0,
+    "lot_realizations_markers": 0,
+    "conflicts": 0,
     "action_queue_count_after_diagnostic": 8
   },
   "operational_interpretation": {
-    "why_blocked": "The candidate is a new OPEN_LIMIT LONG while 4 existing LONG lots are already profitable; the configured guard prevents expanding into a symbol that has profitable lots waiting for target/trim handling.",
-    "condition_to_become_ready": "profitable_count must become 0 for the candidate side or the strategy must produce a close/trim candidate that takes priority; target_reached_lots is currently 0.",
-    "manual_action_needed": false,
-    "safest_next_step": "Wait; no close/submit/cancel action was indicated by the current guard state."
+    "is_no_close_currently_correct": true,
+    "condition_to_generate_close_harvest": "At least one LONG lot reaches its target_price / 200% ROI target, or portfolio harvest scan becomes active and confirmed/micro harvest ready.",
+    "wait_vs_code_change": "With current code/config, this is a wait state. Future code change may be considered only if the intended policy is to harvest earlier than the 200% lot target.",
+    "safest_next_step": "Wait; do not close manually from this diagnostic state."
   },
   "safety_confirmation": {
     "action_queue_writes": false,
