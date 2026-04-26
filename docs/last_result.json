@@ -1,77 +1,42 @@
 {
-  "task_id": "2026-04-26-005",
-  "updated_at": "2026-04-26T08:10:36+03:00",
+  "task_id": "2026-04-26-006",
+  "updated_at": "2026-04-26T08:18:00+03:00",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Shortest safe path from supervised flow to limited automation",
-  "result_type": "design_status_output",
+  "title": "Handoff Protocol v2 with public verification manifest",
+  "result_type": "handoff_protocol_update",
   "scope": {
-    "symbol": "AT/USDT:USDT",
-    "code_changes_made": false,
+    "handoff_only": true,
+    "code_changes_made": true,
+    "trading_logic_changed": false,
+    "strategy_logic_changed": false,
+    "api_executor_changed": false,
+    "mexc_direct_changed": false,
     "ui_changes_made": false,
-    "database_schema_changes_made": false,
-    "live_exchange_action_taken": false,
-    "approval_token_used": false,
-    "broad_redesign_done": false
+    "automation_runner_created": false,
+    "live_exchange_action_taken": false
   },
-  "current_starting_point": {
-    "ready_parts": [
-      "supervised_batch_plan can produce READY/BLOCKED candidates in --no-write mode",
-      "strategy_engine already evaluates hedge/open/close decisions and key guards",
-      "queue/executor/direct-api path exists from supervised live flow",
-      "reconcile/fill_registry/lots path exists after exchange confirmation"
-    ],
-    "reliably_working_parts": [
-      "read-only market/lot/guard snapshots",
-      "BLOCKED/READY safety reporting",
-      "LIMIT-only direct API path under supervised confirmation",
-      "gross cap, profitable-lot, lot-spacing, active-queue/pending guards"
-    ]
+  "summary": "Added Handoff Protocol v2 manifest generation and public verification workflow for the four public handoff JSON files.",
+  "protocol": {
+    "handoff_version": 2,
+    "authoritative_source": "GitHub Pages public URL",
+    "manifest_path": "docs/handoff_manifest.json",
+    "sync_command": "python scripts/sync_handoff_to_docs.py",
+    "verify_public_command": "python scripts/sync_handoff_to_docs.py --verify-public"
   },
-  "minimal_automation_path": [
-    "read_only loop: run planning for one allowlisted symbol on cadence and log readiness/guards only.",
-    "auto_enqueue only: when READY, enqueue one LIMIT candidate to action_queue without exchange submit.",
-    "auto_submit: for one symbol, one contract, LIMIT only, submit queued action after all guards pass and reconcile before next action."
+  "expected_public_state": {
+    "next_task_status": "paused",
+    "old_repetitive_monitoring_pending": false,
+    "manifest_overall_public_verified": true
+  },
+  "changed_files": [
+    "scripts/sync_handoff_to_docs.py",
+    "scripts/sync_handoff_site.ps1",
+    "last_result.json",
+    "task_history.json",
+    "docs/handoff_manifest.json",
+    "docs/last_result.json",
+    "docs/task_history.json"
   ],
-  "exact_modules_needed": [
-    {
-      "module": "scripts/supervised_batch_plan.py",
-      "role": "CLI entry for automated read-only runner."
-    },
-    {
-      "module": "core/supervised_batch_plan.py",
-      "role": "Build candidates and expose READY/BLOCKED batch state."
-    },
-    {
-      "module": "core/supervised_strategy_runner.py",
-      "role": "Single-symbol proposal, guard, and safety evaluation."
-    },
-    {
-      "module": "core/streamlit_services/queue_service.py",
-      "role": "Minimal enqueue target for READY candidates in auto_enqueue mode."
-    },
-    {
-      "module": "core/api_executor.py",
-      "role": "Existing queue execution path for later auto_submit mode."
-    }
-  ],
-  "required_modes": [
-    "read_only",
-    "auto_enqueue",
-    "auto_submit"
-  ],
-  "hard_safety_rules": [
-    "Allowlist exactly one symbol initially.",
-    "Force one contract per action.",
-    "LIMIT orders only.",
-    "No submit while profitable-lot guard blocks.",
-    "Require lot-entry spacing pass.",
-    "Require gross cap pass before enqueue and submit.",
-    "Require no active queue or legacy pending conflict.",
-    "Reconcile after every submit before another submit."
-  ],
-  "no_code_conclusion": {
-    "next_code_step": "A) automated read-only runner",
-    "reason": "It validates cadence, logging, state transitions, and guard stability before any queue writes or exchange risk."
-  }
+  "no_code_conclusion": "Handoff reliability should be verified against public GitHub Pages before operational decisions or automation bridge work."
 }

@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T08:10:36+03:00",
+  "updated_at": "2026-04-26T08:18:00+03:00",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-006",
+      "title": "Create Handoff Protocol v2 with public verification manifest",
+      "status": "completed",
+      "completed_at": "2026-04-26T08:18:00+03:00",
+      "result_summary": "Added manifest-based public verification for handoff files; public Pages is authoritative for operational handoff decisions."
+    },
     {
       "task_id": "2026-04-26-005",
       "title": "Plan shortest safe path to limited automation",
