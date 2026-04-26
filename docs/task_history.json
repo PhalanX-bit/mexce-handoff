@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T14:51:43Z",
+  "updated_at": "2026-04-26T15:03:38Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-017",
+      "title": "Add read-only watcher and live confirmation hardening",
+      "status": "completed",
+      "completed_at": "2026-04-26T15:03:38Z",
+      "result_summary": "Added read-only --watch and required --live --confirm-live --confirm-symbol AT/USDT:USDT; watcher and live-confirm tests made no queue writes and no submits."
+    },
     {
       "task_id": "2026-04-26-016",
       "title": "Read-only contract meta validation for AT/USDT:USDT",

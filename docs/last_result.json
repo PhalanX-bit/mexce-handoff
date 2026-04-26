@@ -1,24 +1,24 @@
 {
-  "task_id": "2026-04-26-016",
-  "updated_at": "2026-04-26T14:51:43Z",
+  "task_id": "2026-04-26-017",
+  "updated_at": "2026-04-26T15:03:38Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Read-only contract meta validation for AT/USDT:USDT",
-  "result_type": "read_only_meta_validation",
+  "title": "Add read-only watcher and live confirmation hardening",
+  "result_type": "operational_hardening",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "code_changes_made": true,
-    "code_change_reason": "Added read-only reporting script only; no execution behavior changed.",
     "ui_changes_made": false,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
+    "target_roi_changed": false,
     "action_queue_writes": false,
-    "api_executor_called": false,
+    "api_executor_live_execution": false,
     "mexc_direct_submit_cancel_called": false,
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "scripts/validate_contract_meta.py",
+    "scripts/automation_read_only_runner.py",
     "last_result.json",
     "task_history.json",
     "docs/last_result.json",
@@ -26,69 +26,65 @@
     "docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\validate_contract_meta.py",
-    "python scripts\\validate_contract_meta.py --symbol AT/USDT:USDT --preview-price 0.16305843 --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json"
+    "python scripts\\automation_read_only_runner.py --help",
+    "python -m py_compile scripts\\automation_read_only_runner.py",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode read_only --watch --interval-sec 1 --max-iterations 2 --json",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live --confirm-live",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live --confirm-live --confirm-symbol AT/USDT:USDT",
+    "python -c <action_queue status count>"
   ],
-  "symbol_normalization": {
-    "input_symbol": "AT/USDT:USDT",
-    "raw_symbol": "AT_USDT",
-    "exchange_symbol_recognized": true
+  "watcher_test": {
+    "iterations": 2,
+    "readiness_state": "BLOCKED",
+    "blockers": [
+      "PROFITABLE_LOTS_PRESENT"
+    ],
+    "actionable_transition": false,
+    "transition_type": "NONE",
+    "actual_queue_write": false,
+    "actual_submit": false
   },
-  "live_contract_meta": {
-    "price_tick": 1e-05,
-    "priceUnit": 1e-05,
-    "qty_step": 1,
-    "volUnit": 1,
-    "min_qty": 1,
-    "minVol": 1,
-    "price_precision": 5,
-    "priceScale": 5,
-    "qty_precision": 0,
-    "volScale": 0,
-    "max_leverage": 50,
-    "maxLeverage": 50,
-    "contract_size": 1,
-    "contractSize": 1,
-    "api_allowed": true,
-    "detail_source": "live_contract_detail_all_symbols"
+  "live_confirmation_tests": {
+    "live_only": {
+      "decision": "live_confirmation_missing",
+      "actual_submit": false,
+      "actual_queue_write": false
+    },
+    "live_confirm_live_only": {
+      "decision": "live_confirmation_missing",
+      "actual_submit": false,
+      "actual_queue_write": false
+    },
+    "live_confirm_live_and_symbol": {
+      "readiness_state": "BLOCKED",
+      "decision": "blocked",
+      "actual_submit": false,
+      "actual_queue_write": false,
+      "reason": "blocked_by_PROFITABLE_LOTS_PRESENT_and_LOT_ENTRY_SPACING"
+    }
   },
-  "market_snapshot": {
-    "lastPrice": 0.16349,
-    "bid1": 0.16305,
-    "ask1": 0.16474,
-    "fairPrice": 0.16364,
-    "indexPrice": 0.16364,
-    "timestamp": 1777215070757
+  "queue_after_tests": {
+    "total": 8,
+    "by_status": {
+      "DONE": 8
+    },
+    "active_pending_armed_running": 0
   },
-  "validation": {
-    "qty_1_valid": true,
-    "preview_limit_price": 0.16305843,
-    "raw_preview_price_valid_for_tick": false,
-    "rounded_limit_price": 0.16305,
-    "price_valid_for_tick": true,
-    "price_valid_for_precision": true,
-    "limit_order_format_valid": true,
-    "formatted_price": "0.16305",
-    "formatted_vol": "1",
-    "precision_error_risk": false
-  },
-  "runner_integration": {
-    "why_previous_report_had_null_meta": "Previous report used get_contract_meta(symbol); AT_USDT symbol-specific contract detail can miss the row and fall back to symbols_state/null fields. All-symbol live contract detail does include AT_USDT.",
-    "runner_submit_path_uses_live_meta": false,
-    "runner_submit_path_fallback": "Submit formatting falls back to live ticker precision for price and integer volume formatting when get_contract_meta lacks tick/scale.",
-    "reporting_fix_needed": true,
-    "reporting_fix_added": true,
-    "execution_behavior_changed": false
+  "implementation": {
+    "watch_mode": "--watch is read_only only; emits JSONL status and stops on actionable transition or max iterations",
+    "live_confirmation": "--live requires --confirm-live and --confirm-symbol AT/USDT:USDT before any queue write/submit path can proceed",
+    "live_missing_behavior": "decision=live_confirmation_missing; actual_submit=false; actual_queue_write=false"
   },
   "safety_confirmation": {
-    "exchange_submits": false,
-    "action_queue_writes": false,
-    "cancels_replaces": false,
-    "api_executor_called": false,
+    "watcher_queue_writes": false,
+    "watcher_exchange_submits": false,
+    "live_submit_without_confirm_flags": false,
+    "live_submit_under_blocked": false,
+    "cancel_replace_chase": false,
     "db_schema_changes": false,
     "ui_changes": false,
     "strategy_logic_changes": false
   },
-  "summary": "Live contract detail confirms AT_USDT supports qty=1 LIMIT orders: priceUnit=0.00001, volUnit=1, minVol=1, priceScale=5, volScale=0, maxLeverage=50. Preview price 0.16305843 formats to valid 0.16305 with no precision error risk."
+  "summary": "Added read-only watcher mode and hardened auto_submit live path with mandatory --confirm-live and --confirm-symbol AT/USDT:USDT. Watcher wrote no queue actions and made no submits; live confirmation tests all failed closed or remained blocked."
 }
