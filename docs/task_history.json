@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T08:51:30+03:00",
+  "updated_at": "2026-04-26T09:20:30+03:00",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-26-009",
+      "title": "Validate auto_enqueue READY path without exchange submit",
+      "status": "completed",
+      "completed_at": "2026-04-26T09:20:30+03:00",
+      "result_summary": "Added --preview-intent to auto_enqueue mode; preview shows the exact OPEN LIMIT queue payload while actual_queue_write=false and action_queue count stayed unchanged at 8."
+    },
     {
       "task_id": "2026-04-26-008",
       "title": "Create auto-enqueue mode for 1-symbol supervised automation bridge",
