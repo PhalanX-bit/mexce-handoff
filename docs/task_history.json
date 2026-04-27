@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-26T15:11:41Z",
+  "updated_at": "2026-04-27T10:38:30Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-27-001",
+      "title": "Allow limited auto_submit for reduce-only CLOSE_LIMIT trim",
+      "status": "completed",
+      "completed_at": "2026-04-27T10:38:30Z",
+      "result_summary": "Limited auto_submit preflight now accepts safe reduce-only CLOSE_LIMIT trim qty=1 while keeping LIMIT-only, qty<=1, non-reduce close blocked, and live confirmation protections; no queue write or exchange submit."
+    },
     {
       "task_id": "2026-04-26-018",
       "title": "Add minimal Streamlit controls for automation runner",

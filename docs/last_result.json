@@ -1,14 +1,14 @@
 {
-  "task_id": "2026-04-26-018",
-  "updated_at": "2026-04-26T15:11:41Z",
+  "task_id": "2026-04-27-001",
+  "updated_at": "2026-04-27T10:38:30Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add minimal Streamlit controls for automation runner",
-  "result_type": "ui_operational_control",
+  "title": "Allow limited auto_submit for reduce-only CLOSE_LIMIT trim",
+  "result_type": "automation_guard_preflight",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "code_changes_made": true,
-    "ui_changes_made": true,
+    "ui_changes_made": false,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
     "api_executor_changed": false,
@@ -17,76 +17,60 @@
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "app/V2/ui/controls_tab.py",
+    "scripts/automation_read_only_runner.py",
+    "scripts/test_automation_read_only_runner.py",
     "last_result.json",
     "task_history.json",
-    "docs/last_result.json",
-    "docs/task_history.json",
-    "docs/handoff_manifest.json"
+    "mexce-handoff/docs/last_result.json",
+    "mexce-handoff/docs/task_history.json",
+    "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py",
-    "python -m py_compile app\\V2\\streamlit_app.py",
-    "python -m py_compile app\\V2\\ui\\controls_tab.py",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --once --json",
+    "python -m py_compile scripts\\automation_read_only_runner.py scripts\\test_automation_read_only_runner.py core\\supervised_strategy_runner.py",
+    "python core\\test_supervised_strategy_runner.py",
+    "python scripts\\test_automation_read_only_runner.py",
+    "python scripts\\automation_read_only_runner.py --help",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode read_only --watch --interval-sec 1 --max-iterations 2 --json",
-    "python -c <action_queue status count>"
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live --confirm-live"
   ],
-  "ui_panel": {
-    "location_tab": "Controls",
-    "panel_name": "Limited Automation Control",
-    "buttons_added": [
-      "Check state",
-      "Auto-submit preflight",
-      "Read-only watcher sample",
-      "Protected LIVE submit"
-    ],
-    "symbol_handling": "fixed disabled AT/USDT:USDT",
-    "live_button_protection": "requires clean preflight in same UI session plus four confirmations; calls runner with --live --confirm-live --confirm-symbol AT/USDT:USDT"
-  },
-  "check_state_result": {
-    "readiness_state": "BLOCKED",
-    "blockers": [
-      "PROFITABLE_LOTS_PRESENT"
-    ],
-    "decision": "blocked",
-    "actual_queue_write": false,
-    "actual_submit": false
-  },
   "preflight_result": {
-    "submit_allowed": false,
-    "decision": "blocked",
+    "readiness_state": "READY_FOR_BATCH_APPROVAL",
+    "blockers": [],
+    "safety_overall": "PASS",
+    "candidate_type": "CLOSE_LIMIT",
+    "reduce_only": 1,
+    "qty": 1.0,
+    "submit_allowed": true,
+    "decision": "ready_auto_submit_preflight",
     "actual_submit": false,
-    "actual_queue_write": false
-  },
-  "watcher_sample": {
-    "iterations": 2,
-    "actionable_transition": false,
     "actual_queue_write": false,
-    "actual_submit": false
+    "reason": "reduce-only CLOSE_LIMIT trim candidate is clean and eligible for limited auto_submit preflight"
   },
-  "live_protection": {
-    "requires_preflight_success": true,
-    "requires_confirmations": true,
-    "requires_confirm_symbol": true,
-    "disabled_refuses_under_blocked": true,
-    "actual_submit_under_current_state": false
-  },
-  "queue_after_tests": {
-    "total": 8,
-    "by_status": {
-      "DONE": 8
-    }
+  "live_guard_tests": {
+    "live_without_confirmations": {
+      "decision": "live_confirmation_missing",
+      "actual_submit": false,
+      "actual_queue_write": false
+    },
+    "live_with_partial_confirmations": {
+      "decision": "live_confirmation_missing",
+      "actual_submit": false,
+      "actual_queue_write": false
+    },
+    "live_with_full_confirmations_executed": false,
+    "full_confirmation_not_executed_reason": "User preference was verification only; no explicit live run requested for this task."
   },
   "safety_confirmation": {
-    "ui_direct_mexc_direct_submit": false,
-    "api_executor_bypassed": false,
-    "exchange_submits_during_test": false,
-    "action_queue_writes_during_blocked": false,
+    "open_limit_rules_changed": false,
+    "market_allowed": false,
+    "qty_above_one_allowed": false,
+    "non_reduce_only_close_allowed": false,
+    "cancel_replace_chase": false,
+    "exchange_submit_during_task": false,
     "db_schema_changes": false,
-    "strategy_logic_changes": false,
-    "broad_ui_redesign": false
+    "ui_changes": false,
+    "strategy_logic_broad_changes": false
   },
-  "summary": "Added a minimal Limited Automation Control panel to the Controls tab. It invokes the existing automation runner via subprocess for read-only check, preflight, watcher sample, and protected live submit. Current BLOCKED state produced no queue writes and no submits."
+  "summary": "Extended limited auto_submit validation to allow safe reduce-only CLOSE_LIMIT trim candidates with qty<=1 while preserving strict OPEN_LIMIT, LIMIT-only, confirmation, and no cancel/replace/chase protections. Current AT/USDT:USDT preflight is READY_FOR_BATCH_APPROVAL with submit_allowed=true, but no queue write or exchange submit was performed."
 }
