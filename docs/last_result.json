@@ -1,14 +1,14 @@
 {
-  "task_id": "2026-04-27-001",
-  "updated_at": "2026-04-27T10:38:30Z",
+  "task_id": "2026-04-27-002",
+  "updated_at": "2026-04-27T13:35:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Allow limited auto_submit for reduce-only CLOSE_LIMIT trim",
-  "result_type": "automation_guard_preflight",
+  "title": "Fix post-submit lifecycle reporting and reduce-only close harvest policy",
+  "result_type": "lifecycle_reporting_and_policy_fix",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "code_changes_made": true,
-    "ui_changes_made": false,
+    "ui_changes_made": true,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
     "api_executor_changed": false,
@@ -18,7 +18,9 @@
   },
   "changed_files": [
     "scripts/automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
     "scripts/test_automation_read_only_runner.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json",
     "mexce-handoff/docs/last_result.json",
@@ -26,51 +28,58 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py scripts\\test_automation_read_only_runner.py core\\supervised_strategy_runner.py",
-    "python core\\test_supervised_strategy_runner.py",
+    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py core\\api_executor.py core\\mexc_direct.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --help",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json --live --confirm-live"
+    "python scripts\\test_controls_automation_parsing.py",
+    "python core\\test_supervised_strategy_runner.py",
+    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json"
   ],
-  "preflight_result": {
+  "action_11_lifecycle": {
+    "action_id": 11,
+    "executor_status": "DONE",
+    "api_order_id": "803716434722380480",
+    "reconcile_state": "CANCELED_NO_FILL",
+    "reconcile_reason": "history_confirms_post_only_cancel_no_fill",
+    "filled_qty": 0.0,
+    "fill_detected": false,
+    "lot_realization_created": false,
+    "lifecycle_result": "submitted_then_canceled_no_fill",
+    "final_fill_success": false
+  },
+  "preflight_after_fix": {
     "readiness_state": "READY_FOR_BATCH_APPROVAL",
     "blockers": [],
     "safety_overall": "PASS",
     "candidate_type": "CLOSE_LIMIT",
     "reduce_only": 1,
     "qty": 1.0,
+    "order_type": "limit",
+    "order_kind": "LIMIT",
+    "post_only": false,
+    "maker_only": false,
+    "execution_policy": "taker_allowed_reduce_only_limit_close",
     "submit_allowed": true,
-    "decision": "ready_auto_submit_preflight",
     "actual_submit": false,
-    "actual_queue_write": false,
-    "reason": "reduce-only CLOSE_LIMIT trim candidate is clean and eligible for limited auto_submit preflight"
+    "actual_queue_write": false
   },
-  "live_guard_tests": {
-    "live_without_confirmations": {
-      "decision": "live_confirmation_missing",
-      "actual_submit": false,
-      "actual_queue_write": false
-    },
-    "live_with_partial_confirmations": {
-      "decision": "live_confirmation_missing",
-      "actual_submit": false,
-      "actual_queue_write": false
-    },
-    "live_with_full_confirmations_executed": false,
-    "full_confirmation_not_executed_reason": "User preference was verification only; no explicit live run requested for this task."
-  },
-  "safety_confirmation": {
-    "open_limit_rules_changed": false,
+  "policy_confirmation": {
+    "open_limit_current_behavior_preserved": true,
+    "close_limit_reduce_only_harvest_post_only_disabled": true,
     "market_allowed": false,
     "qty_above_one_allowed": false,
-    "non_reduce_only_close_allowed": false,
-    "cancel_replace_chase": false,
-    "exchange_submit_during_task": false,
-    "db_schema_changes": false,
-    "ui_changes": false,
-    "strategy_logic_broad_changes": false
+    "non_reduce_only_close_allowed": false
   },
-  "summary": "Extended limited auto_submit validation to allow safe reduce-only CLOSE_LIMIT trim candidates with qty<=1 while preserving strict OPEN_LIMIT, LIMIT-only, confirmation, and no cancel/replace/chase protections. Current AT/USDT:USDT preflight is READY_FOR_BATCH_APPROVAL with submit_allowed=true, but no queue write or exchange submit was performed."
+  "ui_behavior": {
+    "done_shown_as_executor_done_only": true,
+    "canceled_no_fill_warning_shown": true,
+    "live_result_success_requires_fill_reconcile_success": true
+  },
+  "safety_confirmation": {
+    "new_submit": false,
+    "cancel_replace_chase": false,
+    "db_schema_changes": false,
+    "strategy_broad_changes": false,
+    "open_rules_changed": false
+  },
+  "summary": "Runner output now separates executor DONE from reconcile/fill lifecycle and classifies DONE+CANCELED_NO_FILL+filled_qty=0 as submitted_then_canceled_no_fill with final_fill_success=false. UI summary displays reconcile lifecycle and warns on CANCELED_NO_FILL. Reduce-only CLOSE_LIMIT harvest previews are explicitly taker-allowed LIMIT closes with post_only=false/maker_only=false while MARKET, qty>1, and non-reduce-only close remain blocked."
 }

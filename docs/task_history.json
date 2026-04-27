@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-27T10:38:30Z",
+  "updated_at": "2026-04-27T13:35:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-27-002",
+      "title": "Fix post-submit lifecycle reporting and reduce-only close harvest policy",
+      "status": "completed",
+      "completed_at": "2026-04-27T13:35:00Z",
+      "result_summary": "Separated executor DONE from final fill success; action 11 now classifies as submitted_then_canceled_no_fill/final_fill_success=false, UI warns on CANCELED_NO_FILL, and reduce-only CLOSE_LIMIT harvest previews explicitly use taker-allowed LIMIT policy with post_only=false."
+    },
     {
       "task_id": "2026-04-27-001",
       "title": "Allow limited auto_submit for reduce-only CLOSE_LIMIT trim",
