@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T11:40:00Z",
+  "updated_at": "2026-04-29T17:45:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-009",
+      "title": "Create execution policy document and no-fill retry guard",
+      "status": "completed",
+      "completed_at": "2026-04-29T17:45:00Z",
+      "result_summary": "Added docs/EXECUTION_POLICY.md and a Controls no-fill retry guard: previous CANCELED_NO_FILL requires fresh preflight before live unlock, while clean fresh preflight only warns and remains gated by confirmations; no live action or queue write."
+    },
     {
       "task_id": "2026-04-29-008",
       "title": "Add read-only risk/exposure summary panel",
