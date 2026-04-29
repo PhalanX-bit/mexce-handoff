@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-04-29-009",
-  "updated_at": "2026-04-29T17:45:00Z",
+  "task_id": "2026-04-29-010",
+  "updated_at": "2026-04-29T18:38:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Create execution policy document and enforce basic no-fill retry guard",
-  "result_type": "execution_policy_and_retry_guard",
+  "title": "Add per-symbol live policy/config for scanner and protected live flow",
+  "result_type": "per_symbol_live_policy",
   "scope": {
     "code_changes_made": true,
     "ui_changes_made": true,
@@ -18,8 +18,10 @@
     "market_orders_enabled": false
   },
   "changed_files": [
-    "docs/EXECUTION_POLICY.md",
+    "config/symbol_live_policy.json",
+    "scripts/automation_read_only_runner.py",
     "app/V2/ui/controls_tab.py",
+    "scripts/test_automation_read_only_runner.py",
     "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json",
@@ -30,64 +32,84 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
-    "python scripts\\test_controls_automation_parsing.py",
+    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT --mode scan --json --close-only",
+    "python scripts\\test_controls_automation_parsing.py",
+    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --mode scan --json --close-only",
     "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json"
   ],
-  "policy_document": {
-    "path": "docs/EXECUTION_POLICY.md",
-    "open_policy_documented": true,
-    "close_reduce_only_policy_documented": true,
-    "no_fill_policy_documented": true,
-    "open_order_policy_documented": true,
-    "partial_fill_policy_documented": true,
-    "future_market_fallback_documented": true
+  "policy_config": {
+    "file": "config/symbol_live_policy.json",
+    "symbols_configured": [
+      "AT/USDT:USDT",
+      "ADA/USDT:USDT",
+      "BTC/USDT:USDT",
+      "ETH/USDT:USDT",
+      "SOL/USDT:USDT"
+    ],
+    "default_for_missing_policy": "enabled_for_scan=false, enabled_for_live=false, missing_symbol_policy"
   },
-  "no_fill_retry_guard": {
-    "previous_no_fill_detected": true,
-    "fresh_preflight_required": true,
-    "stale_preflight_live_locked": true,
-    "new_clean_preflight_behavior": "Shows previous no-fill warning, but does not block forever when preflight timestamp is newer than the no-fill action and all existing live confirmations pass.",
-    "open_order_duplicate_submit_blocked": true
+  "AT_policy": {
+    "enabled_for_scan": true,
+    "enabled_for_live": true,
+    "close_only": true,
+    "allow_open": false,
+    "allow_close": true,
+    "max_qty": 1,
+    "max_spread_bps": 100,
+    "market_orders_allowed": false
   },
-  "ui_behavior": {
-    "no_fill_next_safe_action": "DO_NOT_BACKFILL in lifecycle panel; RUN_NEW_PREFLIGHT in live retry guard when preflight is missing or stale.",
-    "open_order_next_safe_action": "VERIFY_ORDER_LATER / do not submit duplicate.",
-    "fresh_preflight_warning": true,
-    "live_button_locked_without_fresh_preflight": true
-  },
-  "smoke_results": {
-    "scanner": {
-      "symbols": [
-        "AT/USDT:USDT",
-        "ADA/USDT:USDT"
-      ],
-      "best_candidate": null,
-      "recommended_next_action": "WAIT",
-      "actual_queue_write": false,
-      "actual_submit": false
-    },
-    "preflight": {
-      "symbol": "AT/USDT:USDT",
-      "readiness_state": "BLOCKED",
-      "blocker": "PROFITABLE_LOTS_PRESENT",
-      "profitable_lots": 5,
-      "target_reached_lots": 0,
-      "candidate_type": "OPEN_LIMIT",
-      "submit_allowed": false,
-      "actual_queue_write": false,
-      "actual_submit": false
+  "scanner_result": {
+    "best_candidate_symbol": null,
+    "best_candidate_recommended_action": "WAIT",
+    "policy_fields_shown": true,
+    "disabled_live_symbols_visible_but_not_selected": true,
+    "actual_queue_write": false,
+    "actual_submit": false,
+    "symbols": {
+      "AT/USDT:USDT": {
+        "enabled_for_live": true,
+        "candidate_type": "NO_ACTION",
+        "recommended_action": "BLOCKED",
+        "policy_block_reason": "candidate_type_not_allowed_by_symbol_policy"
+      },
+      "ADA/USDT:USDT": {
+        "enabled_for_live": false,
+        "candidate_type": "CLOSE_LIMIT",
+        "recommended_action": "WAIT",
+        "policy_block_reason": "live_disabled_for_symbol"
+      },
+      "SOL/USDT:USDT": {
+        "enabled_for_live": false,
+        "candidate_type": "CLOSE_LIMIT",
+        "recommended_action": "WAIT",
+        "policy_block_reason": "live_disabled_for_symbol"
+      }
     }
   },
+  "preflight_result": {
+    "symbol": "AT/USDT:USDT",
+    "candidate_type": "NO_ACTION",
+    "readiness_state": "BLOCKED",
+    "submit_allowed": false,
+    "policy_allows_candidate": false,
+    "policy_block_reason": null,
+    "actual_queue_write": false,
+    "actual_submit": false
+  },
+  "ui_behavior": {
+    "policy_columns_shown": true,
+    "live_policy_status_shown": true,
+    "policy_block_reason_shown": true
+  },
   "tests": {
-    "CANCELED_NO_FILL": true,
-    "open_order": true,
-    "partial_fill": true,
-    "MARKET_forbidden": true,
-    "retry_guard": true,
-    "existing_close_eligibility": true,
+    "live_disabled": true,
+    "allow_open_false": true,
+    "allow_close_true": true,
+    "qty_cap": true,
+    "spread_cap": true,
+    "missing_policy": true,
+    "market_forbidden": true,
     "scanner_read_only": true
   },
   "safety_confirmation": {
@@ -99,5 +121,5 @@
     "strategy_logic_broad_changes": false,
     "api_executor_mexc_direct_execution_behavior_changed": false
   },
-  "summary": "Added EXECUTION_POLICY.md and a basic no-fill retry guard in Controls: previous CANCELED_NO_FILL now requires a fresh preflight before live submit can unlock, while a fresh clean preflight only shows a warning and still requires explicit confirmations. No live action, queue write, schema change, strategy change, or API execution behavior change occurred."
+  "summary": "Added config/symbol_live_policy.json and wired per-symbol policy into scan ranking, single-symbol auto_submit preflight/live guards, and Controls UI reporting. Only AT is enabled_for_live and close-only; ADA/BTC/ETH/SOL remain scan-visible but live-disabled. No live action, queue write, schema change, strategy change, or execution behavior change occurred."
 }

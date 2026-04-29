@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T17:45:00Z",
+  "updated_at": "2026-04-29T18:38:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-010",
+      "title": "Add per-symbol live policy/config",
+      "status": "completed",
+      "completed_at": "2026-04-29T18:38:00Z",
+      "result_summary": "Added config/symbol_live_policy.json and wired policy into scanner, auto_submit preflight/live guard, and Controls UI reporting; only AT is live-enabled close-only, other configured symbols are scan-visible but live-disabled."
+    },
     {
       "task_id": "2026-04-29-009",
       "title": "Create execution policy document and no-fill retry guard",
