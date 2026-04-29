@@ -1,12 +1,12 @@
 {
-  "task_id": "2026-04-29-002",
-  "updated_at": "2026-04-29T00:00:00Z",
+  "task_id": "2026-04-29-003",
+  "updated_at": "2026-04-29T09:51:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add post-submit lifecycle panel",
-  "result_type": "read_only_ui_reporting",
+  "title": "Add allowlisted multi-symbol read-only candidate scanner",
+  "result_type": "read_only_scanner",
   "scope": {
-    "symbol": "AT/USDT:USDT",
+    "mode": "scan",
     "code_changes_made": true,
     "ui_changes_made": true,
     "database_schema_changes_made": false,
@@ -18,8 +18,9 @@
     "live_exchange_action_taken": false
   },
   "changed_files": [
+    "scripts/automation_read_only_runner.py",
     "app/V2/ui/controls_tab.py",
-    "scripts/test_controls_automation_parsing.py",
+    "scripts/test_automation_read_only_runner.py",
     "last_result.json",
     "task_history.json",
     "mexce-handoff/docs/last_result.json",
@@ -27,70 +28,67 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\test_controls_automation_parsing.py",
+    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\test_automation_read_only_runner.py scripts\\test_controls_automation_parsing.py",
+    "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "read-only latest automation action lifecycle helper check"
+    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT --mode scan --json",
+    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT --mode scan --json"
   ],
-  "last_action_panel": {
-    "location": "Controls tab / Limited Automation Control",
-    "refresh_button": "Refresh last automation action",
-    "fields_shown": [
-      "action_id",
-      "created_at",
-      "updated_at",
-      "symbol",
-      "panel_mode",
-      "intent",
-      "side",
-      "qty",
-      "limit_price",
-      "reduce_only",
-      "executor_status",
-      "api_order_id",
-      "reconcile_state",
-      "reconcile_reason",
-      "exchange_filled_qty",
-      "exchange_avg_price",
-      "fill_detected",
-      "lot_realization_created",
-      "lot_realizations_for_action",
-      "lifecycle_result",
-      "final_fill_success",
-      "next_safe_action"
-    ]
+  "cli_scan_result": {
+    "scanned_symbols": [
+      "AT/USDT:USDT",
+      "ADA/USDT:USDT"
+    ],
+    "best_candidate_symbol": null,
+    "best_candidate_type": null,
+    "best_candidate_recommended_action": "WAIT",
+    "actual_queue_write": false,
+    "actual_submit": false
   },
-  "action_11_display": {
-    "action_id": 11,
-    "executor_status": "DONE",
-    "reconcile_state": "CANCELED_NO_FILL",
-    "reconcile_reason": "history_confirms_post_only_cancel_no_fill",
-    "exchange_filled_qty": 0.0,
-    "fill_detected": false,
-    "lot_realization_created": false,
-    "lifecycle_result": "submitted_then_canceled_no_fill",
-    "final_fill_success": false,
-    "next_safe_action": "DO_NOT_BACKFILL"
-  },
-  "ui_behavior": {
-    "done_treated_as_fill_success": false,
-    "canceled_no_fill_warning": true,
-    "do_not_backfill_shown": true,
-    "missing_lifecycle_fail_safe": true
-  },
-  "tests": {
-    "canceled_no_fill": true,
-    "filled_success": true,
-    "blocked_no_submit": true,
-    "missing_lifecycle": true
+  "per_symbol_summary": [
+    {
+      "symbol": "AT/USDT:USDT",
+      "readiness_state": "BLOCKED",
+      "blockers": [
+        "PROFITABLE_LOTS_PRESENT"
+      ],
+      "candidate_type": "OPEN_LIMIT",
+      "reduce_only": 0,
+      "qty": 1.0,
+      "submit_allowed_preflight": false,
+      "recommended_action": "BLOCKED",
+      "lifecycle_risk": "last_action_11_canceled_no_fill"
+    },
+    {
+      "symbol": "ADA/USDT:USDT",
+      "readiness_state": "BLOCKED",
+      "blockers": [
+        "LIVE_PROPOSAL_VALIDATION"
+      ],
+      "candidate_type": "NO_ACTION",
+      "reduce_only": null,
+      "qty": 0.0,
+      "submit_allowed_preflight": false,
+      "recommended_action": "BLOCKED",
+      "lifecycle_risk": null
+    }
+  ],
+  "ui_scanner": {
+    "location": "Controls tab / Limited Automation Control / Multi-symbol scanner",
+    "input": "comma-separated allowlist symbols",
+    "table_shown": true,
+    "best_candidate_shown": true,
+    "live_button_added": false
   },
   "safety_confirmation": {
-    "new_submit": false,
+    "queue_writes": false,
+    "exchange_submits": false,
     "cancel_replace_chase": false,
-    "action_queue_writes": false,
-    "lot_realization_created": false,
+    "multi_symbol_live_autonomy": false,
+    "single_symbol_live_path_preserved": true,
     "db_schema_changes": false,
     "strategy_logic_changes": false,
-    "api_executor_mexc_direct_changes": false
+    "api_executor_mexc_direct_execution_changed": false
   },
-  "summary": "Controls tab now has a read-only Last Automation Action / Post-submit Lifecycle panel. Action 11 is shown as submitted_then_canceled_no_fill with final_fill_success=false and next_safe_action=DO_NOT_BACKFILL, so DONE is no longer presented as fill success."
+  "summary": "Added read-only scan mode with explicit user-supplied symbol allowlist and Controls UI scanner. Current scan over AT/USDT:USDT and ADA/USDT:USDT recommends WAIT because AT is blocked by profitable lots and ADA has no safe live proposal. Scanner never writes queue or submits."
 }

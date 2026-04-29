@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T00:00:00Z",
+  "updated_at": "2026-04-29T09:51:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-003",
+      "title": "Add allowlisted multi-symbol read-only candidate scanner",
+      "status": "completed",
+      "completed_at": "2026-04-29T09:51:00Z",
+      "result_summary": "Added read-only scan mode and Controls UI scanner for comma-separated allowlisted symbols; current AT/ADA scan recommends WAIT with no queue write and no exchange submit."
+    },
     {
       "task_id": "2026-04-29-002",
       "title": "Add post-submit lifecycle panel",
