@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-04-29-007",
-  "updated_at": "2026-04-29T11:17:00Z",
+  "task_id": "2026-04-29-008",
+  "updated_at": "2026-04-29T11:40:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add post-submit auto-verify order refresh",
-  "result_type": "post_submit_lifecycle_reporting",
+  "title": "Add read-only risk/exposure summary panel",
+  "result_type": "risk_exposure_reporting",
   "scope": {
     "code_changes_made": true,
     "ui_changes_made": true,
@@ -26,40 +26,96 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\ui\\lots_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python -c \"from core.reconcile_service import get_order_state; ... get_order_state(11) ...\"",
-    "python -c \"from app.V2.ui.controls_tab import _load_last_automation_action_verified_report; ...\""
+    "python -c \"... build_scan(...); _build_risk_exposure_rows(...) ...\""
   ],
-  "verify_last_action": {
-    "action_id": 11,
-    "api_order_id": "803716434722380480",
-    "executor_status": "DONE",
-    "exchange_status": "CANCELED_NO_FILL",
-    "exchange_raw_state": 4,
-    "exchange_filled_qty": 0.0,
-    "exchange_avg_price": null,
-    "reconcile_state": "CANCELED_NO_FILL",
-    "reconcile_reason": "history_confirms_post_only_cancel_no_fill",
-    "lifecycle_result": "submitted_then_canceled_no_fill",
-    "final_fill_success": false,
-    "next_safe_action": "DO_NOT_BACKFILL",
-    "exchange_lookup_ok": true
+  "ui_panel": {
+    "location": "Controls tab",
+    "input": "Risk allowlist symbols comma-separated input",
+    "refresh_button": "Refresh risk summary",
+    "columns_shown": [
+      "symbol",
+      "long_qty",
+      "short_qty",
+      "gross_qty",
+      "net_qty",
+      "gross_notional",
+      "net_notional",
+      "leverage",
+      "margin_mode",
+      "open_lots_count",
+      "profitable_lots",
+      "target_reached_lots",
+      "eligible_lots",
+      "oldest_open_lot",
+      "highest_roi_pct",
+      "nearest_target_gap_bps",
+      "open_orders_count",
+      "active_queue_actions_count",
+      "pending_count",
+      "armed_count",
+      "running_count",
+      "last_action_id",
+      "last_api_order_id",
+      "last_lifecycle_result",
+      "last_final_fill_success",
+      "last_next_safe_action",
+      "readiness_state",
+      "candidate_type",
+      "blockers",
+      "recommended_action",
+      "risk_label"
+    ]
   },
-  "ui_behavior": {
-    "refresh_button": "Verify last submit / Refresh exchange status",
-    "canceled_no_fill_warning": true,
-    "open_order_warning": true,
-    "filled_success": true,
-    "lookup_failure_fail_safe": true
-  },
-  "tests": {
-    "canceled_no_fill": true,
-    "open_no_fill": true,
-    "filled_qty": true,
-    "lookup_failed": true,
-    "no_api_order_id": true
+  "sample_summary": [
+    {
+      "symbol": "AT/USDT:USDT",
+      "long_qty": 40.0,
+      "short_qty": 394.0,
+      "gross_qty": 434.0,
+      "net_qty": -354.0,
+      "open_lots_count": 7,
+      "profitable_lots": 5,
+      "target_reached_lots": 0,
+      "eligible_lots": 0,
+      "open_orders_count": 0,
+      "active_queue_actions_count": 0,
+      "last_lifecycle_result": "submitted_then_canceled_no_fill",
+      "last_next_safe_action": "DO_NOT_BACKFILL",
+      "readiness_state": "BLOCKED",
+      "candidate_type": "OPEN_LIMIT",
+      "risk_label": "LAST_ACTION_NO_FILL"
+    },
+    {
+      "symbol": "ADA/USDT:USDT",
+      "long_qty": 280.0,
+      "short_qty": 103.0,
+      "gross_qty": 383.0,
+      "net_qty": 177.0,
+      "open_lots_count": 0,
+      "profitable_lots": 0,
+      "target_reached_lots": 0,
+      "eligible_lots": 0,
+      "open_orders_count": 0,
+      "active_queue_actions_count": 0,
+      "last_lifecycle_result": null,
+      "last_next_safe_action": null,
+      "readiness_state": "BLOCKED",
+      "candidate_type": "NO_ACTION",
+      "risk_label": "WAIT_BLOCKED"
+    }
+  ],
+  "risk_labels": {
+    "OK_IDLE": true,
+    "WAIT_BLOCKED": true,
+    "CLOSE_READY": true,
+    "OPEN_BLOCKED_BY_PROFIT": true,
+    "OPEN_ORDER_ACTIVE": true,
+    "QUEUE_CONFLICT": true,
+    "LAST_ACTION_NO_FILL": true,
+    "ERROR": true
   },
   "safety_confirmation": {
     "new_submit": false,
@@ -70,5 +126,5 @@
     "strategy_logic_changes": false,
     "api_executor_mexc_direct_execution_behavior_changed": false
   },
-  "summary": "Controls now has a read-only Verify last submit / Refresh exchange status action. It finds the latest automation action with api_order_id, calls the existing read-only order-state lookup, and displays exchange status, filled qty, lifecycle_result, final_fill_success, and next_safe_action without DB writes or exchange actions. Action 11 verifies as CANCELED_NO_FILL with DO_NOT_BACKFILL."
+  "summary": "Controls now includes a read-only Risk / Exposure Summary panel for comma-separated allowlisted symbols. It combines positions_snapshot exposure, open lots, scanner state, action_queue context, last lifecycle result, and a non-executing operator risk label. No live action, queue write, lot realization, schema change, or execution behavior change occurred."
 }
