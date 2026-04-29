@@ -3,6 +3,13 @@
   "status_kind": "short_history",
   "items": [
     {
+      "task_id": "2026-04-29-002",
+      "title": "Add post-submit lifecycle panel",
+      "status": "completed",
+      "completed_at": "2026-04-29T00:00:00Z",
+      "result_summary": "Added read-only Controls panel for latest automation action lifecycle; action 11 displays CANCELED_NO_FILL/submitted_then_canceled_no_fill/final_fill_success=false and next_safe_action=DO_NOT_BACKFILL."
+    },
+    {
       "task_id": "2026-04-29-001",
       "title": "Harden manual close backfill eligibility",
       "status": "completed",

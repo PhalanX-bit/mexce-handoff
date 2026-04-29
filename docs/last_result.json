@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-04-29-001",
+  "task_id": "2026-04-29-002",
   "updated_at": "2026-04-29T00:00:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Harden manual close backfill eligibility",
-  "result_type": "manual_backfill_safety_hardening",
+  "title": "Add post-submit lifecycle panel",
+  "result_type": "read_only_ui_reporting",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "code_changes_made": true,
@@ -18,10 +18,8 @@
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "core/streamlit_services/lots_service.py",
-    "app/V2/ui/lots_tab.py",
-    "core/test_lots_close_preview.py",
-    "core/test_lots_manual_backfill_eligibility.py",
+    "app/V2/ui/controls_tab.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json",
     "mexce-handoff/docs/last_result.json",
@@ -29,32 +27,61 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\lots_tab.py core\\streamlit_services\\lots_service.py app\\V2\\streamlit_app.py core\\test_lots_manual_backfill_eligibility.py core\\test_lots_close_preview.py",
-    "python core\\test_lots_manual_backfill_eligibility.py",
-    "python core\\test_lots_close_preview.py",
-    "read-only action 11 manual backfill eligibility check",
-    "read-only action 11 CLOSE backfill preview check",
-    "blocked backfill_lot_from_action_queue(con, action_id=11) safety check"
+    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\test_controls_automation_parsing.py",
+    "python scripts\\test_controls_automation_parsing.py",
+    "read-only latest automation action lifecycle helper check"
   ],
-  "action_11": {
-    "shown_as_normal_backfill_candidate": false,
-    "blocked_reason": "CANCELED_NO_FILL",
-    "matched_qty_preview": 0.0,
-    "requested_close_qty_preview": 0.0,
-    "lot_realizations_for_action": 0,
-    "can_create_realization": false
+  "last_action_panel": {
+    "location": "Controls tab / Limited Automation Control",
+    "refresh_button": "Refresh last automation action",
+    "fields_shown": [
+      "action_id",
+      "created_at",
+      "updated_at",
+      "symbol",
+      "panel_mode",
+      "intent",
+      "side",
+      "qty",
+      "limit_price",
+      "reduce_only",
+      "executor_status",
+      "api_order_id",
+      "reconcile_state",
+      "reconcile_reason",
+      "exchange_filled_qty",
+      "exchange_avg_price",
+      "fill_detected",
+      "lot_realization_created",
+      "lot_realizations_for_action",
+      "lifecycle_result",
+      "final_fill_success",
+      "next_safe_action"
+    ]
   },
-  "eligibility_rules": {
-    "canceled_no_fill_allowed": false,
-    "filled_qty_zero_allowed": false,
-    "filled_qty_positive_allowed": true,
-    "existing_realization_allowed": false,
-    "missing_evidence_without_override_allowed": false
+  "action_11_display": {
+    "action_id": 11,
+    "executor_status": "DONE",
+    "reconcile_state": "CANCELED_NO_FILL",
+    "reconcile_reason": "history_confirms_post_only_cancel_no_fill",
+    "exchange_filled_qty": 0.0,
+    "fill_detected": false,
+    "lot_realization_created": false,
+    "lifecycle_result": "submitted_then_canceled_no_fill",
+    "final_fill_success": false,
+    "next_safe_action": "DO_NOT_BACKFILL"
   },
   "ui_behavior": {
-    "canceled_no_fill_warning": "Canceled no-fill action. Do not backfill.",
-    "blocked_preview_matched_qty": 0.0,
-    "blocked_close_backfill_button_disabled": true
+    "done_treated_as_fill_success": false,
+    "canceled_no_fill_warning": true,
+    "do_not_backfill_shown": true,
+    "missing_lifecycle_fail_safe": true
+  },
+  "tests": {
+    "canceled_no_fill": true,
+    "filled_success": true,
+    "blocked_no_submit": true,
+    "missing_lifecycle": true
   },
   "safety_confirmation": {
     "new_submit": false,
@@ -63,7 +90,7 @@
     "lot_realization_created": false,
     "db_schema_changes": false,
     "strategy_logic_changes": false,
-    "broad_ui_redesign": false
+    "api_executor_mexc_direct_changes": false
   },
-  "summary": "Manual CLOSE backfill now requires reliable fill evidence or a complete positive override path and explicitly blocks CANCELED_NO_FILL/no-fill actions. Action 11 is no longer a normal backfill candidate, its preview matched_qty is 0, and actual backfill is rejected before any lot_realization can be created."
+  "summary": "Controls tab now has a read-only Last Automation Action / Post-submit Lifecycle panel. Action 11 is shown as submitted_then_canceled_no_fill with final_fill_success=false and next_safe_action=DO_NOT_BACKFILL, so DONE is no longer presented as fill success."
 }
