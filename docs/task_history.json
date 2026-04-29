@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T19:27:27Z",
+  "updated_at": "2026-04-29T19:39:37Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-014",
+      "title": "Allow scanner symbol as active control symbol",
+      "status": "completed",
+      "completed_at": "2026-04-29T19:39:37Z",
+      "result_summary": "Controls UI now lets scanner best/selected symbol become the active single-symbol control symbol; SOL can drive Check state, preflight, watcher, and protected live command text, while symbol changes invalidate stale preflight and no-fill guard remains per-symbol."
+    },
     {
       "task_id": "2026-04-29-013",
       "title": "Enable SOL live policy close-only",

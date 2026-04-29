@@ -1,27 +1,26 @@
 {
-  "task_id": "2026-04-29-013",
-  "updated_at": "2026-04-29T19:27:27Z",
+  "task_id": "2026-04-29-014",
+  "updated_at": "2026-04-29T19:39:37Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Enable SOL live in per-symbol policy, close-only reduce-only qty=1",
-  "result_type": "sol_live_policy_enablement",
+  "title": "Allow selected scanner symbol to become active single-symbol control symbol",
+  "result_type": "active_symbol_selection_ui",
   "scope": {
-    "code_changes_made": false,
-    "ui_changes_made": false,
+    "code_changes_made": true,
+    "ui_changes_made": true,
     "database_schema_changes_made": false,
-    "config_changed": true,
+    "config_changed": false,
     "strategy_logic_changed": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false,
     "action_queue_writes": false,
     "lot_realization_created": false,
     "live_exchange_action_taken": false,
-    "open_enabled": false,
-    "market_enabled": false,
-    "other_symbols_changed": false
+    "multi_symbol_live_autonomy_added": false
   },
   "changed_files": [
-    "config/symbol_live_policy.json",
+    "app/V2/ui/controls_tab.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json",
     "mexce-handoff/docs/last_result.json",
@@ -29,53 +28,41 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
+    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\automation_read_only_runner.py --symbols SOL/USDT:USDT --mode scan --json --close-only",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json",
-    "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\test_controls_automation_parsing.py"
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json"
   ],
-  "SOL_policy_after_change": {
-    "enabled_for_scan": true,
-    "enabled_for_live": true,
-    "close_only": true,
-    "allow_open": false,
-    "allow_close": true,
-    "max_qty": 1.0,
-    "max_spread_bps": 50.0,
-    "market_orders_allowed": false,
-    "require_reduce_only_for_close": true
+  "ui_behavior": {
+    "default_active_symbol": "AT/USDT:USDT",
+    "best_candidate": "SOL/USDT:USDT",
+    "use_best_candidate_button": true,
+    "use_selected_symbol_button": true,
+    "active_symbol_after_selecting_SOL": "SOL/USDT:USDT",
+    "preflight_invalidated_on_symbol_change": true,
+    "confirm_checkbox_text": "Symbol is SOL/USDT:USDT",
+    "protected_live_command_symbol": "SOL/USDT:USDT"
   },
-  "scanner_after_change": {
-    "best_candidate_symbol": "SOL/USDT:USDT",
-    "best_candidate_type": "CLOSE_LIMIT",
-    "recommended_action": "CLOSE_READY",
-    "policy_allows_candidate": true,
-    "actual_queue_write": false,
-    "actual_submit": false
-  },
-  "SOL_preflight": {
-    "readiness_state": "READY_FOR_BATCH_APPROVAL",
-    "blockers": [],
-    "safety_overall": "PASS",
-    "candidate_type": "CLOSE_LIMIT",
-    "candidate_side": "SHORT",
-    "reduce_only": 1,
-    "qty": 1.0,
-    "post_only": false,
-    "maker_only": false,
-    "submit_allowed": true,
+  "SOL_flow": {
+    "SOL_scanner_candidate": "CLOSE_READY",
+    "SOL_preflight_possible_from_UI": true,
+    "SOL_live_locked_until_fresh_preflight": true,
+    "enabled_for_live_respected": true,
+    "preflight_submit_allowed": true,
     "actual_submit": false,
-    "actual_queue_write": false,
-    "decision": "ready_auto_submit_preflight"
+    "actual_queue_write": false
+  },
+  "no_fill_guard": {
+    "AT_previous_no_fill_blocks_AT_stale_live": true,
+    "AT_previous_no_fill_does_not_globally_block_SOL": true,
+    "SOL_requires_fresh_SOL_preflight": true
   },
   "safety_confirmation": {
     "live_submit": false,
     "queue_write": false,
-    "open_enabled": false,
-    "market_enabled": false,
-    "other_symbols_changed": false,
+    "multi_symbol_live_autonomy": false,
     "strategy_api_changes": false,
     "db_schema_changes": false
   },
-  "summary": "Promoted SOL/USDT:USDT to enabled_for_live=true in symbol_live_policy.json while keeping close_only=true, allow_open=false, allow_close=true, max_qty=1, require_reduce_only_for_close=true, and market_orders_allowed=false. Read-only scanner now selects SOL as CLOSE_READY and auto_submit preflight returns submit_allowed=true with no submit and no queue write."
+  "summary": "Controls UI now has a session active_symbol that defaults to AT but can be set from scanner best/selected symbol. Single-symbol Check state, Auto-submit preflight, watcher, Protected LIVE submit, confirm-symbol text, and no-fill retry guard now follow active_symbol. Changing active_symbol invalidates stale preflight/live context. No live action or queue write occurred."
 }
