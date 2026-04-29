@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T09:51:00Z",
+  "updated_at": "2026-04-29T10:20:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-004",
+      "title": "Add scanner copyable commands UI",
+      "status": "completed",
+      "completed_at": "2026-04-29T10:20:00Z",
+      "result_summary": "Added copyable scanner/check/preflight/protected-live command blocks for selected scan symbols; protected live remains text-only and guarded, current scan recommends WAIT."
+    },
     {
       "task_id": "2026-04-29-003",
       "title": "Add allowlisted multi-symbol read-only candidate scanner",

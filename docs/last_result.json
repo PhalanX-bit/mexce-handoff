@@ -1,12 +1,11 @@
 {
-  "task_id": "2026-04-29-003",
-  "updated_at": "2026-04-29T09:51:00Z",
+  "task_id": "2026-04-29-004",
+  "updated_at": "2026-04-29T10:20:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add allowlisted multi-symbol read-only candidate scanner",
-  "result_type": "read_only_scanner",
+  "title": "Add scanner copyable commands UI",
+  "result_type": "ui_convenience",
   "scope": {
-    "mode": "scan",
     "code_changes_made": true,
     "ui_changes_made": true,
     "database_schema_changes_made": false,
@@ -18,9 +17,8 @@
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
     "app/V2/ui/controls_tab.py",
-    "scripts/test_automation_read_only_runner.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json",
     "mexce-handoff/docs/last_result.json",
@@ -28,67 +26,43 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\test_automation_read_only_runner.py scripts\\test_controls_automation_parsing.py",
-    "python scripts\\test_automation_read_only_runner.py",
+    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT --mode scan --json",
     "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT --mode scan --json"
   ],
-  "cli_scan_result": {
-    "scanned_symbols": [
-      "AT/USDT:USDT",
-      "ADA/USDT:USDT"
-    ],
-    "best_candidate_symbol": null,
-    "best_candidate_type": null,
-    "best_candidate_recommended_action": "WAIT",
-    "actual_queue_write": false,
-    "actual_submit": false
+  "ui_behavior": {
+    "scanner_command_shown": true,
+    "selected_symbol_command_shown": true,
+    "preflight_command_shown": true,
+    "protected_live_command_guarded": true,
+    "next_suggested_manual_step": "WAIT / rerun scanner later"
   },
-  "per_symbol_summary": [
-    {
-      "symbol": "AT/USDT:USDT",
-      "readiness_state": "BLOCKED",
-      "blockers": [
-        "PROFITABLE_LOTS_PRESENT"
-      ],
-      "candidate_type": "OPEN_LIMIT",
-      "reduce_only": 0,
-      "qty": 1.0,
-      "submit_allowed_preflight": false,
-      "recommended_action": "BLOCKED",
-      "lifecycle_risk": "last_action_11_canceled_no_fill"
-    },
-    {
-      "symbol": "ADA/USDT:USDT",
-      "readiness_state": "BLOCKED",
-      "blockers": [
-        "LIVE_PROPOSAL_VALIDATION"
-      ],
-      "candidate_type": "NO_ACTION",
-      "reduce_only": null,
-      "qty": 0.0,
-      "submit_allowed_preflight": false,
-      "recommended_action": "BLOCKED",
-      "lifecycle_risk": null
-    }
-  ],
-  "ui_scanner": {
-    "location": "Controls tab / Limited Automation Control / Multi-symbol scanner",
-    "input": "comma-separated allowlist symbols",
-    "table_shown": true,
-    "best_candidate_shown": true,
-    "live_button_added": false
+  "current_scan_interpretation": {
+    "best_candidate": null,
+    "suggested_action": "WAIT",
+    "live_command_executable_from_copy_section": false,
+    "symbols": [
+      {
+        "symbol": "AT/USDT:USDT",
+        "recommended_action": "BLOCKED",
+        "candidate_type": "OPEN_LIMIT",
+        "blocker": "PROFITABLE_LOTS_PRESENT"
+      },
+      {
+        "symbol": "ADA/USDT:USDT",
+        "recommended_action": "BLOCKED",
+        "candidate_type": "NO_ACTION",
+        "blocker": "LIVE_PROPOSAL_VALIDATION"
+      }
+    ]
   },
   "safety_confirmation": {
-    "queue_writes": false,
-    "exchange_submits": false,
-    "cancel_replace_chase": false,
-    "multi_symbol_live_autonomy": false,
-    "single_symbol_live_path_preserved": true,
-    "db_schema_changes": false,
+    "live_submit": false,
+    "queue_write": false,
     "strategy_logic_changes": false,
-    "api_executor_mexc_direct_execution_changed": false
+    "api_executor_mexc_direct_changes": false,
+    "db_schema_changes": false,
+    "broad_ui_redesign": false
   },
-  "summary": "Added read-only scan mode with explicit user-supplied symbol allowlist and Controls UI scanner. Current scan over AT/USDT:USDT and ADA/USDT:USDT recommends WAIT because AT is blocked by profitable lots and ADA has no safe live proposal. Scanner never writes queue or submits."
+  "summary": "Controls scanner now shows copyable scanner/check/preflight/protected-live command blocks for the selected symbol. The protected live command remains text only and is guarded with warnings when scan/preflight conditions are not clean. Current scan still recommends WAIT."
 }
