@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-04-27-002",
-  "updated_at": "2026-04-27T13:35:00Z",
+  "task_id": "2026-04-29-001",
+  "updated_at": "2026-04-29T00:00:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Fix post-submit lifecycle reporting and reduce-only close harvest policy",
-  "result_type": "lifecycle_reporting_and_policy_fix",
+  "title": "Harden manual close backfill eligibility",
+  "result_type": "manual_backfill_safety_hardening",
   "scope": {
     "symbol": "AT/USDT:USDT",
     "code_changes_made": true,
@@ -14,13 +14,14 @@
     "api_executor_changed": false,
     "mexc_direct_changed": false,
     "action_queue_writes": false,
+    "lot_realization_created": false,
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_automation_read_only_runner.py",
-    "scripts/test_controls_automation_parsing.py",
+    "core/streamlit_services/lots_service.py",
+    "app/V2/ui/lots_tab.py",
+    "core/test_lots_close_preview.py",
+    "core/test_lots_manual_backfill_eligibility.py",
     "last_result.json",
     "task_history.json",
     "mexce-handoff/docs/last_result.json",
@@ -28,58 +29,41 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py core\\api_executor.py core\\mexc_direct.py",
-    "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\test_controls_automation_parsing.py",
-    "python core\\test_supervised_strategy_runner.py",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json"
+    "python -m py_compile app\\V2\\ui\\lots_tab.py core\\streamlit_services\\lots_service.py app\\V2\\streamlit_app.py core\\test_lots_manual_backfill_eligibility.py core\\test_lots_close_preview.py",
+    "python core\\test_lots_manual_backfill_eligibility.py",
+    "python core\\test_lots_close_preview.py",
+    "read-only action 11 manual backfill eligibility check",
+    "read-only action 11 CLOSE backfill preview check",
+    "blocked backfill_lot_from_action_queue(con, action_id=11) safety check"
   ],
-  "action_11_lifecycle": {
-    "action_id": 11,
-    "executor_status": "DONE",
-    "api_order_id": "803716434722380480",
-    "reconcile_state": "CANCELED_NO_FILL",
-    "reconcile_reason": "history_confirms_post_only_cancel_no_fill",
-    "filled_qty": 0.0,
-    "fill_detected": false,
-    "lot_realization_created": false,
-    "lifecycle_result": "submitted_then_canceled_no_fill",
-    "final_fill_success": false
+  "action_11": {
+    "shown_as_normal_backfill_candidate": false,
+    "blocked_reason": "CANCELED_NO_FILL",
+    "matched_qty_preview": 0.0,
+    "requested_close_qty_preview": 0.0,
+    "lot_realizations_for_action": 0,
+    "can_create_realization": false
   },
-  "preflight_after_fix": {
-    "readiness_state": "READY_FOR_BATCH_APPROVAL",
-    "blockers": [],
-    "safety_overall": "PASS",
-    "candidate_type": "CLOSE_LIMIT",
-    "reduce_only": 1,
-    "qty": 1.0,
-    "order_type": "limit",
-    "order_kind": "LIMIT",
-    "post_only": false,
-    "maker_only": false,
-    "execution_policy": "taker_allowed_reduce_only_limit_close",
-    "submit_allowed": true,
-    "actual_submit": false,
-    "actual_queue_write": false
-  },
-  "policy_confirmation": {
-    "open_limit_current_behavior_preserved": true,
-    "close_limit_reduce_only_harvest_post_only_disabled": true,
-    "market_allowed": false,
-    "qty_above_one_allowed": false,
-    "non_reduce_only_close_allowed": false
+  "eligibility_rules": {
+    "canceled_no_fill_allowed": false,
+    "filled_qty_zero_allowed": false,
+    "filled_qty_positive_allowed": true,
+    "existing_realization_allowed": false,
+    "missing_evidence_without_override_allowed": false
   },
   "ui_behavior": {
-    "done_shown_as_executor_done_only": true,
-    "canceled_no_fill_warning_shown": true,
-    "live_result_success_requires_fill_reconcile_success": true
+    "canceled_no_fill_warning": "Canceled no-fill action. Do not backfill.",
+    "blocked_preview_matched_qty": 0.0,
+    "blocked_close_backfill_button_disabled": true
   },
   "safety_confirmation": {
     "new_submit": false,
     "cancel_replace_chase": false,
+    "action_queue_writes": false,
+    "lot_realization_created": false,
     "db_schema_changes": false,
-    "strategy_broad_changes": false,
-    "open_rules_changed": false
+    "strategy_logic_changes": false,
+    "broad_ui_redesign": false
   },
-  "summary": "Runner output now separates executor DONE from reconcile/fill lifecycle and classifies DONE+CANCELED_NO_FILL+filled_qty=0 as submitted_then_canceled_no_fill with final_fill_success=false. UI summary displays reconcile lifecycle and warns on CANCELED_NO_FILL. Reduce-only CLOSE_LIMIT harvest previews are explicitly taker-allowed LIMIT closes with post_only=false/maker_only=false while MARKET, qty>1, and non-reduce-only close remain blocked."
+  "summary": "Manual CLOSE backfill now requires reliable fill evidence or a complete positive override path and explicitly blocks CANCELED_NO_FILL/no-fill actions. Action 11 is no longer a normal backfill candidate, its preview matched_qty is 0, and actual backfill is rejected before any lot_realization can be created."
 }

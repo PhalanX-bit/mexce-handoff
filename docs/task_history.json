@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-27T13:35:00Z",
+  "updated_at": "2026-04-29T00:00:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-001",
+      "title": "Harden manual close backfill eligibility",
+      "status": "completed",
+      "completed_at": "2026-04-29T00:00:00Z",
+      "result_summary": "Manual CLOSE backfill now blocks CANCELED_NO_FILL/no-fill actions; action 11 is not a normal candidate, preview matched_qty is 0, and actual backfill is rejected without creating lot_realization."
+    },
     {
       "task_id": "2026-04-27-002",
       "title": "Fix post-submit lifecycle reporting and reduce-only close harvest policy",
