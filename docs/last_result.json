@@ -1,76 +1,111 @@
 {
-  "task_id": "2026-04-29-011",
-  "updated_at": "2026-04-29T19:15:49Z",
+  "task_id": "2026-04-29-012",
+  "updated_at": "2026-04-29T19:23:05Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Fix strategy/candidate side selection for CLOSE_LIMIT trim candidates",
-  "result_type": "close_trim_side_selection_fix",
+  "title": "Final read-only SOL live enablement review after side fix",
+  "result_type": "sol_live_enablement_readiness_review",
   "scope": {
-    "code_changes_made": true,
+    "code_changes_made": false,
     "ui_changes_made": false,
     "database_schema_changes_made": false,
-    "strategy_logic_changed": true,
-    "strategy_logic_change_scope": "defensive CLOSE_LIMIT side mapping guard only",
-    "api_executor_mapping_changed": false,
-    "mexc_direct_mapping_changed": false,
+    "config_changed": false,
+    "strategy_logic_changed": false,
+    "api_executor_changed": false,
+    "mexc_direct_changed": false,
     "action_queue_writes": false,
     "lot_realization_created": false,
     "live_exchange_action_taken": false
   },
-  "changed_files": [
-    "core/streamlit_services/strategy_engine.py",
-    "core/test_strategy_engine_harvest_scan.py",
-    "core/test_supervised_strategy_runner.py",
-    "last_result.json",
-    "task_history.json",
-    "mexce-handoff/docs/last_result.json",
-    "mexce-handoff/docs/task_history.json",
-    "mexce-handoff/docs/handoff_manifest.json"
-  ],
   "commands_run": [
-    "python -m py_compile core\\streamlit_services\\strategy_engine.py core\\supervised_strategy_runner.py core\\supervised_batch_plan.py scripts\\automation_read_only_runner.py",
-    "python core\\test_strategy_engine_harvest_scan.py",
-    "python core\\test_supervised_strategy_runner.py",
-    "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json",
-    "python scripts\\automation_read_only_runner.py --symbols SOL/USDT:USDT --mode scan --json --close-only"
+    "python scripts\\automation_read_only_runner.py --symbols SOL/USDT:USDT --mode scan --json --close-only",
+    "read-only SOL policy simulation with enabled_for_live=true"
   ],
-  "fix_summary": {
-    "candidate_side_semantics": "CLOSE_LIMIT side is treated as the position leg being closed, not buy/sell order direction.",
-    "guard_behavior": "If a CLOSE_LIMIT candidate points to a side with zero contracts while the opposite side has contracts, strategy fails closed with CLOSE_SIDE_MAPPING_AMBIGUOUS_STOP.",
-    "executor_mapping_preserved": "CLOSE+LONG remains CLOSE_LONG; CLOSE+SHORT remains CLOSE_SHORT."
+  "policy": {
+    "enabled_for_scan": true,
+    "enabled_for_live": false,
+    "close_only": true,
+    "allow_open": false,
+    "allow_close": true,
+    "max_qty": 1.0,
+    "max_spread_bps": 50.0,
+    "market_orders_allowed": false
   },
-  "SOL_after_fix": {
+  "meta_liquidity": {
+    "raw_symbol": "SOL_USDT",
+    "meta_valid": true,
+    "meta_source": "all_symbols_fallback",
+    "apiAllowed": true,
+    "price_tick": 0.01,
+    "qty_step": 1.0,
+    "min_qty": 1.0,
+    "price_precision": 2,
+    "qty_precision": 0,
+    "qty_1_valid": true,
+    "max_leverage": 300,
+    "bid1": 82.23,
+    "ask1": 82.24,
+    "lastPrice": 82.24,
+    "fairPrice": 82.23,
+    "indexPrice": 82.28,
+    "spread_bps": 1.2160272390090479,
+    "liquidity_ok": true
+  },
+  "exposure": {
     "long_qty": 12.0,
     "short_qty": 11.0,
+    "gross_qty": 23.0,
+    "net_qty": 1.0,
+    "open_lots_count": 0,
+    "profitable_lots": 0,
+    "target_reached_lots": 0,
+    "eligible_lots": 0
+  },
+  "candidate": {
+    "readiness_state": "READY_FOR_BATCH_APPROVAL",
+    "blockers": [],
+    "safety_overall": "PASS",
     "candidate_type": "CLOSE_LIMIT",
     "candidate_side": "SHORT",
-    "reason": "auto: trim SHORT winner | leg_trim | leg-target",
+    "qty": 1.0,
+    "reduce_only": 1,
+    "order_type": "limit",
+    "limit_price": 82.37565823333334,
+    "post_only": false,
+    "maker_only": false,
+    "reason": "auto: trim SHORT winner | leg_trim | leg-target"
+  },
+  "mapping": {
+    "panel_mode": "CLOSE",
+    "intent": "close",
+    "ui_side": "SHORT",
     "api_side_token": "CLOSE_SHORT",
     "mexc_side_enum": 2,
     "closes_long": false,
     "closes_short": true,
-    "mapping_result": "MAPPING_OK_CLOSES_SHORT_FOR_CURRENT_HEDGED_EXPOSURE",
-    "submit_allowed_preflight": false,
-    "policy_allows_candidate": false,
-    "policy_block_reason": "live_disabled_for_symbol",
-    "note": "Current live strategy snapshot sees SOL as hedged LONG=12 / SHORT=11. The long-only regression case is now guarded and tested."
+    "mapping_result": "MAPPING_OK_CLOSES_SHORT_FOR_CURRENT_HEDGED_EXPOSURE"
   },
-  "regression_tests": {
-    "long_only_close_emits_LONG": true,
-    "short_only_close_emits_SHORT": true,
-    "mixed_eligible_long_emits_LONG": true,
-    "mixed_eligible_short_emits_SHORT": true,
-    "SOL_like_long_only_regression_blocks_CLOSE_SHORT": true,
-    "api_executor_mapping_unchanged": true
+  "orders_queue_lifecycle": {
+    "open_orders_count": 0,
+    "active_queue_actions_count": 0,
+    "last_action_id": null,
+    "last_lifecycle_result": null,
+    "last_next_safe_action": null
+  },
+  "would_be_policy_result": {
+    "assumed_change": "SOL enabled_for_live=true only",
+    "would_policy_allow_candidate_if_enabled": true,
+    "policy_block_reason_after_enable": null,
+    "safe_to_enable_live": true,
+    "reason": "SOL passes meta, qty=1, liquidity, CLOSE_LIMIT reduce_only qty=1, post_only=false, blockers=[], safety_overall=PASS, mapping OK, and has no open orders or active queue conflicts. Current blocker is only enabled_for_live=false."
   },
   "safety_confirmation": {
     "live_submit": false,
     "queue_write": false,
-    "cancel_replace_chase": false,
-    "db_schema_changes": false,
-    "strategy_broad_refactor": false,
-    "api_executor_mexc_direct_execution_changed": false
+    "config_changed": false,
+    "strategy_api_changes": false,
+    "db_schema_changes": false
   },
-  "summary": "Added a defensive CLOSE_LIMIT side mapping guard in strategy_engine and regression coverage. Strategy now fails closed if a close candidate targets a side with no contracts while the opposite leg has exposure. Current SOL data is hedged LONG=12/SHORT=11, so CLOSE_SHORT maps correctly to closing the SHORT leg and remains live-disabled by policy."
+  "summary": "Read-only SOL review says SOL is safe for a future config-only live enablement to enabled_for_live=true for close-only reduce-only qty=1, subject to operator confirmation. No config change, queue write, or live action was made."
 }

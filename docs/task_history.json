@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T19:15:49Z",
+  "updated_at": "2026-04-29T19:23:05Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-012",
+      "title": "Final read-only SOL live enablement review",
+      "status": "completed",
+      "completed_at": "2026-04-29T19:23:05Z",
+      "result_summary": "SOL passes read-only live enablement criteria for future config-only enabled_for_live=true: meta_valid, qty_1_valid, liquidity_ok, CLOSE_LIMIT reduce_only qty=1, post_only=false, mapping CLOSE_SHORT closes current SHORT leg, no open orders, no active queue. No config/live/queue change made."
+    },
     {
       "task_id": "2026-04-29-011",
       "title": "Fix CLOSE trim side selection",
