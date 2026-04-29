@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T10:42:00Z",
+  "updated_at": "2026-04-29T10:58:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-006",
+      "title": "Fix scanner contract meta lookup consistency",
+      "status": "completed",
+      "completed_at": "2026-04-29T10:58:00Z",
+      "result_summary": "Scanner now uses symbol detail then all-symbol contract detail fallback before get_contract_meta; AT meta_valid=true and qty_1_valid=true via all_symbols_fallback, with no queue write or exchange submit."
+    },
     {
       "task_id": "2026-04-29-005",
       "title": "Enhance multi-symbol scanner with meta/spread/close-only ranking",

@@ -1,13 +1,13 @@
 {
-  "task_id": "2026-04-29-005",
-  "updated_at": "2026-04-29T10:42:00Z",
+  "task_id": "2026-04-29-006",
+  "updated_at": "2026-04-29T10:58:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Enhance multi-symbol scanner with contract meta, spread, and close-only ranking",
-  "result_type": "scanner_reporting_ranking",
+  "title": "Fix scanner contract meta lookup consistency",
+  "result_type": "scanner_meta_lookup_fix",
   "scope": {
     "code_changes_made": true,
-    "ui_changes_made": true,
+    "ui_changes_made": false,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
     "api_executor_changed": false,
@@ -18,9 +18,7 @@
   },
   "changed_files": [
     "scripts/automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
     "scripts/test_automation_read_only_runner.py",
-    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json",
     "mexce-handoff/docs/last_result.json",
@@ -28,122 +26,95 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python -m py_compile scripts\\automation_read_only_runner.py scripts\\validate_contract_meta.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT --mode scan --json --close-only",
+    "python scripts\\validate_contract_meta.py --symbol AT/USDT:USDT --preview-price 0.16305843 --json",
+    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT --mode scan --json --close-only",
     "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --mode scan --json --close-only"
   ],
-  "cli_scan": {
-    "symbols": [
-      "AT/USDT:USDT",
-      "ADA/USDT:USDT",
-      "BTC/USDT:USDT",
-      "ETH/USDT:USDT",
-      "SOL/USDT:USDT"
-    ],
-    "close_only_mode": true,
-    "max_spread_bps": 50.0,
+  "at_meta_validate_contract_meta": {
+    "raw_symbol": "AT_USDT",
+    "price_tick": 0.00001,
+    "qty_step": 1,
+    "min_qty": 1,
+    "price_precision": 5,
+    "qty_precision": 0,
+    "qty_1_valid": true,
+    "meta_valid": true,
+    "exchange_symbol_recognized": true,
+    "apiAllowed": true,
+    "max_leverage": 50,
+    "contract_size": 1
+  },
+  "at_meta_scanner": {
+    "raw_symbol": "AT_USDT",
+    "meta_source": "all_symbols_fallback",
+    "meta_valid": true,
+    "meta_error": null,
+    "price_tick": 0.00001,
+    "qty_step": 1.0,
+    "min_qty": 1.0,
+    "price_precision": 5,
+    "qty_precision": 0,
+    "max_leverage": 50,
+    "contract_size": 1.0,
+    "qty_1_valid": true,
+    "spread_bps": 93.93654737735362,
+    "liquidity_ok": false,
+    "recommended_action": "BLOCKED",
+    "rejection_reason": "blocked_by_guards"
+  },
+  "multi_symbol_scan": {
     "best_candidate_symbol": null,
-    "best_candidate_type": null,
     "best_candidate_recommended_action": null,
     "actual_queue_write": false,
-    "actual_submit": false
-  },
-  "per_symbol_summary": [
-    {
-      "symbol": "AT/USDT:USDT",
-      "meta_valid": false,
-      "qty_1_valid": false,
-      "spread_bps": 72.19778553010917,
-      "liquidity_ok": false,
-      "readiness_state": "BLOCKED",
-      "candidate_type": "OPEN_LIMIT",
-      "reduce_only": 0,
-      "post_only": null,
-      "maker_only": null,
-      "submit_allowed_preflight": false,
-      "recommended_action": "BLOCKED",
-      "rejection_reason": "blocked_by_guards"
-    },
-    {
-      "symbol": "ADA/USDT:USDT",
-      "meta_valid": true,
-      "qty_1_valid": true,
-      "spread_bps": 3.94710874284543,
-      "liquidity_ok": true,
-      "readiness_state": "BLOCKED",
-      "candidate_type": "NO_ACTION",
-      "reduce_only": null,
-      "post_only": null,
-      "maker_only": null,
-      "submit_allowed_preflight": false,
-      "recommended_action": "BLOCKED",
-      "rejection_reason": "blocked_by_guards"
-    },
-    {
-      "symbol": "BTC/USDT:USDT",
-      "meta_valid": true,
-      "qty_1_valid": true,
-      "spread_bps": 0.012855230181415432,
-      "liquidity_ok": true,
-      "readiness_state": "BLOCKED",
-      "candidate_type": "NO_ACTION",
-      "reduce_only": null,
-      "post_only": null,
-      "maker_only": null,
-      "submit_allowed_preflight": false,
-      "recommended_action": "BLOCKED",
-      "rejection_reason": "blocked_by_guards"
-    },
-    {
-      "symbol": "ETH/USDT:USDT",
-      "meta_valid": true,
-      "qty_1_valid": true,
-      "spread_bps": 0.042666393600738685,
-      "liquidity_ok": true,
-      "readiness_state": "BLOCKED",
-      "candidate_type": "NO_ACTION",
-      "reduce_only": null,
-      "post_only": null,
-      "maker_only": null,
-      "submit_allowed_preflight": false,
-      "recommended_action": "BLOCKED",
-      "rejection_reason": "blocked_by_guards"
-    },
-    {
-      "symbol": "SOL/USDT:USDT",
-      "meta_valid": true,
-      "qty_1_valid": true,
-      "spread_bps": 1.1706175007322348,
-      "liquidity_ok": true,
-      "readiness_state": "BLOCKED",
-      "candidate_type": "NO_ACTION",
-      "reduce_only": null,
-      "post_only": null,
-      "maker_only": null,
-      "submit_allowed_preflight": false,
-      "recommended_action": "BLOCKED",
-      "rejection_reason": "blocked_by_guards"
-    }
-  ],
-  "ui_scanner": {
-    "close_only_checkbox": true,
-    "spread_threshold_shown_input": true,
-    "meta_columns_shown": true,
-    "spread_columns_shown": true,
-    "best_candidate_explanation": true
+    "actual_submit": false,
+    "symbols": [
+      {
+        "symbol": "AT/USDT:USDT",
+        "meta_valid": true,
+        "qty_1_valid": true,
+        "liquidity_ok": false,
+        "recommended_action": "BLOCKED"
+      },
+      {
+        "symbol": "ADA/USDT:USDT",
+        "meta_valid": true,
+        "qty_1_valid": true,
+        "liquidity_ok": true,
+        "recommended_action": "BLOCKED"
+      },
+      {
+        "symbol": "BTC/USDT:USDT",
+        "meta_valid": true,
+        "qty_1_valid": true,
+        "liquidity_ok": true,
+        "recommended_action": "BLOCKED"
+      },
+      {
+        "symbol": "ETH/USDT:USDT",
+        "meta_valid": true,
+        "qty_1_valid": true,
+        "liquidity_ok": true,
+        "recommended_action": "BLOCKED"
+      },
+      {
+        "symbol": "SOL/USDT:USDT",
+        "meta_valid": true,
+        "qty_1_valid": true,
+        "liquidity_ok": true,
+        "recommended_action": "BLOCKED"
+      }
+    ]
   },
   "safety_confirmation": {
     "queue_writes": false,
     "exchange_submits": false,
     "cancel_replace_chase": false,
-    "multi_symbol_live_autonomy": false,
-    "open_live_selection_in_close_only_mode": false,
-    "single_symbol_live_path_preserved": true,
-    "db_schema_changes": false,
     "strategy_logic_changes": false,
-    "api_executor_mexc_direct_execution_changed": false
+    "api_executor_mexc_direct_execution_changed": false,
+    "db_schema_changes": false
   },
-  "summary": "Multi-symbol scan mode now enriches each allowlisted symbol with contract meta validity, qty=1 validation, live bid/ask spread sanity, liquidity_ok, close-only mode, and safe close-only ranking. Current scan found no best candidate; all symbols remain BLOCKED/no-action, with no queue writes and no exchange submits."
+  "summary": "Scanner contract meta lookup now mirrors validate_contract_meta fallback behavior: symbol-specific detail first, all-symbol contract detail fallback second, and get_contract_meta last. AT/USDT:USDT now reports meta_valid=true and qty_1_valid=true via all_symbols_fallback; current non-selection is due to guards/liquidity, not meta lookup failure."
 }
