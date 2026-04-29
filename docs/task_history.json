@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T18:38:00Z",
+  "updated_at": "2026-04-29T19:15:49Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-011",
+      "title": "Fix CLOSE trim side selection",
+      "status": "completed",
+      "completed_at": "2026-04-29T19:15:49Z",
+      "result_summary": "Added defensive CLOSE_LIMIT side mapping guard and regression coverage: close side must match an existing position leg or strategy fails closed with CLOSE_SIDE_MAPPING_AMBIGUOUS_STOP; current SOL is hedged LONG=12/SHORT=11 so CLOSE_SHORT maps to closing SHORT and remains live-disabled by policy."
+    },
     {
       "task_id": "2026-04-29-010",
       "title": "Add per-symbol live policy/config",

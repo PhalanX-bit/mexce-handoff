@@ -1,125 +1,76 @@
 {
-  "task_id": "2026-04-29-010",
-  "updated_at": "2026-04-29T18:38:00Z",
+  "task_id": "2026-04-29-011",
+  "updated_at": "2026-04-29T19:15:49Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add per-symbol live policy/config for scanner and protected live flow",
-  "result_type": "per_symbol_live_policy",
+  "title": "Fix strategy/candidate side selection for CLOSE_LIMIT trim candidates",
+  "result_type": "close_trim_side_selection_fix",
   "scope": {
     "code_changes_made": true,
-    "ui_changes_made": true,
+    "ui_changes_made": false,
     "database_schema_changes_made": false,
-    "strategy_logic_changed": false,
-    "api_executor_changed": false,
-    "mexc_direct_execution_changed": false,
+    "strategy_logic_changed": true,
+    "strategy_logic_change_scope": "defensive CLOSE_LIMIT side mapping guard only",
+    "api_executor_mapping_changed": false,
+    "mexc_direct_mapping_changed": false,
     "action_queue_writes": false,
     "lot_realization_created": false,
-    "live_exchange_action_taken": false,
-    "market_orders_enabled": false
+    "live_exchange_action_taken": false
   },
   "changed_files": [
-    "config/symbol_live_policy.json",
-    "scripts/automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_automation_read_only_runner.py",
-    "scripts/test_controls_automation_parsing.py",
+    "core/streamlit_services/strategy_engine.py",
+    "core/test_strategy_engine_harvest_scan.py",
+    "core/test_supervised_strategy_runner.py",
     "last_result.json",
     "task_history.json",
-    "mexce-handoff/docs/project_status.json",
-    "mexce-handoff/docs/next_task.json",
     "mexce-handoff/docs/last_result.json",
     "mexce-handoff/docs/task_history.json",
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python -m py_compile core\\streamlit_services\\strategy_engine.py core\\supervised_strategy_runner.py core\\supervised_batch_plan.py scripts\\automation_read_only_runner.py",
+    "python core\\test_strategy_engine_harvest_scan.py",
+    "python core\\test_supervised_strategy_runner.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --mode scan --json --close-only",
-    "python scripts\\automation_read_only_runner.py --symbol AT/USDT:USDT --mode auto_submit --once --json"
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json",
+    "python scripts\\automation_read_only_runner.py --symbols SOL/USDT:USDT --mode scan --json --close-only"
   ],
-  "policy_config": {
-    "file": "config/symbol_live_policy.json",
-    "symbols_configured": [
-      "AT/USDT:USDT",
-      "ADA/USDT:USDT",
-      "BTC/USDT:USDT",
-      "ETH/USDT:USDT",
-      "SOL/USDT:USDT"
-    ],
-    "default_for_missing_policy": "enabled_for_scan=false, enabled_for_live=false, missing_symbol_policy"
+  "fix_summary": {
+    "candidate_side_semantics": "CLOSE_LIMIT side is treated as the position leg being closed, not buy/sell order direction.",
+    "guard_behavior": "If a CLOSE_LIMIT candidate points to a side with zero contracts while the opposite side has contracts, strategy fails closed with CLOSE_SIDE_MAPPING_AMBIGUOUS_STOP.",
+    "executor_mapping_preserved": "CLOSE+LONG remains CLOSE_LONG; CLOSE+SHORT remains CLOSE_SHORT."
   },
-  "AT_policy": {
-    "enabled_for_scan": true,
-    "enabled_for_live": true,
-    "close_only": true,
-    "allow_open": false,
-    "allow_close": true,
-    "max_qty": 1,
-    "max_spread_bps": 100,
-    "market_orders_allowed": false
-  },
-  "scanner_result": {
-    "best_candidate_symbol": null,
-    "best_candidate_recommended_action": "WAIT",
-    "policy_fields_shown": true,
-    "disabled_live_symbols_visible_but_not_selected": true,
-    "actual_queue_write": false,
-    "actual_submit": false,
-    "symbols": {
-      "AT/USDT:USDT": {
-        "enabled_for_live": true,
-        "candidate_type": "NO_ACTION",
-        "recommended_action": "BLOCKED",
-        "policy_block_reason": "candidate_type_not_allowed_by_symbol_policy"
-      },
-      "ADA/USDT:USDT": {
-        "enabled_for_live": false,
-        "candidate_type": "CLOSE_LIMIT",
-        "recommended_action": "WAIT",
-        "policy_block_reason": "live_disabled_for_symbol"
-      },
-      "SOL/USDT:USDT": {
-        "enabled_for_live": false,
-        "candidate_type": "CLOSE_LIMIT",
-        "recommended_action": "WAIT",
-        "policy_block_reason": "live_disabled_for_symbol"
-      }
-    }
-  },
-  "preflight_result": {
-    "symbol": "AT/USDT:USDT",
-    "candidate_type": "NO_ACTION",
-    "readiness_state": "BLOCKED",
-    "submit_allowed": false,
+  "SOL_after_fix": {
+    "long_qty": 12.0,
+    "short_qty": 11.0,
+    "candidate_type": "CLOSE_LIMIT",
+    "candidate_side": "SHORT",
+    "reason": "auto: trim SHORT winner | leg_trim | leg-target",
+    "api_side_token": "CLOSE_SHORT",
+    "mexc_side_enum": 2,
+    "closes_long": false,
+    "closes_short": true,
+    "mapping_result": "MAPPING_OK_CLOSES_SHORT_FOR_CURRENT_HEDGED_EXPOSURE",
+    "submit_allowed_preflight": false,
     "policy_allows_candidate": false,
-    "policy_block_reason": null,
-    "actual_queue_write": false,
-    "actual_submit": false
+    "policy_block_reason": "live_disabled_for_symbol",
+    "note": "Current live strategy snapshot sees SOL as hedged LONG=12 / SHORT=11. The long-only regression case is now guarded and tested."
   },
-  "ui_behavior": {
-    "policy_columns_shown": true,
-    "live_policy_status_shown": true,
-    "policy_block_reason_shown": true
-  },
-  "tests": {
-    "live_disabled": true,
-    "allow_open_false": true,
-    "allow_close_true": true,
-    "qty_cap": true,
-    "spread_cap": true,
-    "missing_policy": true,
-    "market_forbidden": true,
-    "scanner_read_only": true
+  "regression_tests": {
+    "long_only_close_emits_LONG": true,
+    "short_only_close_emits_SHORT": true,
+    "mixed_eligible_long_emits_LONG": true,
+    "mixed_eligible_short_emits_SHORT": true,
+    "SOL_like_long_only_regression_blocks_CLOSE_SHORT": true,
+    "api_executor_mapping_unchanged": true
   },
   "safety_confirmation": {
-    "new_submit": false,
+    "live_submit": false,
     "queue_write": false,
     "cancel_replace_chase": false,
-    "MARKET_enabled": false,
     "db_schema_changes": false,
-    "strategy_logic_broad_changes": false,
-    "api_executor_mexc_direct_execution_behavior_changed": false
+    "strategy_broad_refactor": false,
+    "api_executor_mexc_direct_execution_changed": false
   },
-  "summary": "Added config/symbol_live_policy.json and wired per-symbol policy into scan ranking, single-symbol auto_submit preflight/live guards, and Controls UI reporting. Only AT is enabled_for_live and close-only; ADA/BTC/ETH/SOL remain scan-visible but live-disabled. No live action, queue write, schema change, strategy change, or execution behavior change occurred."
+  "summary": "Added a defensive CLOSE_LIMIT side mapping guard in strategy_engine and regression coverage. Strategy now fails closed if a close candidate targets a side with no contracts while the opposite leg has exposure. Current SOL data is hedged LONG=12/SHORT=11, so CLOSE_SHORT maps correctly to closing the SHORT leg and remains live-disabled by policy."
 }
