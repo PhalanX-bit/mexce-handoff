@@ -1,23 +1,25 @@
 {
-  "task_id": "2026-04-29-004",
-  "updated_at": "2026-04-29T10:20:00Z",
+  "task_id": "2026-04-29-005",
+  "updated_at": "2026-04-29T10:42:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add scanner copyable commands UI",
-  "result_type": "ui_convenience",
+  "title": "Enhance multi-symbol scanner with contract meta, spread, and close-only ranking",
+  "result_type": "scanner_reporting_ranking",
   "scope": {
     "code_changes_made": true,
     "ui_changes_made": true,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
     "api_executor_changed": false,
-    "mexc_direct_changed": false,
+    "mexc_direct_execution_changed": false,
     "action_queue_writes": false,
     "lot_realization_created": false,
     "live_exchange_action_taken": false
   },
   "changed_files": [
+    "scripts/automation_read_only_runner.py",
     "app/V2/ui/controls_tab.py",
+    "scripts/test_automation_read_only_runner.py",
     "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json",
@@ -26,43 +28,122 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\test_controls_automation_parsing.py",
+    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT --mode scan --json"
+    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT --mode scan --json --close-only",
+    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --mode scan --json --close-only"
   ],
-  "ui_behavior": {
-    "scanner_command_shown": true,
-    "selected_symbol_command_shown": true,
-    "preflight_command_shown": true,
-    "protected_live_command_guarded": true,
-    "next_suggested_manual_step": "WAIT / rerun scanner later"
-  },
-  "current_scan_interpretation": {
-    "best_candidate": null,
-    "suggested_action": "WAIT",
-    "live_command_executable_from_copy_section": false,
+  "cli_scan": {
     "symbols": [
-      {
-        "symbol": "AT/USDT:USDT",
-        "recommended_action": "BLOCKED",
-        "candidate_type": "OPEN_LIMIT",
-        "blocker": "PROFITABLE_LOTS_PRESENT"
-      },
-      {
-        "symbol": "ADA/USDT:USDT",
-        "recommended_action": "BLOCKED",
-        "candidate_type": "NO_ACTION",
-        "blocker": "LIVE_PROPOSAL_VALIDATION"
-      }
-    ]
+      "AT/USDT:USDT",
+      "ADA/USDT:USDT",
+      "BTC/USDT:USDT",
+      "ETH/USDT:USDT",
+      "SOL/USDT:USDT"
+    ],
+    "close_only_mode": true,
+    "max_spread_bps": 50.0,
+    "best_candidate_symbol": null,
+    "best_candidate_type": null,
+    "best_candidate_recommended_action": null,
+    "actual_queue_write": false,
+    "actual_submit": false
+  },
+  "per_symbol_summary": [
+    {
+      "symbol": "AT/USDT:USDT",
+      "meta_valid": false,
+      "qty_1_valid": false,
+      "spread_bps": 72.19778553010917,
+      "liquidity_ok": false,
+      "readiness_state": "BLOCKED",
+      "candidate_type": "OPEN_LIMIT",
+      "reduce_only": 0,
+      "post_only": null,
+      "maker_only": null,
+      "submit_allowed_preflight": false,
+      "recommended_action": "BLOCKED",
+      "rejection_reason": "blocked_by_guards"
+    },
+    {
+      "symbol": "ADA/USDT:USDT",
+      "meta_valid": true,
+      "qty_1_valid": true,
+      "spread_bps": 3.94710874284543,
+      "liquidity_ok": true,
+      "readiness_state": "BLOCKED",
+      "candidate_type": "NO_ACTION",
+      "reduce_only": null,
+      "post_only": null,
+      "maker_only": null,
+      "submit_allowed_preflight": false,
+      "recommended_action": "BLOCKED",
+      "rejection_reason": "blocked_by_guards"
+    },
+    {
+      "symbol": "BTC/USDT:USDT",
+      "meta_valid": true,
+      "qty_1_valid": true,
+      "spread_bps": 0.012855230181415432,
+      "liquidity_ok": true,
+      "readiness_state": "BLOCKED",
+      "candidate_type": "NO_ACTION",
+      "reduce_only": null,
+      "post_only": null,
+      "maker_only": null,
+      "submit_allowed_preflight": false,
+      "recommended_action": "BLOCKED",
+      "rejection_reason": "blocked_by_guards"
+    },
+    {
+      "symbol": "ETH/USDT:USDT",
+      "meta_valid": true,
+      "qty_1_valid": true,
+      "spread_bps": 0.042666393600738685,
+      "liquidity_ok": true,
+      "readiness_state": "BLOCKED",
+      "candidate_type": "NO_ACTION",
+      "reduce_only": null,
+      "post_only": null,
+      "maker_only": null,
+      "submit_allowed_preflight": false,
+      "recommended_action": "BLOCKED",
+      "rejection_reason": "blocked_by_guards"
+    },
+    {
+      "symbol": "SOL/USDT:USDT",
+      "meta_valid": true,
+      "qty_1_valid": true,
+      "spread_bps": 1.1706175007322348,
+      "liquidity_ok": true,
+      "readiness_state": "BLOCKED",
+      "candidate_type": "NO_ACTION",
+      "reduce_only": null,
+      "post_only": null,
+      "maker_only": null,
+      "submit_allowed_preflight": false,
+      "recommended_action": "BLOCKED",
+      "rejection_reason": "blocked_by_guards"
+    }
+  ],
+  "ui_scanner": {
+    "close_only_checkbox": true,
+    "spread_threshold_shown_input": true,
+    "meta_columns_shown": true,
+    "spread_columns_shown": true,
+    "best_candidate_explanation": true
   },
   "safety_confirmation": {
-    "live_submit": false,
-    "queue_write": false,
-    "strategy_logic_changes": false,
-    "api_executor_mexc_direct_changes": false,
+    "queue_writes": false,
+    "exchange_submits": false,
+    "cancel_replace_chase": false,
+    "multi_symbol_live_autonomy": false,
+    "open_live_selection_in_close_only_mode": false,
+    "single_symbol_live_path_preserved": true,
     "db_schema_changes": false,
-    "broad_ui_redesign": false
+    "strategy_logic_changes": false,
+    "api_executor_mexc_direct_execution_changed": false
   },
-  "summary": "Controls scanner now shows copyable scanner/check/preflight/protected-live command blocks for the selected symbol. The protected live command remains text only and is guarded with warnings when scan/preflight conditions are not clean. Current scan still recommends WAIT."
+  "summary": "Multi-symbol scan mode now enriches each allowlisted symbol with contract meta validity, qty=1 validation, live bid/ask spread sanity, liquidity_ok, close-only mode, and safe close-only ranking. Current scan found no best candidate; all symbols remain BLOCKED/no-action, with no queue writes and no exchange submits."
 }

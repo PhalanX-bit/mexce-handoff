@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T10:20:00Z",
+  "updated_at": "2026-04-29T10:42:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-005",
+      "title": "Enhance multi-symbol scanner with meta/spread/close-only ranking",
+      "status": "completed",
+      "completed_at": "2026-04-29T10:42:00Z",
+      "result_summary": "Scanner now reports contract meta validity, qty=1 validation, spread/liquidity sanity, and close-only safe ranking; current 5-symbol scan has no best candidate and made no queue write or exchange submit."
+    },
     {
       "task_id": "2026-04-29-004",
       "title": "Add scanner copyable commands UI",
