@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T10:58:00Z",
+  "updated_at": "2026-04-29T11:17:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-007",
+      "title": "Add post-submit auto-verify order refresh",
+      "status": "completed",
+      "completed_at": "2026-04-29T11:17:00Z",
+      "result_summary": "Added read-only Controls verify button for the latest submitted automation order; action 11 refreshes as CANCELED_NO_FILL, filled_qty=0, final_fill_success=false, next_safe_action=DO_NOT_BACKFILL."
+    },
     {
       "task_id": "2026-04-29-006",
       "title": "Fix scanner contract meta lookup consistency",

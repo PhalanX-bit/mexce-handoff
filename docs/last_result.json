@@ -1,13 +1,13 @@
 {
-  "task_id": "2026-04-29-006",
-  "updated_at": "2026-04-29T10:58:00Z",
+  "task_id": "2026-04-29-007",
+  "updated_at": "2026-04-29T11:17:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Fix scanner contract meta lookup consistency",
-  "result_type": "scanner_meta_lookup_fix",
+  "title": "Add post-submit auto-verify order refresh",
+  "result_type": "post_submit_lifecycle_reporting",
   "scope": {
     "code_changes_made": true,
-    "ui_changes_made": false,
+    "ui_changes_made": true,
     "database_schema_changes_made": false,
     "strategy_logic_changed": false,
     "api_executor_changed": false,
@@ -17,8 +17,8 @@
     "live_exchange_action_taken": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "scripts/test_automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json",
     "mexce-handoff/docs/last_result.json",
@@ -26,95 +26,49 @@
     "mexce-handoff/docs/handoff_manifest.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py scripts\\validate_contract_meta.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\test_automation_read_only_runner.py",
+    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\validate_contract_meta.py --symbol AT/USDT:USDT --preview-price 0.16305843 --json",
-    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT --mode scan --json --close-only",
-    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --mode scan --json --close-only"
+    "python scripts\\test_automation_read_only_runner.py",
+    "python -c \"from core.reconcile_service import get_order_state; ... get_order_state(11) ...\"",
+    "python -c \"from app.V2.ui.controls_tab import _load_last_automation_action_verified_report; ...\""
   ],
-  "at_meta_validate_contract_meta": {
-    "raw_symbol": "AT_USDT",
-    "price_tick": 0.00001,
-    "qty_step": 1,
-    "min_qty": 1,
-    "price_precision": 5,
-    "qty_precision": 0,
-    "qty_1_valid": true,
-    "meta_valid": true,
-    "exchange_symbol_recognized": true,
-    "apiAllowed": true,
-    "max_leverage": 50,
-    "contract_size": 1
+  "verify_last_action": {
+    "action_id": 11,
+    "api_order_id": "803716434722380480",
+    "executor_status": "DONE",
+    "exchange_status": "CANCELED_NO_FILL",
+    "exchange_raw_state": 4,
+    "exchange_filled_qty": 0.0,
+    "exchange_avg_price": null,
+    "reconcile_state": "CANCELED_NO_FILL",
+    "reconcile_reason": "history_confirms_post_only_cancel_no_fill",
+    "lifecycle_result": "submitted_then_canceled_no_fill",
+    "final_fill_success": false,
+    "next_safe_action": "DO_NOT_BACKFILL",
+    "exchange_lookup_ok": true
   },
-  "at_meta_scanner": {
-    "raw_symbol": "AT_USDT",
-    "meta_source": "all_symbols_fallback",
-    "meta_valid": true,
-    "meta_error": null,
-    "price_tick": 0.00001,
-    "qty_step": 1.0,
-    "min_qty": 1.0,
-    "price_precision": 5,
-    "qty_precision": 0,
-    "max_leverage": 50,
-    "contract_size": 1.0,
-    "qty_1_valid": true,
-    "spread_bps": 93.93654737735362,
-    "liquidity_ok": false,
-    "recommended_action": "BLOCKED",
-    "rejection_reason": "blocked_by_guards"
+  "ui_behavior": {
+    "refresh_button": "Verify last submit / Refresh exchange status",
+    "canceled_no_fill_warning": true,
+    "open_order_warning": true,
+    "filled_success": true,
+    "lookup_failure_fail_safe": true
   },
-  "multi_symbol_scan": {
-    "best_candidate_symbol": null,
-    "best_candidate_recommended_action": null,
-    "actual_queue_write": false,
-    "actual_submit": false,
-    "symbols": [
-      {
-        "symbol": "AT/USDT:USDT",
-        "meta_valid": true,
-        "qty_1_valid": true,
-        "liquidity_ok": false,
-        "recommended_action": "BLOCKED"
-      },
-      {
-        "symbol": "ADA/USDT:USDT",
-        "meta_valid": true,
-        "qty_1_valid": true,
-        "liquidity_ok": true,
-        "recommended_action": "BLOCKED"
-      },
-      {
-        "symbol": "BTC/USDT:USDT",
-        "meta_valid": true,
-        "qty_1_valid": true,
-        "liquidity_ok": true,
-        "recommended_action": "BLOCKED"
-      },
-      {
-        "symbol": "ETH/USDT:USDT",
-        "meta_valid": true,
-        "qty_1_valid": true,
-        "liquidity_ok": true,
-        "recommended_action": "BLOCKED"
-      },
-      {
-        "symbol": "SOL/USDT:USDT",
-        "meta_valid": true,
-        "qty_1_valid": true,
-        "liquidity_ok": true,
-        "recommended_action": "BLOCKED"
-      }
-    ]
+  "tests": {
+    "canceled_no_fill": true,
+    "open_no_fill": true,
+    "filled_qty": true,
+    "lookup_failed": true,
+    "no_api_order_id": true
   },
   "safety_confirmation": {
-    "queue_writes": false,
-    "exchange_submits": false,
+    "new_submit": false,
+    "queue_write": false,
     "cancel_replace_chase": false,
+    "lot_realization_created": false,
+    "db_schema_changes": false,
     "strategy_logic_changes": false,
-    "api_executor_mexc_direct_execution_changed": false,
-    "db_schema_changes": false
+    "api_executor_mexc_direct_execution_behavior_changed": false
   },
-  "summary": "Scanner contract meta lookup now mirrors validate_contract_meta fallback behavior: symbol-specific detail first, all-symbol contract detail fallback second, and get_contract_meta last. AT/USDT:USDT now reports meta_valid=true and qty_1_valid=true via all_symbols_fallback; current non-selection is due to guards/liquidity, not meta lookup failure."
+  "summary": "Controls now has a read-only Verify last submit / Refresh exchange status action. It finds the latest automation action with api_order_id, calls the existing read-only order-state lookup, and displays exchange status, filled qty, lifecycle_result, final_fill_success, and next_safe_action without DB writes or exchange actions. Action 11 verifies as CANCELED_NO_FILL with DO_NOT_BACKFILL."
 }
