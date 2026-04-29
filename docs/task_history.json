@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T19:23:05Z",
+  "updated_at": "2026-04-29T19:27:27Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-29-013",
+      "title": "Enable SOL live policy close-only",
+      "status": "completed",
+      "completed_at": "2026-04-29T19:27:27Z",
+      "result_summary": "Enabled SOL/USDT:USDT for live policy as close-only reduce-only qty=1; scanner now selects SOL as CLOSE_READY and auto_submit preflight returns submit_allowed=true, with no live submit and no queue write."
+    },
     {
       "task_id": "2026-04-29-012",
       "title": "Final read-only SOL live enablement review",

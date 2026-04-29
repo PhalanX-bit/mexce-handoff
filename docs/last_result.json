@@ -1,111 +1,81 @@
 {
-  "task_id": "2026-04-29-012",
-  "updated_at": "2026-04-29T19:23:05Z",
+  "task_id": "2026-04-29-013",
+  "updated_at": "2026-04-29T19:27:27Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Final read-only SOL live enablement review after side fix",
-  "result_type": "sol_live_enablement_readiness_review",
+  "title": "Enable SOL live in per-symbol policy, close-only reduce-only qty=1",
+  "result_type": "sol_live_policy_enablement",
   "scope": {
     "code_changes_made": false,
     "ui_changes_made": false,
     "database_schema_changes_made": false,
-    "config_changed": false,
+    "config_changed": true,
     "strategy_logic_changed": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false,
     "action_queue_writes": false,
     "lot_realization_created": false,
-    "live_exchange_action_taken": false
+    "live_exchange_action_taken": false,
+    "open_enabled": false,
+    "market_enabled": false,
+    "other_symbols_changed": false
   },
-  "commands_run": [
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json",
-    "python scripts\\automation_read_only_runner.py --symbols SOL/USDT:USDT --mode scan --json --close-only",
-    "read-only SOL policy simulation with enabled_for_live=true"
+  "changed_files": [
+    "config/symbol_live_policy.json",
+    "last_result.json",
+    "task_history.json",
+    "mexce-handoff/docs/last_result.json",
+    "mexce-handoff/docs/task_history.json",
+    "mexce-handoff/docs/handoff_manifest.json"
   ],
-  "policy": {
+  "commands_run": [
+    "python scripts\\automation_read_only_runner.py --symbols SOL/USDT:USDT --mode scan --json --close-only",
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json",
+    "python scripts\\test_automation_read_only_runner.py",
+    "python scripts\\test_controls_automation_parsing.py"
+  ],
+  "SOL_policy_after_change": {
     "enabled_for_scan": true,
-    "enabled_for_live": false,
+    "enabled_for_live": true,
     "close_only": true,
     "allow_open": false,
     "allow_close": true,
     "max_qty": 1.0,
     "max_spread_bps": 50.0,
-    "market_orders_allowed": false
+    "market_orders_allowed": false,
+    "require_reduce_only_for_close": true
   },
-  "meta_liquidity": {
-    "raw_symbol": "SOL_USDT",
-    "meta_valid": true,
-    "meta_source": "all_symbols_fallback",
-    "apiAllowed": true,
-    "price_tick": 0.01,
-    "qty_step": 1.0,
-    "min_qty": 1.0,
-    "price_precision": 2,
-    "qty_precision": 0,
-    "qty_1_valid": true,
-    "max_leverage": 300,
-    "bid1": 82.23,
-    "ask1": 82.24,
-    "lastPrice": 82.24,
-    "fairPrice": 82.23,
-    "indexPrice": 82.28,
-    "spread_bps": 1.2160272390090479,
-    "liquidity_ok": true
+  "scanner_after_change": {
+    "best_candidate_symbol": "SOL/USDT:USDT",
+    "best_candidate_type": "CLOSE_LIMIT",
+    "recommended_action": "CLOSE_READY",
+    "policy_allows_candidate": true,
+    "actual_queue_write": false,
+    "actual_submit": false
   },
-  "exposure": {
-    "long_qty": 12.0,
-    "short_qty": 11.0,
-    "gross_qty": 23.0,
-    "net_qty": 1.0,
-    "open_lots_count": 0,
-    "profitable_lots": 0,
-    "target_reached_lots": 0,
-    "eligible_lots": 0
-  },
-  "candidate": {
+  "SOL_preflight": {
     "readiness_state": "READY_FOR_BATCH_APPROVAL",
     "blockers": [],
     "safety_overall": "PASS",
     "candidate_type": "CLOSE_LIMIT",
     "candidate_side": "SHORT",
-    "qty": 1.0,
     "reduce_only": 1,
-    "order_type": "limit",
-    "limit_price": 82.37565823333334,
+    "qty": 1.0,
     "post_only": false,
     "maker_only": false,
-    "reason": "auto: trim SHORT winner | leg_trim | leg-target"
-  },
-  "mapping": {
-    "panel_mode": "CLOSE",
-    "intent": "close",
-    "ui_side": "SHORT",
-    "api_side_token": "CLOSE_SHORT",
-    "mexc_side_enum": 2,
-    "closes_long": false,
-    "closes_short": true,
-    "mapping_result": "MAPPING_OK_CLOSES_SHORT_FOR_CURRENT_HEDGED_EXPOSURE"
-  },
-  "orders_queue_lifecycle": {
-    "open_orders_count": 0,
-    "active_queue_actions_count": 0,
-    "last_action_id": null,
-    "last_lifecycle_result": null,
-    "last_next_safe_action": null
-  },
-  "would_be_policy_result": {
-    "assumed_change": "SOL enabled_for_live=true only",
-    "would_policy_allow_candidate_if_enabled": true,
-    "policy_block_reason_after_enable": null,
-    "safe_to_enable_live": true,
-    "reason": "SOL passes meta, qty=1, liquidity, CLOSE_LIMIT reduce_only qty=1, post_only=false, blockers=[], safety_overall=PASS, mapping OK, and has no open orders or active queue conflicts. Current blocker is only enabled_for_live=false."
+    "submit_allowed": true,
+    "actual_submit": false,
+    "actual_queue_write": false,
+    "decision": "ready_auto_submit_preflight"
   },
   "safety_confirmation": {
     "live_submit": false,
     "queue_write": false,
-    "config_changed": false,
+    "open_enabled": false,
+    "market_enabled": false,
+    "other_symbols_changed": false,
     "strategy_api_changes": false,
     "db_schema_changes": false
   },
-  "summary": "Read-only SOL review says SOL is safe for a future config-only live enablement to enabled_for_live=true for close-only reduce-only qty=1, subject to operator confirmation. No config change, queue write, or live action was made."
+  "summary": "Promoted SOL/USDT:USDT to enabled_for_live=true in symbol_live_policy.json while keeping close_only=true, allow_open=false, allow_close=true, max_qty=1, require_reduce_only_for_close=true, and market_orders_allowed=false. Read-only scanner now selects SOL as CLOSE_READY and auto_submit preflight returns submit_allowed=true with no submit and no queue write."
 }
