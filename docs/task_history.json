@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-30T03:48:00Z",
+  "updated_at": "2026-04-30T08:42:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-30-004",
+      "title": "Convert Risk / Exposure summary to symbol cards",
+      "status": "completed",
+      "completed_at": "2026-04-30T08:42:00Z",
+      "result_summary": "Risk / Exposure Summary now uses compact per-symbol cards with exposure, lots, queue/orders, lifecycle, policy, warnings, raw JSON expanders, and a non-executing Use symbol button; the full wide table is collapsed as debug. No live action, queue write, strategy/API, or schema changes."
+    },
     {
       "task_id": "2026-04-30-003",
       "title": "Add Operations / Control Center summary",
