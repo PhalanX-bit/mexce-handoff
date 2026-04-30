@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-29T19:39:37Z",
+  "updated_at": "2026-04-30T03:24:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-30-001",
+      "title": "Diagnose SOL post-only no-fill",
+      "status": "completed",
+      "completed_at": "2026-04-30T03:24:00Z",
+      "result_summary": "Read-only diagnosis found SOL action 12 was submitted as MEXC orderType=2/Post Only Maker despite runner preview post_only=false. Root cause is mexc_direct create_limit_order_raw using open_type=2 for both payload type and openType; no live submit, queue write, cancel/replace, or backfill was performed."
+    },
     {
       "task_id": "2026-04-29-014",
       "title": "Allow scanner symbol as active control symbol",

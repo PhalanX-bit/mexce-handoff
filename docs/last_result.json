@@ -1,13 +1,13 @@
 {
-  "task_id": "2026-04-29-014",
-  "updated_at": "2026-04-29T19:39:37Z",
+  "task_id": "2026-04-30-001",
+  "updated_at": "2026-04-30T03:24:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Allow selected scanner symbol to become active single-symbol control symbol",
-  "result_type": "active_symbol_selection_ui",
+  "title": "Diagnose SOL no-fill after expected post_only=false close",
+  "result_type": "sol_post_only_no_fill_diagnostic",
   "scope": {
-    "code_changes_made": true,
-    "ui_changes_made": true,
+    "code_changes_made": false,
+    "ui_changes_made": false,
     "database_schema_changes_made": false,
     "config_changed": false,
     "strategy_logic_changed": false,
@@ -15,54 +15,98 @@
     "mexc_direct_changed": false,
     "action_queue_writes": false,
     "lot_realization_created": false,
+    "manual_backfill": false,
     "live_exchange_action_taken": false,
-    "multi_symbol_live_autonomy_added": false
+    "cancel_replace_chase": false,
+    "market_enabled": false
   },
-  "changed_files": [
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_controls_automation_parsing.py",
-    "last_result.json",
-    "task_history.json",
-    "mexce-handoff/docs/last_result.json",
-    "mexce-handoff/docs/task_history.json",
-    "mexce-handoff/docs/handoff_manifest.json"
-  ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbols SOL/USDT:USDT --mode scan --json --close-only",
+    "read-only SQLite query against data/mexc.sqlite action_queue/actions_ledger",
+    "read-only MEXC lookup via list_open_orders_raw/list_history_orders_raw/list_deals_raw for SOL order 804558821271170048",
     "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json"
   ],
-  "ui_behavior": {
-    "default_active_symbol": "AT/USDT:USDT",
-    "best_candidate": "SOL/USDT:USDT",
-    "use_best_candidate_button": true,
-    "use_selected_symbol_button": true,
-    "active_symbol_after_selecting_SOL": "SOL/USDT:USDT",
-    "preflight_invalidated_on_symbol_change": true,
-    "confirm_checkbox_text": "Symbol is SOL/USDT:USDT",
-    "protected_live_command_symbol": "SOL/USDT:USDT"
+  "last_SOL_action": {
+    "action_id": 12,
+    "api_order_id": "804558821271170048",
+    "symbol": "SOL/USDT:USDT",
+    "panel_mode": "CLOSE",
+    "intent": "close",
+    "side": "SHORT",
+    "qty": 1.0,
+    "limit_price": 82.38,
+    "reduce_only": 1,
+    "order_kind": "LIMIT",
+    "order_type": "limit",
+    "action_post_only": null,
+    "action_maker_only": null,
+    "time_in_force": null,
+    "local_status": "DONE",
+    "reconcile_state": "CANCELED_NO_FILL",
+    "reconcile_reason": "history_confirms_post_only_cancel_no_fill",
+    "lifecycle_result": "submitted_then_canceled_no_fill"
   },
-  "SOL_flow": {
-    "SOL_scanner_candidate": "CLOSE_READY",
-    "SOL_preflight_possible_from_UI": true,
-    "SOL_live_locked_until_fresh_preflight": true,
-    "enabled_for_live_respected": true,
-    "preflight_submit_allowed": true,
-    "actual_submit": false,
-    "actual_queue_write": false
+  "preflight_intended": {
+    "candidate_type": "CLOSE_LIMIT",
+    "reduce_only": 1,
+    "qty": 1.0,
+    "post_only": false,
+    "maker_only": false,
+    "submit_allowed": true,
+    "note": "Pre-submit preview intended taker-allowed reduce-only LIMIT close, but these fields are not persisted in action_queue."
   },
-  "no_fill_guard": {
-    "AT_previous_no_fill_blocks_AT_stale_live": true,
-    "AT_previous_no_fill_does_not_globally_block_SOL": true,
-    "SOL_requires_fresh_SOL_preflight": true
+  "payload_path": {
+    "api_executor_order_kind": "LIMIT",
+    "api_executor_post_only": false,
+    "mexc_direct_order_type": 2,
+    "mexc_direct_post_only": true,
+    "raw_payload_logged": false,
+    "raw_payload_relevant_fields": {
+      "symbol": "SOL_USDT",
+      "price": "82.38",
+      "vol": "1",
+      "side": 2,
+      "type": 2,
+      "openType": 2,
+      "leverage": 300,
+      "category": 1,
+      "externalOid": "aq-12-1777492169347"
+    }
+  },
+  "exchange_order": {
+    "state": 4,
+    "errorCode": 20,
+    "showCancelReason": 1,
+    "dealVol": 0,
+    "avgPrice": 0,
+    "price": 82.38,
+    "vol": 1,
+    "side": 2,
+    "orderType": 2,
+    "category": 1,
+    "openType": 2,
+    "raw_status_summary": "history order state=4 canceled, orderType=2 Post Only Maker, dealVol=0"
+  },
+  "cause": {
+    "classification": "MEXC_ORDER_TYPE_MAPPING_WRONG",
+    "explanation": "core/mexc_direct.py create_limit_order_raw uses open_type=2 for both payload type and openType. In MEXC contract API, type=1 is normal price-limited order and type=2 is Post Only Maker. Therefore every direct LIMIT submit is sent as orderType=2/post-only, regardless of runner preview post_only=false.",
+    "minimal_fix_proposal": "Split order_type from open_type in mexc_direct.create_limit_order_raw/create_limit_order_and_get_id. Default order_type should be 1 for taker-allowed LIMIT; OPEN post-only behavior should explicitly pass order_type=2 or order_kind=POST_ONLY through api_executor. Preserve MARKET forbidden, qty cap, and no cancel/replace/chase.",
+    "files_likely_needed": [
+      "core/mexc_direct.py",
+      "core/api_executor.py",
+      "scripts/automation_read_only_runner.py",
+      "core/test_mexc_direct_signing.py or new mexc_direct payload tests",
+      "scripts/test_automation_read_only_runner.py"
+    ]
   },
   "safety_confirmation": {
-    "live_submit": false,
+    "new_submit": false,
     "queue_write": false,
-    "multi_symbol_live_autonomy": false,
-    "strategy_api_changes": false,
-    "db_schema_changes": false
+    "cancel_replace_chase": false,
+    "manual_backfill": false,
+    "market_enabled": false,
+    "db_schema_changes": false,
+    "strategy_broad_changes": false,
+    "api_execution_behavior_changed": false
   },
-  "summary": "Controls UI now has a session active_symbol that defaults to AT but can be set from scanner best/selected symbol. Single-symbol Check state, Auto-submit preflight, watcher, Protected LIVE submit, confirm-symbol text, and no-fill retry guard now follow active_symbol. Changing active_symbol invalidates stale preflight/live context. No live action or queue write occurred."
+  "summary": "SOL action 12 was locally LIMIT/reduce_only close, but the direct MEXC submit payload path still produced type=2/openType=2. Exchange history confirms orderType=2, state=4, errorCode=20, dealVol=0. The no-fill is not a misleading exchange reason; the submitted order was effectively Post Only Maker because mexc_direct maps LIMIT payload type incorrectly."
 }
