@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-04-30-004",
-  "updated_at": "2026-04-30T08:42:00Z",
+  "task_id": "2026-04-30-005",
+  "updated_at": "2026-04-30T09:15:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Phase 2 - Convert Risk / Exposure summary into compact symbol cards",
-  "result_type": "risk_exposure_cards_phase_2",
+  "title": "Phase 3 - Add Actions / Lifecycle timeline view",
+  "result_type": "actions_lifecycle_timeline_phase_3",
   "scope": {
     "code_changes_made": true,
     "ui_changes_made": true,
@@ -28,66 +28,51 @@
   ],
   "commands_run": [
     "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\test_controls_automation_parsing.py",
-    "python explicit py_compile with temporary cfile for locked Windows __pycache__"
+    "python scripts\\test_controls_automation_parsing.py"
   ],
   "ui_changes": {
-    "card_view_added": true,
-    "full_table_collapsed": true,
-    "raw_json_expanders": true,
-    "use_symbol_button_behavior": "Use symbol only sets active_symbol/session state and invalidates old preflight; it does not run preflight/live."
+    "timeline_section_added": true,
+    "location": "Controls tab, below Operations / Control Center",
+    "last_n_actions_supported": 5,
+    "steps_shown": [
+      "Preflight",
+      "Queue",
+      "Submit",
+      "Exchange",
+      "Reconcile",
+      "Lots",
+      "Next safe action"
+    ],
+    "raw_expanders": [
+      "submitted payload",
+      "action/debug details",
+      "api/exchange response",
+      "reconcile payload"
+    ]
   },
-  "sample_cards": [
-    {
-      "symbol": "SOL/USDT:USDT",
-      "risk_label": "CLOSE_READY",
-      "readiness_state": "READY_FOR_BATCH_APPROVAL",
-      "candidate_type": "CLOSE_LIMIT",
-      "exposure": {
-        "long_qty": 12.0,
-        "short_qty": 11.0,
-        "gross_qty": 23.0,
-        "net_qty": 1.0
-      },
-      "lots": {
-        "open_lots_count": 3,
-        "profitable_lots": 1,
-        "target_reached_lots": 1,
-        "eligible_lots": 1
-      },
-      "orders_queue": {
-        "open_orders_count": 0,
-        "active_queue_actions_count": 0
-      },
-      "last_lifecycle": {
-        "last_lifecycle_result": "submitted_then_canceled_no_fill",
-        "last_next_safe_action": "DO_NOT_BACKFILL"
-      },
-      "policy": {
-        "enabled_for_live": true,
-        "close_only": true,
-        "allow_open": false,
-        "allow_close": true,
-        "max_qty": 1.0,
-        "max_spread_bps": 50.0
-      }
-    }
-  ],
-  "warnings": {
-    "LAST_ACTION_NO_FILL": "No-fill action exists. Do not backfill.",
-    "CLOSE_READY": "Close candidate is ready. Run single-symbol preflight.",
-    "QUEUE_CONFLICT": "Do not submit duplicate.",
-    "OPEN_ORDER_ACTIVE": "Do not submit duplicate.",
-    "WAIT_BLOCKED": "neutral"
+  "lifecycle_behavior": {
+    "done_treated_as_fill_success": false,
+    "canceled_no_fill_status": "WARNING",
+    "submitted_open_status": "WARNING",
+    "submitted_filled_status": "PASS",
+    "missing_lifecycle_status": "UNKNOWN",
+    "payload_summary_fields": [
+      "type",
+      "openType",
+      "side",
+      "price",
+      "vol",
+      "reduceOnly",
+      "externalOid"
+    ]
   },
   "tests": {
-    "risk_rows_render_into_compact_card_summaries": true,
-    "last_action_no_fill_warning": true,
-    "close_ready_next_action": true,
-    "queue_conflict_warning": true,
-    "missing_fields_neutral_placeholders": true,
-    "full_debug_table_available": true,
-    "no_live_or_queue_action_from_cards": true
+    "canceled_no_fill_warning": true,
+    "submitted_filled_success": true,
+    "submitted_open_warning": true,
+    "missing_lifecycle_unknown": true,
+    "submitted_payload_type_displayed": true,
+    "action_queue_done_not_fill_success": true
   },
   "safety_confirmation": {
     "live_submit": false,
@@ -96,8 +81,7 @@
     "lot_realization_created": false,
     "db_schema_changes": false,
     "strategy_logic_changes": false,
-    "api_executor_mexc_direct_changes": false,
-    "multi_symbol_live_automation": false
+    "api_executor_mexc_direct_changes": false
   },
-  "summary": "Risk / Exposure Summary now renders compact per-symbol cards as the primary operator view. Each card shows risk label, readiness/candidate, exposure, lots, orders/queue, last lifecycle, policy, warnings, raw JSON expanders, and a non-executing Use symbol button. The full wide table remains available only inside a debug expander."
+  "summary": "Controls now includes an Actions / Lifecycle Timeline read-only section for the latest automation actions. It separates preflight, queue, submit, exchange, reconcile, lots, and next-safe-action stages so DONE is executor completion only, CANCELED_NO_FILL is visibly no-fill, and payload/reconcile raw data stays in expanders."
 }

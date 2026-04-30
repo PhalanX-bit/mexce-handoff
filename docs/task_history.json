@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-30T08:42:00Z",
+  "updated_at": "2026-04-30T09:15:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-30-005",
+      "title": "Add Actions / Lifecycle timeline view",
+      "status": "completed",
+      "completed_at": "2026-04-30T09:15:00Z",
+      "result_summary": "Added a read-only Actions / Lifecycle Timeline in Controls for the latest automation actions, with stage cards for preflight, queue, submit, exchange, reconcile, lots, and next safe action. DONE is executor-only, CANCELED_NO_FILL is warning/no-fill, raw payload/API/reconcile details are in expanders, and no live action or queue write occurred."
+    },
     {
       "task_id": "2026-04-30-004",
       "title": "Convert Risk / Exposure summary to symbol cards",
