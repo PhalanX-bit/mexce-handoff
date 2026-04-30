@@ -1,13 +1,13 @@
 {
-  "task_id": "2026-04-30-006",
-  "updated_at": "2026-04-30T10:25:00Z",
+  "task_id": "2026-04-30-007",
+  "updated_at": "2026-04-30T10:45:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Create synthetic execution-policy simulation helper",
-  "result_type": "execution_policy_simulation_helper",
+  "title": "Add execution-policy comparison panel to Strategy Simulation tab",
+  "result_type": "execution_policy_simulation_ui_panel",
   "scope": {
     "code_changes_made": true,
-    "ui_changes_made": false,
+    "ui_changes_made": true,
     "database_schema_changes_made": false,
     "config_changed": false,
     "strategy_live_logic_changed": false,
@@ -19,40 +19,50 @@
     "market_enabled_live": false
   },
   "changed_files": [
-    "core/streamlit_services/strategy_simulation_service.py",
-    "core/test_execution_policy_simulation.py",
+    "app/V2/ui/strategy_simulation_tab.py",
+    "scripts/test_strategy_simulation_ui.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile core\\streamlit_services\\strategy_simulation_service.py core\\test_execution_policy_simulation.py",
+    "python -m py_compile app\\V2\\ui\\strategy_simulation_tab.py core\\streamlit_services\\strategy_simulation_service.py scripts\\test_strategy_simulation_ui.py",
     "python core\\test_execution_policy_simulation.py",
-    "python inline sample metrics for simulate_close_execution_policy"
+    "python scripts\\test_strategy_simulation_ui.py",
+    "python inline sample comparison for _build_execution_policy_comparison"
   ],
-  "helper": {
-    "file": "core/streamlit_services/strategy_simulation_service.py",
-    "functions": [
-      "simulate_close_execution_policy"
+  "ui_panel": {
+    "location": "Strategy Simulation tab, below Live market forecast",
+    "inputs": [
+      "side",
+      "entry_price",
+      "current_price",
+      "qty",
+      "target_roi_pct",
+      "spread_bps",
+      "close_limit_offset_bps",
+      "fallback_market_roi_pct"
     ],
-    "execution_modes": [
+    "modes_shown": [
       "post_only_limit_close",
       "taker_limit_close",
       "market_fallback_simulated"
     ],
-    "market_live_allowed": false
+    "raw_json_expanders": true,
+    "safety_warnings": [
+      "Simulation only. Does not enqueue, submit, cancel, replace, or change live policy.",
+      "MARKET fallback is simulated only and remains disabled in live execution."
+    ]
   },
-  "sample_metrics": {
+  "sample_comparison": {
     "post_only_limit_close": {
-      "close_signals": 1,
       "filled_count": 0,
       "no_fill_count": 1,
-      "lifecycle_result_example": "submitted_then_canceled_no_fill"
+      "lifecycle_result": "submitted_open_or_submitted_then_canceled_no_fill_depending_on_marketable_input"
     },
     "taker_limit_close": {
-      "close_signals": 1,
-      "filled_count": 1,
-      "no_fill_count": 0,
-      "lifecycle_result_example": "submitted_filled"
+      "filled_count": 0,
+      "no_fill_count": 1,
+      "lifecycle_result": "submitted_open_for_non_marketable_input_or_submitted_filled_for_marketable_input"
     },
     "market_fallback_simulated": {
       "market_simulated_count": 1,
@@ -60,12 +70,10 @@
     }
   },
   "tests": {
-    "post_only_marketable_no_fill": true,
-    "taker_limit_marketable_filled": true,
-    "non_marketable_no_immediate_fill": true,
-    "market_fallback_simulated_only": true,
-    "market_not_enabled_in_live_policy_config": true,
-    "json_serializable": true
+    "helper_simulation": true,
+    "ui_formatting": true,
+    "json_serializable": true,
+    "market_live_disabled": true
   },
   "safety_confirmation": {
     "live_submit": false,
@@ -73,8 +81,7 @@
     "db_writes": false,
     "market_enabled_live": false,
     "strategy_live_logic_changed": false,
-    "api_executor_mexc_direct_changed": false,
-    "ui_changed": false
+    "api_executor_mexc_direct_changed": false
   },
-  "summary": "Added a JSON-only synthetic execution policy helper for CLOSE reduce-only harvest assumptions. It models marketable post-only LIMIT as CANCELED_NO_FILL, taker-allowed LIMIT as filled, and MARKET fallback as simulation-only with market_live_allowed=false. No UI, DB, queue, live execution, or real execution path changes were made."
+  "summary": "Strategy Simulation now has a read-only Execution Policy Comparison panel. It compares post-only LIMIT close, taker-allowed LIMIT close, and simulation-only MARKET fallback with compact table/cards and raw JSON expanders. The panel only calls the synthetic simulation helper and does not touch live execution, queue, DB, api_executor, or mexc_direct."
 }

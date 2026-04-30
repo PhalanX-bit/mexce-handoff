@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-30T10:25:00Z",
+  "updated_at": "2026-04-30T10:45:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-30-007",
+      "title": "Add execution-policy comparison panel to Strategy Simulation",
+      "status": "completed",
+      "completed_at": "2026-04-30T10:45:00Z",
+      "result_summary": "Added a read-only Execution Policy Comparison panel to Strategy Simulation with inputs for side/entry/current/qty/ROI/spread/offset/fallback ROI and comparison output for post-only LIMIT, taker LIMIT, and simulation-only MARKET fallback. No live action, queue write, DB write, or execution path change."
+    },
     {
       "task_id": "2026-04-30-006",
       "title": "Create synthetic execution-policy simulation helper",
