@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-30T10:45:00Z",
+  "updated_at": "2026-04-30T11:20:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-30-008",
+      "title": "Add Target ROI Comparison panel",
+      "status": "completed",
+      "completed_at": "2026-04-30T11:20:00Z",
+      "result_summary": "Added read-only Target ROI Comparison to Strategy Simulation for comparing ROI targets such as 100/150/200/250 across synthetic paths and execution assumptions. It shows PnL, lots, signals, blocked periods, exposure, no-fill/fill metrics, lightweight charts, and raw expanders; no live, queue, DB, or execution path changes."
+    },
     {
       "task_id": "2026-04-30-007",
       "title": "Add execution-policy comparison panel to Strategy Simulation",

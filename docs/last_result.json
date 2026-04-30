@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-04-30-007",
-  "updated_at": "2026-04-30T10:45:00Z",
+  "task_id": "2026-04-30-008",
+  "updated_at": "2026-04-30T11:20:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add execution-policy comparison panel to Strategy Simulation tab",
-  "result_type": "execution_policy_simulation_ui_panel",
+  "title": "Add Target ROI Comparison panel to Strategy Simulation tab",
+  "result_type": "target_roi_comparison_simulation_panel",
   "scope": {
     "code_changes_made": true,
     "ui_changes_made": true,
@@ -19,61 +19,85 @@
     "market_enabled_live": false
   },
   "changed_files": [
+    "core/streamlit_services/strategy_simulation_service.py",
     "app/V2/ui/strategy_simulation_tab.py",
     "scripts/test_strategy_simulation_ui.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\strategy_simulation_tab.py core\\streamlit_services\\strategy_simulation_service.py scripts\\test_strategy_simulation_ui.py",
+    "python explicit py_compile with temporary cfile for app/V2/ui/strategy_simulation_tab.py core/streamlit_services/strategy_simulation_service.py scripts/test_strategy_simulation_ui.py",
     "python core\\test_execution_policy_simulation.py",
     "python scripts\\test_strategy_simulation_ui.py",
-    "python inline sample comparison for _build_execution_policy_comparison"
+    "python inline sample comparison for simulate_target_roi_comparison"
   ],
   "ui_panel": {
-    "location": "Strategy Simulation tab, below Live market forecast",
+    "location": "Strategy Simulation tab, below Execution Policy Comparison",
     "inputs": [
-      "side",
-      "entry_price",
-      "current_price",
-      "qty",
-      "target_roi_pct",
+      "target_roi_set",
+      "synthetic_path",
+      "execution_assumption",
+      "steps",
       "spread_bps",
-      "close_limit_offset_bps",
+      "qty_per_close",
       "fallback_market_roi_pct"
     ],
-    "modes_shown": [
+    "roi_targets": [
+      100,
+      150,
+      200,
+      250
+    ],
+    "execution_assumptions": [
       "post_only_limit_close",
       "taker_limit_close",
       "market_fallback_simulated"
     ],
-    "raw_json_expanders": true,
-    "safety_warnings": [
-      "Simulation only. Does not enqueue, submit, cancel, replace, or change live policy.",
-      "MARKET fallback is simulated only and remains disabled in live execution."
-    ]
+    "charts": [
+      "target ROI vs realized PnL",
+      "target ROI vs close/no-fill count",
+      "target ROI vs open lots count"
+    ],
+    "raw_expanders": true
   },
-  "sample_comparison": {
-    "post_only_limit_close": {
-      "filled_count": 0,
-      "no_fill_count": 1,
-      "lifecycle_result": "submitted_open_or_submitted_then_canceled_no_fill_depending_on_marketable_input"
+  "sample_comparison": [
+    {
+      "target_roi_pct": 100.0,
+      "realized_pnl": 0.48,
+      "unrealized_pnl": -0.1479947646,
+      "open_lots_count": 1,
+      "closed_lots_count": 1,
+      "close_signal_count": 1,
+      "no_fill_count": 0,
+      "filled_count": 1,
+      "blocked_periods": 0,
+      "max_drawdown": 0.45996
     },
-    "taker_limit_close": {
-      "filled_count": 0,
-      "no_fill_count": 1,
-      "lifecycle_result": "submitted_open_for_non_marketable_input_or_submitted_filled_for_marketable_input"
-    },
-    "market_fallback_simulated": {
-      "market_simulated_count": 1,
-      "market_live_allowed": false
+    {
+      "target_roi_pct": 250.0,
+      "realized_pnl": 5.9682727564,
+      "unrealized_pnl": -9.0811566495,
+      "open_lots_count": 18,
+      "closed_lots_count": 9,
+      "close_signal_count": 9,
+      "no_fill_count": 0,
+      "filled_count": 9,
+      "blocked_periods": 6,
+      "max_drawdown": 3.3785979008
     }
+  ],
+  "interpretation": {
+    "lower_roi_behavior": "Lower ROI target harvests sooner and can create more frequent close opportunities depending on path.",
+    "higher_roi_behavior": "Higher ROI target waits longer and can accumulate more lots/blocked periods in some paths.",
+    "execution_assumption_effect": "post-only can produce no-fill/open events; taker LIMIT fills marketable close signals; MARKET fallback remains simulation-only."
   },
   "tests": {
-    "helper_simulation": true,
-    "ui_formatting": true,
-    "json_serializable": true,
-    "market_live_disabled": true
+    "roi_parser": true,
+    "one_scenario_per_roi": true,
+    "post_only_no_fill_metrics": true,
+    "taker_limit_fill_metrics": true,
+    "market_fallback_simulation_only": true,
+    "json_serializable": true
   },
   "safety_confirmation": {
     "live_submit": false,
@@ -83,5 +107,5 @@
     "strategy_live_logic_changed": false,
     "api_executor_mexc_direct_changed": false
   },
-  "summary": "Strategy Simulation now has a read-only Execution Policy Comparison panel. It compares post-only LIMIT close, taker-allowed LIMIT close, and simulation-only MARKET fallback with compact table/cards and raw JSON expanders. The panel only calls the synthetic simulation helper and does not touch live execution, queue, DB, api_executor, or mexc_direct."
+  "summary": "Strategy Simulation now includes a read-only Target ROI Comparison panel for comparing target ROI thresholds such as 100/150/200/250 across synthetic paths and execution assumptions. It returns PnL, lots, signal, blocked, exposure, no-fill/fill, drawdown, charts, and raw expanders without live, queue, DB, or execution path changes."
 }
