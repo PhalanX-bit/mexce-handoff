@@ -1,111 +1,97 @@
 {
-  "task_id": "2026-04-30-002",
-  "updated_at": "2026-04-30T03:35:00Z",
+  "task_id": "2026-04-30-003",
+  "updated_at": "2026-04-30T03:48:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Fix MEXC order type mapping for normal LIMIT vs Post Only Maker",
-  "result_type": "mexc_order_type_mapping_fix",
+  "title": "Phase 1 - Add compact Operations / Control Center summary section",
+  "result_type": "operations_control_center_phase_1",
   "scope": {
     "code_changes_made": true,
-    "ui_changes_made": false,
+    "ui_changes_made": true,
     "database_schema_changes_made": false,
     "config_changed": false,
     "strategy_logic_changed": false,
-    "api_executor_changed": true,
-    "mexc_direct_changed": true,
+    "api_executor_changed": false,
+    "mexc_direct_changed": false,
     "action_queue_writes": false,
     "lot_realization_created": false,
     "manual_backfill": false,
     "live_exchange_action_taken": false,
     "cancel_replace_chase": false,
-    "market_enabled": false
+    "multi_symbol_live_autonomy_added": false
   },
   "changed_files": [
-    "core/mexc_direct.py",
-    "core/api_executor.py",
-    "scripts/automation_read_only_runner.py",
-    "core/test_mexc_direct_signing.py",
-    "core/test_api_executor_normalize_action.py",
-    "scripts/test_automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile core\\mexc_direct.py core\\api_executor.py scripts\\automation_read_only_runner.py",
-    "python core\\test_mexc_direct_signing.py",
-    "python core\\test_api_executor_normalize_action.py",
-    "python scripts\\test_automation_read_only_runner.py",
-    "python core\\test_supervised_strategy_runner.py",
-    "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json",
-    "synthetic no-live SOL CLOSE/OPEN payload mapping check"
+    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python scripts\\test_controls_automation_parsing.py"
   ],
-  "mapping_after_fix": {
-    "normal_limit_type": 1,
-    "post_only_type": 2,
-    "openType_handling": "openType remains separate margin/open mode field, default 2/cross; it is no longer reused as MEXC order type.",
-    "market_allowed": false
+  "new_section": {
+    "location": "Top of Controls tab, before Limited Automation Control and detailed controls.",
+    "cards_added": [
+      "Active Symbol",
+      "Best Candidate",
+      "Readiness / Safety",
+      "Last Lifecycle",
+      "Payload Preview"
+    ],
+    "raw_expanders": [
+      "Show raw scanner JSON",
+      "Show raw preflight JSON",
+      "Show raw lifecycle JSON",
+      "Show raw payload preview"
+    ]
   },
-  "SOL_close_mapping_after_fix": {
-    "symbol": "SOL/USDT:USDT",
-    "candidate_type": "CLOSE_LIMIT",
-    "reduce_only": 1,
-    "qty": 1.0,
-    "post_only": false,
-    "maker_only": false,
-    "mexc_order_type": 1,
-    "openType": 2,
-    "side": "CLOSE_SHORT",
-    "submit_allowed": "not currently applicable: real SOL preflight now BLOCKED/NO_ACTION; mapping verified by synthetic payload and executor tests",
-    "actual_submit": false,
-    "actual_queue_write": false
+  "active_symbol_card": {
+    "active_symbol": "session active symbol, default AT/USDT:USDT",
+    "live_policy_status": "LIVE_ENABLED / LIVE_DISABLED / MISSING_POLICY",
+    "market_allowed": "shown from policy context when available"
   },
-  "current_SOL_preflight": {
-    "readiness_state": "BLOCKED",
-    "reason": "No live action in proposal.",
-    "candidate_type": "NO_ACTION",
-    "submit_allowed": false,
-    "actual_submit": false,
-    "actual_queue_write": false
+  "best_candidate_card": {
+    "best_candidate": "shown from latest scanner result when available",
+    "recommended_action": "shown",
+    "policy_allows_candidate": "shown",
+    "use_best_candidate_button": true
   },
-  "OPEN_behavior": {
-    "OPEN_LIMIT_post_only_preserved": true,
-    "OPEN_mexc_order_type": 2,
-    "OPEN_market_allowed": false
+  "readiness_safety_card": {
+    "readiness_state": "shown from latest preflight/check result",
+    "safety_overall": "shown from guards_summary",
+    "blockers": "count plus main blocker reason",
+    "submit_allowed": "shown",
+    "next_safe_action": "WAIT / RUN_SCANNER / RUN_PREFLIGHT / LIVE_CLOSE_LIMIT_ALLOWED / VERIFY_LAST_SUBMIT / DO_NOT_BACKFILL / DO_NOT_DUPLICATE_SUBMIT / STOP_AND_DIAGNOSE"
+  },
+  "last_lifecycle_card": {
+    "last_action_id": "shown when lifecycle report exists or latest automation action loads read-only",
+    "lifecycle_result": "shown",
+    "final_fill_success": "shown",
+    "warning_shown": "CANCELED_NO_FILL displays: Submitted but canceled with no fill. Do not backfill."
+  },
+  "payload_preview": {
+    "payload_shown": "shown when latest preflight has enqueue_payload_preview",
+    "mexc_order_type": "shown",
+    "post_only_maker_only": "shown",
+    "placeholder_when_absent": "Run preflight to preview payload."
   },
   "tests": {
-    "close_reduce_only_type_1": true,
-    "open_post_only_type_2": true,
-    "post_only_false_not_type_2": true,
-    "openType_not_order_type": true,
-    "market_forbidden": true,
-    "side_mapping_unchanged": true
-  },
-  "payload_diagnostics": {
-    "raw_payload_logging_added": true,
-    "fields_logged": [
-      "symbol",
-      "price",
-      "vol",
-      "side",
-      "type",
-      "openType",
-      "leverage",
-      "category",
-      "externalOid"
-    ],
-    "secrets_exposed": false,
-    "note": "create_limit_order_raw now attaches _submitted_payload to the successful API response for future diagnostics."
+    "missing_scanner_data_neutral_card": true,
+    "best_candidate_present_shown": true,
+    "canceled_no_fill_warning_do_not_backfill": true,
+    "clean_preflight_payload_fields_shown": true,
+    "no_preflight_payload_placeholder": true,
+    "live_button_guards_unchanged": true
   },
   "safety_confirmation": {
-    "new_submit": false,
+    "live_submit": false,
     "queue_write": false,
     "cancel_replace_chase": false,
-    "manual_backfill": false,
-    "market_enabled": false,
     "db_schema_changes": false,
-    "strategy_broad_changes": false,
-    "api_execution_behavior_changed_only_for_order_type_mapping": true
+    "strategy_logic_changes": false,
+    "api_executor_mexc_direct_changes": false,
+    "existing_protected_live_guards_unchanged": true
   },
-  "summary": "MEXC order type is now separated from openType. Reduce-only CLOSE_LIMIT with order_kind=LIMIT maps to normal MEXC LIMIT type=1/openType=2, while OPEN_LIMIT preserves post-only maker behavior as type=2/openType=2. Current SOL market state is no longer close-ready, so no live or queue action occurred."
+  "summary": "Controls tab now starts with a compact Operations / Control Center summary using existing session data only. It surfaces active symbol policy, best scanner candidate, readiness/safety, next safe action, last lifecycle, payload preview, and raw JSON expanders while leaving all existing detailed sections in place."
 }
