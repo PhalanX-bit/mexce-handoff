@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-30T03:24:00Z",
+  "updated_at": "2026-04-30T03:35:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-30-002",
+      "title": "Fix MEXC normal LIMIT vs post-only type mapping",
+      "status": "completed",
+      "completed_at": "2026-04-30T03:35:00Z",
+      "result_summary": "Separated MEXC order type from openType: reduce-only CLOSE_LIMIT now maps to normal LIMIT type=1/openType=2, while OPEN_LIMIT preserves post-only maker behavior as type=2/openType=2. Tests and no-live synthetic mapping passed; current SOL preflight is BLOCKED/NO_ACTION, with no live submit or queue write."
+    },
     {
       "task_id": "2026-04-30-001",
       "title": "Diagnose SOL post-only no-fill",

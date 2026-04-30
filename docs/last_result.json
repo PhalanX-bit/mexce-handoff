@@ -1,18 +1,18 @@
 {
-  "task_id": "2026-04-30-001",
-  "updated_at": "2026-04-30T03:24:00Z",
+  "task_id": "2026-04-30-002",
+  "updated_at": "2026-04-30T03:35:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Diagnose SOL no-fill after expected post_only=false close",
-  "result_type": "sol_post_only_no_fill_diagnostic",
+  "title": "Fix MEXC order type mapping for normal LIMIT vs Post Only Maker",
+  "result_type": "mexc_order_type_mapping_fix",
   "scope": {
-    "code_changes_made": false,
+    "code_changes_made": true,
     "ui_changes_made": false,
     "database_schema_changes_made": false,
     "config_changed": false,
     "strategy_logic_changed": false,
-    "api_executor_changed": false,
-    "mexc_direct_changed": false,
+    "api_executor_changed": true,
+    "mexc_direct_changed": true,
     "action_queue_writes": false,
     "lot_realization_created": false,
     "manual_backfill": false,
@@ -20,83 +20,82 @@
     "cancel_replace_chase": false,
     "market_enabled": false
   },
-  "commands_run": [
-    "read-only SQLite query against data/mexc.sqlite action_queue/actions_ledger",
-    "read-only MEXC lookup via list_open_orders_raw/list_history_orders_raw/list_deals_raw for SOL order 804558821271170048",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json"
+  "changed_files": [
+    "core/mexc_direct.py",
+    "core/api_executor.py",
+    "scripts/automation_read_only_runner.py",
+    "core/test_mexc_direct_signing.py",
+    "core/test_api_executor_normalize_action.py",
+    "scripts/test_automation_read_only_runner.py",
+    "last_result.json",
+    "task_history.json"
   ],
-  "last_SOL_action": {
-    "action_id": 12,
-    "api_order_id": "804558821271170048",
-    "symbol": "SOL/USDT:USDT",
-    "panel_mode": "CLOSE",
-    "intent": "close",
-    "side": "SHORT",
-    "qty": 1.0,
-    "limit_price": 82.38,
-    "reduce_only": 1,
-    "order_kind": "LIMIT",
-    "order_type": "limit",
-    "action_post_only": null,
-    "action_maker_only": null,
-    "time_in_force": null,
-    "local_status": "DONE",
-    "reconcile_state": "CANCELED_NO_FILL",
-    "reconcile_reason": "history_confirms_post_only_cancel_no_fill",
-    "lifecycle_result": "submitted_then_canceled_no_fill"
+  "commands_run": [
+    "python -m py_compile core\\mexc_direct.py core\\api_executor.py scripts\\automation_read_only_runner.py",
+    "python core\\test_mexc_direct_signing.py",
+    "python core\\test_api_executor_normalize_action.py",
+    "python scripts\\test_automation_read_only_runner.py",
+    "python core\\test_supervised_strategy_runner.py",
+    "python scripts\\test_controls_automation_parsing.py",
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode auto_submit --once --json",
+    "synthetic no-live SOL CLOSE/OPEN payload mapping check"
+  ],
+  "mapping_after_fix": {
+    "normal_limit_type": 1,
+    "post_only_type": 2,
+    "openType_handling": "openType remains separate margin/open mode field, default 2/cross; it is no longer reused as MEXC order type.",
+    "market_allowed": false
   },
-  "preflight_intended": {
+  "SOL_close_mapping_after_fix": {
+    "symbol": "SOL/USDT:USDT",
     "candidate_type": "CLOSE_LIMIT",
     "reduce_only": 1,
     "qty": 1.0,
     "post_only": false,
     "maker_only": false,
-    "submit_allowed": true,
-    "note": "Pre-submit preview intended taker-allowed reduce-only LIMIT close, but these fields are not persisted in action_queue."
-  },
-  "payload_path": {
-    "api_executor_order_kind": "LIMIT",
-    "api_executor_post_only": false,
-    "mexc_direct_order_type": 2,
-    "mexc_direct_post_only": true,
-    "raw_payload_logged": false,
-    "raw_payload_relevant_fields": {
-      "symbol": "SOL_USDT",
-      "price": "82.38",
-      "vol": "1",
-      "side": 2,
-      "type": 2,
-      "openType": 2,
-      "leverage": 300,
-      "category": 1,
-      "externalOid": "aq-12-1777492169347"
-    }
-  },
-  "exchange_order": {
-    "state": 4,
-    "errorCode": 20,
-    "showCancelReason": 1,
-    "dealVol": 0,
-    "avgPrice": 0,
-    "price": 82.38,
-    "vol": 1,
-    "side": 2,
-    "orderType": 2,
-    "category": 1,
+    "mexc_order_type": 1,
     "openType": 2,
-    "raw_status_summary": "history order state=4 canceled, orderType=2 Post Only Maker, dealVol=0"
+    "side": "CLOSE_SHORT",
+    "submit_allowed": "not currently applicable: real SOL preflight now BLOCKED/NO_ACTION; mapping verified by synthetic payload and executor tests",
+    "actual_submit": false,
+    "actual_queue_write": false
   },
-  "cause": {
-    "classification": "MEXC_ORDER_TYPE_MAPPING_WRONG",
-    "explanation": "core/mexc_direct.py create_limit_order_raw uses open_type=2 for both payload type and openType. In MEXC contract API, type=1 is normal price-limited order and type=2 is Post Only Maker. Therefore every direct LIMIT submit is sent as orderType=2/post-only, regardless of runner preview post_only=false.",
-    "minimal_fix_proposal": "Split order_type from open_type in mexc_direct.create_limit_order_raw/create_limit_order_and_get_id. Default order_type should be 1 for taker-allowed LIMIT; OPEN post-only behavior should explicitly pass order_type=2 or order_kind=POST_ONLY through api_executor. Preserve MARKET forbidden, qty cap, and no cancel/replace/chase.",
-    "files_likely_needed": [
-      "core/mexc_direct.py",
-      "core/api_executor.py",
-      "scripts/automation_read_only_runner.py",
-      "core/test_mexc_direct_signing.py or new mexc_direct payload tests",
-      "scripts/test_automation_read_only_runner.py"
-    ]
+  "current_SOL_preflight": {
+    "readiness_state": "BLOCKED",
+    "reason": "No live action in proposal.",
+    "candidate_type": "NO_ACTION",
+    "submit_allowed": false,
+    "actual_submit": false,
+    "actual_queue_write": false
+  },
+  "OPEN_behavior": {
+    "OPEN_LIMIT_post_only_preserved": true,
+    "OPEN_mexc_order_type": 2,
+    "OPEN_market_allowed": false
+  },
+  "tests": {
+    "close_reduce_only_type_1": true,
+    "open_post_only_type_2": true,
+    "post_only_false_not_type_2": true,
+    "openType_not_order_type": true,
+    "market_forbidden": true,
+    "side_mapping_unchanged": true
+  },
+  "payload_diagnostics": {
+    "raw_payload_logging_added": true,
+    "fields_logged": [
+      "symbol",
+      "price",
+      "vol",
+      "side",
+      "type",
+      "openType",
+      "leverage",
+      "category",
+      "externalOid"
+    ],
+    "secrets_exposed": false,
+    "note": "create_limit_order_raw now attaches _submitted_payload to the successful API response for future diagnostics."
   },
   "safety_confirmation": {
     "new_submit": false,
@@ -106,7 +105,7 @@
     "market_enabled": false,
     "db_schema_changes": false,
     "strategy_broad_changes": false,
-    "api_execution_behavior_changed": false
+    "api_execution_behavior_changed_only_for_order_type_mapping": true
   },
-  "summary": "SOL action 12 was locally LIMIT/reduce_only close, but the direct MEXC submit payload path still produced type=2/openType=2. Exchange history confirms orderType=2, state=4, errorCode=20, dealVol=0. The no-fill is not a misleading exchange reason; the submitted order was effectively Post Only Maker because mexc_direct maps LIMIT payload type incorrectly."
+  "summary": "MEXC order type is now separated from openType. Reduce-only CLOSE_LIMIT with order_kind=LIMIT maps to normal MEXC LIMIT type=1/openType=2, while OPEN_LIMIT preserves post-only maker behavior as type=2/openType=2. Current SOL market state is no longer close-ready, so no live or queue action occurred."
 }
