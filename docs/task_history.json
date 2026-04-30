@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-30T09:15:00Z",
+  "updated_at": "2026-04-30T10:25:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-04-30-006",
+      "title": "Create synthetic execution-policy simulation helper",
+      "status": "completed",
+      "completed_at": "2026-04-30T10:25:00Z",
+      "result_summary": "Added simulate_close_execution_policy for JSON-only synthetic comparison of post-only LIMIT close, taker LIMIT close, and simulation-only MARKET fallback. It models marketable post-only close as CANCELED_NO_FILL and taker LIMIT as filled, with tests and no UI, DB, queue, live execution, or real execution path changes."
+    },
     {
       "task_id": "2026-04-30-005",
       "title": "Add Actions / Lifecycle timeline view",

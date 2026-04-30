@@ -1,87 +1,80 @@
 {
-  "task_id": "2026-04-30-005",
-  "updated_at": "2026-04-30T09:15:00Z",
+  "task_id": "2026-04-30-006",
+  "updated_at": "2026-04-30T10:25:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Phase 3 - Add Actions / Lifecycle timeline view",
-  "result_type": "actions_lifecycle_timeline_phase_3",
+  "title": "Create synthetic execution-policy simulation helper",
+  "result_type": "execution_policy_simulation_helper",
   "scope": {
     "code_changes_made": true,
-    "ui_changes_made": true,
+    "ui_changes_made": false,
     "database_schema_changes_made": false,
     "config_changed": false,
-    "strategy_logic_changed": false,
+    "strategy_live_logic_changed": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false,
     "action_queue_writes": false,
-    "lot_realization_created": false,
-    "manual_backfill": false,
+    "db_writes": false,
     "live_exchange_action_taken": false,
-    "cancel_replace_chase": false,
-    "multi_symbol_live_autonomy_added": false
+    "market_enabled_live": false
   },
   "changed_files": [
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_controls_automation_parsing.py",
+    "core/streamlit_services/strategy_simulation_service.py",
+    "core/test_execution_policy_simulation.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\test_controls_automation_parsing.py"
+    "python -m py_compile core\\streamlit_services\\strategy_simulation_service.py core\\test_execution_policy_simulation.py",
+    "python core\\test_execution_policy_simulation.py",
+    "python inline sample metrics for simulate_close_execution_policy"
   ],
-  "ui_changes": {
-    "timeline_section_added": true,
-    "location": "Controls tab, below Operations / Control Center",
-    "last_n_actions_supported": 5,
-    "steps_shown": [
-      "Preflight",
-      "Queue",
-      "Submit",
-      "Exchange",
-      "Reconcile",
-      "Lots",
-      "Next safe action"
+  "helper": {
+    "file": "core/streamlit_services/strategy_simulation_service.py",
+    "functions": [
+      "simulate_close_execution_policy"
     ],
-    "raw_expanders": [
-      "submitted payload",
-      "action/debug details",
-      "api/exchange response",
-      "reconcile payload"
-    ]
+    "execution_modes": [
+      "post_only_limit_close",
+      "taker_limit_close",
+      "market_fallback_simulated"
+    ],
+    "market_live_allowed": false
   },
-  "lifecycle_behavior": {
-    "done_treated_as_fill_success": false,
-    "canceled_no_fill_status": "WARNING",
-    "submitted_open_status": "WARNING",
-    "submitted_filled_status": "PASS",
-    "missing_lifecycle_status": "UNKNOWN",
-    "payload_summary_fields": [
-      "type",
-      "openType",
-      "side",
-      "price",
-      "vol",
-      "reduceOnly",
-      "externalOid"
-    ]
+  "sample_metrics": {
+    "post_only_limit_close": {
+      "close_signals": 1,
+      "filled_count": 0,
+      "no_fill_count": 1,
+      "lifecycle_result_example": "submitted_then_canceled_no_fill"
+    },
+    "taker_limit_close": {
+      "close_signals": 1,
+      "filled_count": 1,
+      "no_fill_count": 0,
+      "lifecycle_result_example": "submitted_filled"
+    },
+    "market_fallback_simulated": {
+      "market_simulated_count": 1,
+      "market_live_allowed": false
+    }
   },
   "tests": {
-    "canceled_no_fill_warning": true,
-    "submitted_filled_success": true,
-    "submitted_open_warning": true,
-    "missing_lifecycle_unknown": true,
-    "submitted_payload_type_displayed": true,
-    "action_queue_done_not_fill_success": true
+    "post_only_marketable_no_fill": true,
+    "taker_limit_marketable_filled": true,
+    "non_marketable_no_immediate_fill": true,
+    "market_fallback_simulated_only": true,
+    "market_not_enabled_in_live_policy_config": true,
+    "json_serializable": true
   },
   "safety_confirmation": {
     "live_submit": false,
-    "queue_write": false,
-    "cancel_replace_chase": false,
-    "lot_realization_created": false,
-    "db_schema_changes": false,
-    "strategy_logic_changes": false,
-    "api_executor_mexc_direct_changes": false
+    "action_queue_write": false,
+    "db_writes": false,
+    "market_enabled_live": false,
+    "strategy_live_logic_changed": false,
+    "api_executor_mexc_direct_changed": false,
+    "ui_changed": false
   },
-  "summary": "Controls now includes an Actions / Lifecycle Timeline read-only section for the latest automation actions. It separates preflight, queue, submit, exchange, reconcile, lots, and next-safe-action stages so DONE is executor completion only, CANCELED_NO_FILL is visibly no-fill, and payload/reconcile raw data stays in expanders."
+  "summary": "Added a JSON-only synthetic execution policy helper for CLOSE reduce-only harvest assumptions. It models marketable post-only LIMIT as CANCELED_NO_FILL, taker-allowed LIMIT as filled, and MARKET fallback as simulation-only with market_live_allowed=false. No UI, DB, queue, live execution, or real execution path changes were made."
 }
