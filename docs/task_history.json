@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-01T12:15:00Z",
+  "updated_at": "2026-05-01T12:24:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-01-003",
+      "title": "Enable SOL allow_seed and verify read-only seed preflight",
+      "status": "completed",
+      "completed_at": "2026-05-01T12:24:00Z",
+      "result_summary": "Enabled allow_seed=true only for SOL/USDT:USDT. Read-only LONG and SHORT seed preflight now pass with post-only OPEN LIMIT type=2 payload previews, policy_block_reason=null, actual_queue_write=false, and actual_submit=false; no live submit, queue write, seed submit UI, MARKET, strategy/API, or DB schema changes."
+    },
     {
       "task_id": "2026-05-01-002",
       "title": "Add seed policy fields and read-only seed preflight",

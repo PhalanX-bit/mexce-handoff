@@ -1,13 +1,13 @@
 {
-  "task_id": "2026-05-01-002",
-  "updated_at": "2026-05-01T12:15:00Z",
+  "task_id": "2026-05-01-003",
+  "updated_at": "2026-05-01T12:24:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add seed policy fields and read-only seed preflight",
-  "result_type": "seed_preflight_phase_b",
+  "title": "Enable SOL allow_seed and verify read-only seed preflight",
+  "result_type": "sol_seed_policy_enablement",
   "scope": {
     "code_changes_made": true,
-    "ui_changes_made": true,
+    "ui_changes_made": false,
     "database_schema_changes_made": false,
     "config_changed": true,
     "strategy_live_logic_changed": false,
@@ -20,79 +20,61 @@
   },
   "changed_files": [
     "config/symbol_live_policy.json",
-    "scripts/automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
     "scripts/test_automation_read_only_runner.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side LONG --json",
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side SHORT --json",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side LONG --json",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side SHORT --json"
+    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py"
   ],
-  "policy_fields": {
-    "file": "config/symbol_live_policy.json",
-    "sol_allow_seed": false,
+  "sol_seed_policy": {
+    "allow_seed": true,
     "seed_max_qty": 1,
     "seed_allowed_sides": [
       "LONG",
       "SHORT"
     ],
     "seed_order_type": "POST_ONLY_LIMIT",
-    "seed_requires_post_only": true
+    "seed_requires_post_only": true,
+    "market_orders_allowed": false
   },
-  "cli_seed_preflight_long": {
-    "seed_allowed_now": false,
-    "policy_block_reason": "seed_disabled_for_symbol",
-    "payload_preview_exists": true,
+  "long_seed_preflight": {
+    "seed_allowed_now": true,
+    "policy_block_reason": null,
     "side": "LONG",
+    "qty": 1.0,
     "reduce_only": 0,
     "post_only": true,
     "mexc_order_type": 2,
-    "limit_price": 83.86
+    "limit_price": 84.15,
+    "actual_queue_write": false,
+    "actual_submit": false
   },
-  "cli_seed_preflight_short": {
-    "seed_allowed_now": false,
-    "policy_block_reason": "seed_disabled_for_symbol",
-    "payload_preview_exists": true,
+  "short_seed_preflight": {
+    "seed_allowed_now": true,
+    "policy_block_reason": null,
     "side": "SHORT",
+    "qty": 1.0,
     "reduce_only": 0,
     "post_only": true,
     "mexc_order_type": 2,
-    "limit_price": 83.97
-  },
-  "ui": {
-    "protected_seed_mode_section": true,
-    "active_symbol_shown": true,
-    "direction_selector": true,
-    "seed_preflight_button": true,
-    "seed_disabled_warning": true,
-    "live_seed_submit_button_added": false
-  },
-  "tests": {
-    "allow_seed_false": true,
-    "missing_policy": true,
-    "enabled_for_live_false": true,
-    "invalid_side": true,
-    "long_payload": true,
-    "short_payload": true,
-    "queue_conflict": true,
-    "open_order_conflict": true,
-    "market_forbidden": true,
-    "no_queue_write_submit": true
+    "limit_price": 84.26,
+    "actual_queue_write": false,
+    "actual_submit": false
   },
   "safety_confirmation": {
     "live_submit": false,
     "action_queue_write": false,
+    "seed_live_submit_button_added": false,
     "cancel_replace_chase": false,
     "lot_realization_created": false,
     "market_enabled_live": false,
-    "strategy_live_logic_changed": false,
-    "api_executor_mexc_direct_execution_changed": false,
-    "db_schema_changes": false
+    "other_symbols_changed": false,
+    "strategy_api_db_changes": false
   },
-  "summary": "Added explicit seed policy fields with allow_seed=false by default, added read-only seed_preflight CLI mode for one symbol and LONG/SHORT direction, added a collapsed Protected Seed Mode UI section, and verified SOL seed preflight is blocked by seed_disabled_for_symbol while producing safe POST_ONLY LIMIT OPEN payload previews. No queue write, live submit, DB schema, strategy, or execution path change."
+  "summary": "Enabled allow_seed=true only for SOL/USDT:USDT in symbol_live_policy. Read-only LONG and SHORT seed preflight now pass policy with post-only OPEN LIMIT type=2 payload previews, while actual_queue_write=false and actual_submit=false. No live submit, queue write, seed submit UI, lot realization, MARKET enablement, strategy/API, or DB schema change."
 }
