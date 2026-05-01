@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-01T09:42:00Z",
+  "updated_at": "2026-05-01T12:15:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-01-002",
+      "title": "Add seed policy fields and read-only seed preflight",
+      "status": "completed",
+      "completed_at": "2026-05-01T12:15:00Z",
+      "result_summary": "Added allow_seed/seed_max_qty/seed_allowed_sides/POST_ONLY_LIMIT policy fields with allow_seed=false, added read-only seed_preflight mode and a collapsed Protected Seed Mode UI section. SOL LONG/SHORT seed preflight is blocked by seed_disabled_for_symbol but shows safe post-only OPEN type=2 payload preview; no live submit, queue write, lot realization, strategy, API execution, or schema change."
+    },
     {
       "task_id": "2026-05-01-001",
       "title": "Improve Target ROI Comparison seed handling",

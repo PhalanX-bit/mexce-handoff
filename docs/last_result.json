@@ -1,15 +1,15 @@
 {
-  "task_id": "2026-05-01-001",
-  "updated_at": "2026-05-01T09:42:00Z",
+  "task_id": "2026-05-01-002",
+  "updated_at": "2026-05-01T12:15:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Improve Target ROI Comparison seed handling and interpretation quality",
-  "result_type": "target_roi_seed_interpretation_fix",
+  "title": "Add seed policy fields and read-only seed preflight",
+  "result_type": "seed_preflight_phase_b",
   "scope": {
     "code_changes_made": true,
     "ui_changes_made": true,
     "database_schema_changes_made": false,
-    "config_changed": false,
+    "config_changed": true,
     "strategy_live_logic_changed": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false,
@@ -19,101 +19,80 @@
     "market_enabled_live": false
   },
   "changed_files": [
-    "core/streamlit_services/strategy_simulation_service.py",
-    "app/V2/ui/strategy_simulation_tab.py",
-    "scripts/test_strategy_simulation_ui.py",
+    "config/symbol_live_policy.json",
+    "scripts/automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
+    "scripts/test_automation_read_only_runner.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile app\\V2\\ui\\strategy_simulation_tab.py core\\streamlit_services\\strategy_simulation_service.py (hit Windows pyc lock)",
-    "python explicit py_compile with temporary cfile for app/V2/ui/strategy_simulation_tab.py core/streamlit_services/strategy_simulation_service.py",
-    "python core\\test_execution_policy_simulation.py",
-    "python scripts\\test_strategy_simulation_ui.py",
-    "python read-only sqlite ADA seed query",
-    "python inline ADA live_position_seed sample comparison"
+    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python scripts\\test_automation_read_only_runner.py",
+    "python scripts\\test_controls_automation_parsing.py",
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side LONG --json",
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side SHORT --json"
   ],
-  "seed_modes": {
-    "synthetic_empty": "Available; explicitly starts from zero exposure.",
-    "live_position_seed": "Available; uses live/current position aggregates, current price, weighted entries, and live equity when present.",
-    "live_lots_seed": "Available; uses open position_lots when present and warns/falls back safely when unavailable.",
-    "manual_seed": "Available; uses the existing manual Seed state inputs."
+  "policy_fields": {
+    "file": "config/symbol_live_policy.json",
+    "sol_allow_seed": false,
+    "seed_max_qty": 1,
+    "seed_allowed_sides": [
+      "LONG",
+      "SHORT"
+    ],
+    "seed_order_type": "POST_ONLY_LIMIT",
+    "seed_requires_post_only": true
   },
-  "live_ada_seed_behavior": {
-    "live_long_qty": 280.0,
-    "live_short_qty": 103.0,
-    "simulation_seed_long_qty": 280.0,
-    "simulation_seed_short_qty": 103.0,
-    "open_lots_seeded": 0,
-    "fallback_warning": "No open ADA lots were present in read-only DB query; live_position_seed remains explicit and non-empty."
+  "cli_seed_preflight_long": {
+    "seed_allowed_now": false,
+    "policy_block_reason": "seed_disabled_for_symbol",
+    "payload_preview_exists": true,
+    "side": "LONG",
+    "reduce_only": 0,
+    "post_only": true,
+    "mexc_order_type": 2,
+    "limit_price": 83.86
   },
-  "interpretation_quality": {
-    "no_close_signals_warning": true,
-    "realized_pnl_zero_warning": true,
-    "informative_for_harvest": false,
-    "suggestions_shown": [
-      "use live_lots_seed",
-      "increase steps",
-      "increase oscillation/shock",
-      "lower target ROI",
-      "choose shock/recover path"
-    ]
+  "cli_seed_preflight_short": {
+    "seed_allowed_now": false,
+    "policy_block_reason": "seed_disabled_for_symbol",
+    "payload_preview_exists": true,
+    "side": "SHORT",
+    "reduce_only": 0,
+    "post_only": true,
+    "mexc_order_type": 2,
+    "limit_price": 83.97
   },
-  "raw_json_behavior": {
-    "collapsed_by_default": true,
-    "compact_summary_shown": true,
-    "download_json_option": true,
-    "export_layout_issue_reduced": true
-  },
-  "sample_comparison": {
-    "seed_mode": "live_position_seed",
-    "roi_targets": [
-      100,
-      150,
-      200,
-      250
-    ],
-    "close_signal_count": [
-      0,
-      0,
-      0,
-      0
-    ],
-    "filled_count": [
-      0,
-      0,
-      0,
-      0
-    ],
-    "realized_pnl": [
-      0.0,
-      0.0,
-      0.0,
-      0.0
-    ],
-    "blocked_periods": [
-      0,
-      0,
-      0,
-      0
-    ],
-    "informative_for_harvest": false
+  "ui": {
+    "protected_seed_mode_section": true,
+    "active_symbol_shown": true,
+    "direction_selector": true,
+    "seed_preflight_button": true,
+    "seed_disabled_warning": true,
+    "live_seed_submit_button_added": false
   },
   "tests": {
-    "synthetic_empty_no_close_warning": true,
-    "live_position_seed_nonzero": true,
-    "live_lots_seed_open_lots": true,
-    "no_close_signals_informative_false": true,
-    "raw_json_serializable_compact": true,
-    "no_live_queue_db_writes": true
+    "allow_seed_false": true,
+    "missing_policy": true,
+    "enabled_for_live_false": true,
+    "invalid_side": true,
+    "long_payload": true,
+    "short_payload": true,
+    "queue_conflict": true,
+    "open_order_conflict": true,
+    "market_forbidden": true,
+    "no_queue_write_submit": true
   },
   "safety_confirmation": {
     "live_submit": false,
     "action_queue_write": false,
-    "db_writes": false,
+    "cancel_replace_chase": false,
+    "lot_realization_created": false,
     "market_enabled_live": false,
     "strategy_live_logic_changed": false,
-    "api_executor_mexc_direct_changed": false
+    "api_executor_mexc_direct_execution_changed": false,
+    "db_schema_changes": false
   },
-  "summary": "Target ROI Comparison now has explicit seed modes, uses live position aggregates instead of silently behaving like an empty synthetic seed, supports live lots seed input when open lots exist, adds harvest-informativeness metrics and warnings for no-close/no-realized-PnL runs, and replaces heavy raw JSON rendering with compact collapsed previews plus download JSON."
+  "summary": "Added explicit seed policy fields with allow_seed=false by default, added read-only seed_preflight CLI mode for one symbol and LONG/SHORT direction, added a collapsed Protected Seed Mode UI section, and verified SOL seed preflight is blocked by seed_disabled_for_symbol while producing safe POST_ONLY LIMIT OPEN payload previews. No queue write, live submit, DB schema, strategy, or execution path change."
 }
