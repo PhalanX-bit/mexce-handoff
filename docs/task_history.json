@@ -3,6 +3,13 @@
   "status_kind": "short_history",
   "items": [
     {
+      "task_id": "2026-05-01-004",
+      "title": "Add protected seed live submit path for one direction",
+      "status": "completed",
+      "completed_at": "2026-05-01T12:36:00Z",
+      "result_summary": "Added protected seed_submit mode and locked UI controls for one active symbol plus one LONG/SHORT seed direction. No-live SOL LONG/SHORT smoke returned seed_ready_preflight_only with post-only OPEN LIMIT type=2 payloads, actual_queue_write=false, and actual_submit=false; live remains gated by --live plus confirm-live/confirm-symbol/confirm-seed and UI confirmations."
+    },
+    {
       "task_id": "2026-05-01-003",
       "title": "Enable SOL allow_seed and verify read-only seed preflight",
       "status": "completed",
