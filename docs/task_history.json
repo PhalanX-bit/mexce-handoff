@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-01T20:02:00Z",
+  "updated_at": "2026-05-01T23:11:45Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-01-006",
+      "title": "Fix protected seed leverage resolution",
+      "status": "completed",
+      "completed_at": "2026-05-01T23:11:45Z",
+      "result_summary": "Removed the hardcoded protected seed leverage=50 and added resolve_seed_leverage using current live position leverage first, optional symbol policy seed_leverage second, config default third, and fail-closed unknown/ambiguous/max checks. SOL seed preflight LONG/SHORT and seed_submit no-live now use leverage=300 with no queue write and no live submit."
+    },
     {
       "task_id": "2026-05-01-005",
       "title": "Diagnose seed leverage mismatch",
