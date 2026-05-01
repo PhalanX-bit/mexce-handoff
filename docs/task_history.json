@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-01T12:24:00Z",
+  "updated_at": "2026-05-01T20:02:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-01-005",
+      "title": "Diagnose seed leverage mismatch",
+      "status": "completed",
+      "completed_at": "2026-05-01T20:02:00Z",
+      "result_summary": "Read-only diagnosis of failed SOL seed action 13 found SEED_HARDCODED_LEVERAGE_50: the action and reconstructed MEXC payload used leverage=50, while live SOL LONG and SHORT positions are 300x cross. Proposed fix is a seed leverage resolver using current position leverage first, explicit symbol policy seed_leverage second, config default third, and fail-closed seed_leverage_unknown when ambiguous."
+    },
     {
       "task_id": "2026-05-01-004",
       "title": "Add protected seed live submit path for one direction",

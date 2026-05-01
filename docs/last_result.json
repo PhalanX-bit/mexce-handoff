@@ -1,13 +1,13 @@
 {
-  "task_id": "2026-05-01-004",
-  "updated_at": "2026-05-01T12:36:00Z",
+  "task_id": "2026-05-01-005",
+  "updated_at": "2026-05-01T20:02:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add protected seed live submit path for one direction",
-  "result_type": "protected_seed_live_path_phase_c",
+  "title": "Diagnose seed leverage mismatch",
+  "result_type": "seed_leverage_mismatch_diagnostic",
   "scope": {
-    "code_changes_made": true,
-    "ui_changes_made": true,
+    "code_changes_made": false,
+    "ui_changes_made": false,
     "database_schema_changes_made": false,
     "config_changed": false,
     "strategy_live_logic_changed": false,
@@ -16,78 +16,93 @@
     "action_queue_writes": false,
     "db_writes": false,
     "live_exchange_action_taken": false,
-    "market_enabled_live": false,
-    "multi_symbol_seed_enabled": false
+    "cancel_replace_chase": false,
+    "manual_backfill": false,
+    "exchange_leverage_changed": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_automation_read_only_runner.py",
-    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_submit --seed-side LONG --json",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_submit --seed-side SHORT --json"
+    "read-only DB inspection of data\\mexc.sqlite action_queue action_id=13",
+    "read-only api_executor normalize_action reconstruction for action_id=13",
+    "read-only MEXC/CCXT fetch_positions for SOL/USDT:USDT",
+    "rg leverage/seed leverage code path inspection"
   ],
-  "cli_seed_submit_no_live_long": {
-    "seed_allowed_now": true,
-    "decision": "seed_ready_preflight_only",
-    "live_confirmation_ok": false,
-    "actual_queue_write": false,
-    "actual_submit": false,
-    "payload_side": "LONG",
-    "reduce_only": 0,
-    "post_only": true,
-    "mexc_order_type": 2,
-    "limit_price": 84.31
+  "failed_action": {
+    "action_id": 13,
+    "symbol": "SOL/USDT:USDT",
+    "side": "LONG",
+    "qty": 1.0,
+    "limit_price": 83.76,
+    "leverage": 50,
+    "status": "FAILED",
+    "api_order_id": null,
+    "error_code": 2021,
+    "error_message": "Order leverage is inconsistent with the existing position leverage"
   },
-  "cli_seed_submit_no_live_short": {
-    "seed_allowed_now": true,
-    "decision": "seed_ready_preflight_only",
-    "live_confirmation_ok": false,
-    "actual_queue_write": false,
-    "actual_submit": false,
-    "payload_side": "SHORT",
-    "reduce_only": 0,
-    "post_only": true,
-    "mexc_order_type": 2,
-    "limit_price": 84.4
+  "leverage_sources": {
+    "action_queue_leverage": 50,
+    "preflight_leverage": null,
+    "runner_default": 50,
+    "api_executor_default": "none; requires action leverage and only caps by max leverage",
+    "config_default": null,
+    "symbol_policy_leverage": null,
+    "current_position_leverage": {
+      "long": 300.0,
+      "short": 300.0,
+      "margin_mode": "cross",
+      "openType": 2
+    },
+    "contract_max_leverage": 300
   },
-  "ui": {
-    "protected_seed_live_controls_added": true,
-    "confirm_live": true,
-    "confirm_symbol": true,
-    "confirm_seed": true,
-    "opens_position_warning_checkbox": true,
-    "stale_preflight_invalidation": true,
-    "live_button_locked_without_confirmations": true
+  "normalized_payload": {
+    "api_side": "OPEN_LONG",
+    "mexc_side": 1,
+    "type": 2,
+    "openType": 2,
+    "leverage": 50,
+    "price": 83.76,
+    "vol": 1
   },
-  "tests": {
-    "no_live_blocks": true,
-    "missing_confirmations": true,
-    "wrong_symbol": true,
-    "allow_seed_false": true,
-    "queue_open_order_conflict": true,
-    "long_payload": true,
-    "short_payload": true,
-    "market_forbidden": true,
-    "ui_invalidation": true
+  "cause": {
+    "classification": "SEED_HARDCODED_LEVERAGE_50",
+    "explanation": "The protected seed action payload is created with hardcoded leverage=50 in automation_read_only_runner._build_seed_submit_action_payload. api_executor preserves that action leverage, caps only above contract max leverage, and MEXC rejected the OPEN_LONG post-only LIMIT because existing SOL positions use 300x leverage."
+  },
+  "safe_leverage_policy_proposal": {
+    "source_priority": [
+      "current live position leverage for the symbol/side if any position exists",
+      "symbol_live_policy.seed_leverage if explicitly configured",
+      "supervised strategy default leverage if added/available",
+      "block with seed_leverage_unknown if ambiguous or unavailable"
+    ],
+    "when_to_block": [
+      "no position leverage and no explicit seed_leverage/default",
+      "long/short position leverage mismatch for the same symbol",
+      "resolved leverage exceeds contract max_leverage",
+      "resolved leverage is missing, zero, or not parseable"
+    ],
+    "config_fields_needed": [
+      "seed_leverage optional per symbol",
+      "seed_leverage_source in preview/reporting"
+    ],
+    "files_likely_needed": [
+      "scripts/automation_read_only_runner.py",
+      "config/symbol_live_policy.json",
+      "app/V2/ui/controls_tab.py",
+      "scripts/test_automation_read_only_runner.py",
+      "scripts/test_controls_automation_parsing.py"
+    ]
   },
   "safety_confirmation": {
-    "live_submit_executed": false,
-    "action_queue_write_during_task": false,
+    "new_submit": false,
+    "queue_write": false,
     "cancel_replace_chase": false,
-    "lot_realization_created": false,
-    "market_enabled_live": false,
-    "multi_symbol_seed": false,
+    "backfill": false,
+    "exchange_leverage_changed": false,
     "db_schema_changes": false,
-    "strategy_logic_changes": false,
-    "api_executor_mexc_direct_execution_behavior_changed": false
+    "strategy_logic_changed": false
   },
-  "summary": "Added seed_submit mode as a protected live-capable seed path that rebuilds seed preflight in the same run, requires --live plus confirm-live/confirm-symbol/confirm-seed before any future queue write, and remains preflight-only without live flags. Controls UI now has locked Protected seed live submit controls tied to fresh active_symbol+seed_side seed preflight. No live submit or action_queue write was performed."
+  "summary": "Read-only diagnosis of failed SOL seed action 13 found a leverage mismatch: the seed action was written with leverage=50, while live SOL LONG and SHORT positions are 300x cross. api_executor did not invent the value; it came from the runner's seed submit payload. Recommended fix is a read-only seed leverage resolver and preflight block if leverage cannot be safely resolved."
 }
