@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-04-30T11:20:00Z",
+  "updated_at": "2026-05-01T09:42:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-01-001",
+      "title": "Improve Target ROI Comparison seed handling",
+      "status": "completed",
+      "completed_at": "2026-05-01T09:42:00Z",
+      "result_summary": "Added explicit Target ROI seed modes for synthetic_empty, live_position_seed, live_lots_seed, and manual_seed; live_position_seed now uses nonzero current position aggregates, no-close/no-realized-PnL runs show harvest-quality warnings, raw JSON is compact/collapsed with download option, and no live, queue, DB, strategy, or execution path changes were made."
+    },
     {
       "task_id": "2026-04-30-008",
       "title": "Add Target ROI Comparison panel",

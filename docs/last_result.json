@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-04-30-008",
-  "updated_at": "2026-04-30T11:20:00Z",
+  "task_id": "2026-05-01-001",
+  "updated_at": "2026-05-01T09:42:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add Target ROI Comparison panel to Strategy Simulation tab",
-  "result_type": "target_roi_comparison_simulation_panel",
+  "title": "Improve Target ROI Comparison seed handling and interpretation quality",
+  "result_type": "target_roi_seed_interpretation_fix",
   "scope": {
     "code_changes_made": true,
     "ui_changes_made": true,
@@ -26,78 +26,86 @@
     "task_history.json"
   ],
   "commands_run": [
-    "python explicit py_compile with temporary cfile for app/V2/ui/strategy_simulation_tab.py core/streamlit_services/strategy_simulation_service.py scripts/test_strategy_simulation_ui.py",
+    "python -m py_compile app\\V2\\ui\\strategy_simulation_tab.py core\\streamlit_services\\strategy_simulation_service.py (hit Windows pyc lock)",
+    "python explicit py_compile with temporary cfile for app/V2/ui/strategy_simulation_tab.py core/streamlit_services/strategy_simulation_service.py",
     "python core\\test_execution_policy_simulation.py",
     "python scripts\\test_strategy_simulation_ui.py",
-    "python inline sample comparison for simulate_target_roi_comparison"
+    "python read-only sqlite ADA seed query",
+    "python inline ADA live_position_seed sample comparison"
   ],
-  "ui_panel": {
-    "location": "Strategy Simulation tab, below Execution Policy Comparison",
-    "inputs": [
-      "target_roi_set",
-      "synthetic_path",
-      "execution_assumption",
-      "steps",
-      "spread_bps",
-      "qty_per_close",
-      "fallback_market_roi_pct"
-    ],
+  "seed_modes": {
+    "synthetic_empty": "Available; explicitly starts from zero exposure.",
+    "live_position_seed": "Available; uses live/current position aggregates, current price, weighted entries, and live equity when present.",
+    "live_lots_seed": "Available; uses open position_lots when present and warns/falls back safely when unavailable.",
+    "manual_seed": "Available; uses the existing manual Seed state inputs."
+  },
+  "live_ada_seed_behavior": {
+    "live_long_qty": 280.0,
+    "live_short_qty": 103.0,
+    "simulation_seed_long_qty": 280.0,
+    "simulation_seed_short_qty": 103.0,
+    "open_lots_seeded": 0,
+    "fallback_warning": "No open ADA lots were present in read-only DB query; live_position_seed remains explicit and non-empty."
+  },
+  "interpretation_quality": {
+    "no_close_signals_warning": true,
+    "realized_pnl_zero_warning": true,
+    "informative_for_harvest": false,
+    "suggestions_shown": [
+      "use live_lots_seed",
+      "increase steps",
+      "increase oscillation/shock",
+      "lower target ROI",
+      "choose shock/recover path"
+    ]
+  },
+  "raw_json_behavior": {
+    "collapsed_by_default": true,
+    "compact_summary_shown": true,
+    "download_json_option": true,
+    "export_layout_issue_reduced": true
+  },
+  "sample_comparison": {
+    "seed_mode": "live_position_seed",
     "roi_targets": [
       100,
       150,
       200,
       250
     ],
-    "execution_assumptions": [
-      "post_only_limit_close",
-      "taker_limit_close",
-      "market_fallback_simulated"
+    "close_signal_count": [
+      0,
+      0,
+      0,
+      0
     ],
-    "charts": [
-      "target ROI vs realized PnL",
-      "target ROI vs close/no-fill count",
-      "target ROI vs open lots count"
+    "filled_count": [
+      0,
+      0,
+      0,
+      0
     ],
-    "raw_expanders": true
-  },
-  "sample_comparison": [
-    {
-      "target_roi_pct": 100.0,
-      "realized_pnl": 0.48,
-      "unrealized_pnl": -0.1479947646,
-      "open_lots_count": 1,
-      "closed_lots_count": 1,
-      "close_signal_count": 1,
-      "no_fill_count": 0,
-      "filled_count": 1,
-      "blocked_periods": 0,
-      "max_drawdown": 0.45996
-    },
-    {
-      "target_roi_pct": 250.0,
-      "realized_pnl": 5.9682727564,
-      "unrealized_pnl": -9.0811566495,
-      "open_lots_count": 18,
-      "closed_lots_count": 9,
-      "close_signal_count": 9,
-      "no_fill_count": 0,
-      "filled_count": 9,
-      "blocked_periods": 6,
-      "max_drawdown": 3.3785979008
-    }
-  ],
-  "interpretation": {
-    "lower_roi_behavior": "Lower ROI target harvests sooner and can create more frequent close opportunities depending on path.",
-    "higher_roi_behavior": "Higher ROI target waits longer and can accumulate more lots/blocked periods in some paths.",
-    "execution_assumption_effect": "post-only can produce no-fill/open events; taker LIMIT fills marketable close signals; MARKET fallback remains simulation-only."
+    "realized_pnl": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "blocked_periods": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "informative_for_harvest": false
   },
   "tests": {
-    "roi_parser": true,
-    "one_scenario_per_roi": true,
-    "post_only_no_fill_metrics": true,
-    "taker_limit_fill_metrics": true,
-    "market_fallback_simulation_only": true,
-    "json_serializable": true
+    "synthetic_empty_no_close_warning": true,
+    "live_position_seed_nonzero": true,
+    "live_lots_seed_open_lots": true,
+    "no_close_signals_informative_false": true,
+    "raw_json_serializable_compact": true,
+    "no_live_queue_db_writes": true
   },
   "safety_confirmation": {
     "live_submit": false,
@@ -107,5 +115,5 @@
     "strategy_live_logic_changed": false,
     "api_executor_mexc_direct_changed": false
   },
-  "summary": "Strategy Simulation now includes a read-only Target ROI Comparison panel for comparing target ROI thresholds such as 100/150/200/250 across synthetic paths and execution assumptions. It returns PnL, lots, signal, blocked, exposure, no-fill/fill, drawdown, charts, and raw expanders without live, queue, DB, or execution path changes."
+  "summary": "Target ROI Comparison now has explicit seed modes, uses live position aggregates instead of silently behaving like an empty synthetic seed, supports live lots seed input when open lots exist, adds harvest-informativeness metrics and warnings for no-close/no-realized-PnL runs, and replaces heavy raw JSON rendering with compact collapsed previews plus download JSON."
 }
