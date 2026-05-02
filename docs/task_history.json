@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-01T23:11:45Z",
+  "updated_at": "2026-05-02T23:05:44Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-02-001",
+      "title": "Improve scanner/UI decision clarity for policy-blocked candidates",
+      "status": "completed",
+      "completed_at": "2026-05-02T23:05:44Z",
+      "result_summary": "Scanner rows now include display/action fields that separate raw strategy READY/PASS from operator actionability. AT OPEN_LIMIT under close-only allow_open=false policy now shows POLICY_BLOCKED/actionable=false/live_ready=false with a clear operator message, and best_candidate remains null/WAIT when only policy-blocked rows exist."
+    },
     {
       "task_id": "2026-05-01-006",
       "title": "Fix protected seed leverage resolution",

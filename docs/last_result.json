@@ -1,28 +1,26 @@
 {
-  "task_id": "2026-05-01-006",
-  "updated_at": "2026-05-01T23:11:45Z",
+  "task_id": "2026-05-02-001",
+  "updated_at": "2026-05-02T23:05:44Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Fix protected seed leverage resolution",
-  "result_type": "seed_leverage_resolution_fix_verification",
+  "title": "Improve scanner/UI decision clarity for policy-blocked candidates",
+  "result_type": "scanner_policy_blocked_candidate_clarity_verification",
   "scope": {
     "code_changes_made": true,
     "ui_changes_made": true,
     "database_schema_changes_made": false,
-    "config_changed": true,
+    "config_changed": false,
+    "policy_rules_changed": false,
     "strategy_live_logic_changed": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false,
     "action_queue_writes": false,
     "db_writes": false,
     "live_exchange_action_taken": false,
-    "cancel_replace_chase": false,
-    "manual_backfill": false,
-    "exchange_leverage_changed": false
+    "cancel_replace_chase": false
   },
   "changed_files": [
     "scripts/automation_read_only_runner.py",
-    "config/symbol_live_policy.json",
     "app/V2/ui/controls_tab.py",
     "scripts/test_automation_read_only_runner.py",
     "scripts/test_controls_automation_parsing.py",
@@ -33,80 +31,58 @@
     "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side LONG --json",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side SHORT --json",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_submit --seed-side LONG --json"
+    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --mode scan --json --close-only --max-spread-bps 50"
   ],
-  "leverage_resolver": {
-    "function": "resolve_seed_leverage",
-    "priority": [
-      "current live position leverage for the symbol/side when available",
-      "symbol_live_policy.seed_leverage when explicitly configured",
-      "supervised/default config leverage when available",
-      "fail closed with seed_leverage_unknown"
+  "at_scanner_row_after_fix": {
+    "readiness_state_raw": "READY_FOR_BATCH_APPROVAL",
+    "safety_overall_raw": "PASS",
+    "candidate_type": "OPEN_LIMIT",
+    "side": "LONG",
+    "qty": 1,
+    "reduce_only": 0,
+    "post_only": true,
+    "policy_allows_candidate": false,
+    "policy_block_reason": "open_disabled_for_symbol_policy",
+    "recommended_action": "POLICY_BLOCKED",
+    "actionable": false,
+    "live_ready": false,
+    "queue_ready": false,
+    "display_readiness_state": "POLICY_BLOCKED",
+    "display_safety_state": "BLOCKED_BY_POLICY",
+    "display_recommended_action": "WAIT",
+    "operator_message": "Strategy proposed OPEN_LIMIT, but symbol policy is close-only / allow_open=false."
+  },
+  "best_candidate": {
+    "best_candidate_symbol": null,
+    "recommended_next_action": "WAIT",
+    "reason_if_none": "Only policy-blocked or non-actionable rows are present."
+  },
+  "ui": {
+    "scanner_table_display_fields": [
+      "actionable",
+      "display_readiness_state",
+      "display_safety_state",
+      "display_recommended_action",
+      "operator_message"
     ],
-    "block_reasons": [
-      "seed_leverage_unknown",
-      "seed_leverage_ambiguous",
-      "seed_leverage_above_contract_max",
-      "seed_leverage_invalid",
-      "seed_leverage_position_lookup_failed"
-    ]
-  },
-  "sol_seed_preflight_long": {
-    "seed_allowed_now": true,
-    "seed_leverage": 300,
-    "seed_leverage_source": "current_position_leverage:LONG",
-    "seed_leverage_valid": true,
-    "seed_leverage_block_reason": null,
-    "payload_leverage": 300,
-    "mexc_order_type": 2,
-    "openType": 2,
-    "post_only": true,
-    "reduce_only": 0,
-    "actual_queue_write": false,
-    "actual_submit": false
-  },
-  "sol_seed_preflight_short": {
-    "seed_allowed_now": true,
-    "seed_leverage": 300,
-    "seed_leverage_source": "current_position_leverage:SHORT",
-    "seed_leverage_valid": true,
-    "seed_leverage_block_reason": null,
-    "payload_leverage": 300,
-    "mexc_order_type": 2,
-    "openType": 2,
-    "post_only": true,
-    "reduce_only": 0,
-    "actual_queue_write": false,
-    "actual_submit": false
-  },
-  "sol_seed_submit_no_live": {
-    "decision": "seed_ready_preflight_only",
-    "live_confirmation_ok": false,
-    "payload_leverage": 300,
-    "actual_queue_write": false,
-    "actual_submit": false
+    "operations_best_candidate_message": "No actionable candidate; AT strategy proposed OPEN_LIMIT but open is disabled by symbol policy.",
+    "protected_live_command_guard": "Selected policy-blocked candidate shows warning and remains text-only/guarded."
   },
   "tests": {
-    "no_hardcoded_50": true,
-    "current_position_leverage_used": true,
-    "policy_seed_leverage_fallback": true,
-    "ambiguous_leverage_blocks": true,
-    "missing_leverage_blocks": true,
-    "above_max_leverage_blocks": true,
-    "seed_payload_still_type_2": true,
-    "market_forbidden": true
+    "open_disabled_blocks": true,
+    "best_candidate_ignores_policy_blocked": true,
+    "close_candidate_remains_actionable": true,
+    "live_disabled_blocks": true,
+    "ui_no_actionable_candidate": true
   },
   "safety_confirmation": {
     "live_submit": false,
     "action_queue_write": false,
     "cancel_replace_chase": false,
-    "backfill": false,
-    "exchange_leverage_changed": false,
     "db_schema_changes": false,
-    "strategy_logic_changed": false,
-    "api_executor_mexc_direct_execution_behavior_changed": false
+    "strategy_logic_changes": false,
+    "api_executor_mexc_direct_changes": false,
+    "policy_rules_changed": false
   },
-  "summary": "Protected seed leverage now resolves from live position leverage first, then optional symbol policy seed_leverage, then default config leverage, and blocks if unresolved or invalid. SOL seed preflight LONG/SHORT and seed_submit no-live now use leverage=300 from current position leverage, preserve post-only OPEN LIMIT type=2, and perform no queue write or submit."
+  "summary": "Scanner output now separates raw strategy readiness from operator display readiness. Policy-blocked candidates, including AT OPEN_LIMIT under close-only allow_open=false policy, are marked actionable=false/live_ready=false/queue_ready=false with display_readiness_state=POLICY_BLOCKED and operator guidance. Best candidate selection only considers actionable rows."
 }
