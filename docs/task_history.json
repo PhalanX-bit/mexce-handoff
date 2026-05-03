@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-03T22:25:30Z",
+  "updated_at": "2026-05-03T22:50:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-03-003",
+      "title": "Add periodic supervisor dry-run mode",
+      "status": "completed",
+      "completed_at": "2026-05-03T22:50:00Z",
+      "result_summary": "Added read-only supervisor_dry_run mode that scans allowlisted symbols, filters only safe CLOSE_LIMIT reduce-only qty=1 candidates, reports one possible manual next step, and never writes queue or submits. Current live state returns WAIT because no close-ready candidate remains after the successful SOL harvest."
+    },
     {
       "task_id": "2026-05-03-002",
       "title": "Fix lot-level trim close eligibility for seeded SOL lots",
