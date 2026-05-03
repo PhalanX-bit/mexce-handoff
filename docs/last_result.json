@@ -1,14 +1,15 @@
 {
-  "task_id": "2026-05-03-003",
-  "updated_at": "2026-05-03T22:50:00Z",
+  "task_id": "2026-05-03-004",
+  "updated_at": "2026-05-03T23:15:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add periodic supervisor dry-run mode",
-  "result_type": "supervisor_dry_run_loop_verification",
+  "title": "Add locked supervisor_live_once path",
+  "result_type": "supervisor_live_once_locked_path_verification",
   "scope": {
     "live_submit": false,
     "action_queue_write": false,
     "seed_action": false,
+    "open_action": false,
     "cancel_replace_chase": false,
     "market_enabled": false,
     "db_schema_changes": false,
@@ -19,48 +20,68 @@
   "changed_files": [
     "scripts/automation_read_only_runner.py",
     "scripts/test_automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
     "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_supervisor_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode supervisor_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode supervisor_dry_run --symbols SOL/USDT:USDT --watch --interval-sec 1 --max-iterations 1 --json"
+    "python scripts\\automation_read_only_runner.py --mode supervisor_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode supervisor_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "supervisor_dry_run": {
+  "supervisor_live_once": {
+    "implemented": true,
     "supervisor_state": "WAIT",
-    "best_symbol": null,
-    "best_candidate": null,
-    "reason": "no_actionable_close_ready_candidate",
-    "next_manual_step": "rerun later",
+    "selected_symbol": null,
+    "selected_candidate": null,
+    "decision": "supervisor_wait",
+    "confirmation_ok": false,
+    "confirmation_missing_reasons": [
+      "live_flag_missing",
+      "confirm_live_missing",
+      "confirm_supervisor_live_once_missing"
+    ],
     "max_actions_per_run": 1,
     "live_submit_allowed": false,
     "queue_write_allowed": false,
     "seed_allowed_in_supervisor": false,
-    "market_allowed": false
+    "open_allowed_in_supervisor": false,
+    "market_allowed": false,
+    "actual_queue_write": false,
+    "actual_submit": false
   },
-  "per_symbol_behavior": {
-    "AT": "OPEN_LIMIT visible but policy-blocked by close-only allow_open=false; ignored by supervisor.",
-    "ADA": "No actionable candidate; enabled_for_live=false scan-only symbol.",
-    "BTC": "No actionable candidate; enabled_for_live=false scan-only symbol.",
-    "ETH": "No actionable candidate; enabled_for_live=false scan-only symbol.",
-    "SOL": "No current CLOSE_READY candidate after successful SOL LONG harvest; supervisor waits."
+  "candidate_rules": {
+    "close_limit_only": true,
+    "reduce_only_required": true,
+    "qty_one_required": true,
+    "market_forbidden": true,
+    "open_forbidden": true,
+    "seed_forbidden": true,
+    "conflicts_blocked": true,
+    "unresolved_lifecycle_blocked": true
   },
-  "watch_mode": {
-    "implemented": true,
-    "max_iterations_smoke": 1,
-    "no_writes_submits": true
+  "current_no_live_smoke": {
+    "AT": "No actionable close candidate; no queue write or submit.",
+    "ADA": "No actionable close candidate; live disabled / scan-only.",
+    "BTC": "No actionable close candidate; live disabled / scan-only.",
+    "ETH": "No actionable close candidate; live disabled / scan-only.",
+    "SOL": "No current CLOSE_READY candidate; supervisor waits."
   },
   "tests": {
+    "no_live_blocks": true,
+    "missing_confirmations": true,
     "wait_state": true,
-    "ready_one_action": true,
+    "ready_locked": true,
+    "open_ignored": true,
     "policy_blocked_ignored": true,
     "live_disabled_ignored": true,
     "conflicts_blocked": true,
-    "unresolved_lifecycle_blocked": true,
-    "json_serializable": true
+    "max_one_action": true,
+    "json_serializable": true,
+    "dry_run_unchanged": true
   },
-  "summary": "Added read-only supervisor_dry_run mode that scans allowlisted symbols, filters only safe CLOSE_LIMIT reduce-only qty=1 candidates, reports one possible manual next step, and never writes queue or submits. Current live state returns WAIT because no close-ready candidate remains after the successful SOL harvest."
+  "summary": "Added locked supervisor_live_once mode. It reuses supervisor dry-run selection, only considers actionable CLOSE_LIMIT reduce-only qty=1 candidates, remains locked without --live/--confirm-live/--confirm-supervisor-live-once, and performed no queue writes or live submits during verification."
 }

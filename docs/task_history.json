@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-03T22:50:00Z",
+  "updated_at": "2026-05-03T23:15:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-03-004",
+      "title": "Add locked supervisor_live_once path",
+      "status": "completed",
+      "completed_at": "2026-05-03T23:15:00Z",
+      "result_summary": "Added locked supervisor_live_once mode. It reuses supervisor dry-run selection, only considers actionable CLOSE_LIMIT reduce-only qty=1 candidates, remains locked without --live/--confirm-live/--confirm-supervisor-live-once, and performed no queue writes or live submits during verification."
+    },
     {
       "task_id": "2026-05-03-003",
       "title": "Add periodic supervisor dry-run mode",
