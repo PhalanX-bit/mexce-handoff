@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-03T22:10:24Z",
+  "updated_at": "2026-05-03T22:25:30Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-03-002",
+      "title": "Fix lot-level trim close eligibility for seeded SOL lots",
+      "status": "completed",
+      "completed_at": "2026-05-03T22:25:30Z",
+      "result_summary": "Confirmed exchange-backed target-reached lot evidence can now drive LOT_TRIM CLOSE_LIMIT readiness even when aggregate leg UPNL is negative. SOL currently scans as CLOSE_READY LONG qty=1 reduce_only=1, policy_allowed=true, with no queue write and no live submit."
+    },
     {
       "task_id": "2026-05-03-001",
       "title": "Diagnose seeded SOL close eligibility",
