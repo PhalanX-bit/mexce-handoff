@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-02T23:05:44Z",
+  "updated_at": "2026-05-03T22:10:24Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-03-001",
+      "title": "Diagnose seeded SOL close eligibility",
+      "status": "completed",
+      "completed_at": "2026-05-03T22:10:24Z",
+      "result_summary": "Read-only diagnosis found SOL seed lots are exchange-confirmed and included; current price is fresh and the LONG seed lot is target-reached. Raw strategy sees eligible_long_lots_count=1, but blocks with AUTO_CLOSE_LOSS_FORBIDDEN_LONG because aggregate LONG leg UPNL is negative. Proposed minimal fix is to let eligible lot-level profit evidence drive LOT_TRIM while preserving aggregate loss guard for leg-target closes."
+    },
     {
       "task_id": "2026-05-02-001",
       "title": "Improve scanner/UI decision clarity for policy-blocked candidates",

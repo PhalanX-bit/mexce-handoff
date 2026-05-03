@@ -1,13 +1,13 @@
 {
-  "task_id": "2026-05-02-001",
-  "updated_at": "2026-05-02T23:05:44Z",
+  "task_id": "2026-05-03-001",
+  "updated_at": "2026-05-03T22:10:24Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Improve scanner/UI decision clarity for policy-blocked candidates",
-  "result_type": "scanner_policy_blocked_candidate_clarity_verification",
+  "title": "Diagnose seeded SOL close eligibility",
+  "result_type": "seeded_sol_close_eligibility_diagnostic",
   "scope": {
-    "code_changes_made": true,
-    "ui_changes_made": true,
+    "code_changes_made": false,
+    "ui_changes_made": false,
     "database_schema_changes_made": false,
     "config_changed": false,
     "policy_rules_changed": false,
@@ -17,72 +17,134 @@
     "action_queue_writes": false,
     "db_writes": false,
     "live_exchange_action_taken": false,
-    "cancel_replace_chase": false
+    "cancel_replace_chase": false,
+    "manual_backfill": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_automation_read_only_runner.py",
-    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --mode scan --json --close-only --max-spread-bps 50"
+    "read-only SQLite inspection of SOL position_lots and seed action rows",
+    "python scripts\\automation_read_only_runner.py --symbols SOL/USDT:USDT --mode scan --json --close-only --max-spread-bps 50",
+    "read-only raw prepare_strategy_step/include_raw diagnostic for SOL/USDT:USDT"
   ],
-  "at_scanner_row_after_fix": {
-    "readiness_state_raw": "READY_FOR_BATCH_APPROVAL",
-    "safety_overall_raw": "PASS",
-    "candidate_type": "OPEN_LIMIT",
-    "side": "LONG",
-    "qty": 1,
-    "reduce_only": 0,
-    "post_only": true,
-    "policy_allows_candidate": false,
-    "policy_block_reason": "open_disabled_for_symbol_policy",
-    "recommended_action": "POLICY_BLOCKED",
-    "actionable": false,
-    "live_ready": false,
-    "queue_ready": false,
-    "display_readiness_state": "POLICY_BLOCKED",
-    "display_safety_state": "BLOCKED_BY_POLICY",
+  "sol_lots": {
+    "long_lot": {
+      "id": 8,
+      "symbol": "SOL/USDT:USDT",
+      "side": "LONG",
+      "source_action_id": 14,
+      "source_created_by": "streamlit_v2:seed",
+      "qty_remaining": 1.0,
+      "entry_price": 83.54,
+      "target_price": 84.09693333333334,
+      "target_roi_pct": 200.0,
+      "leverage": 300.0,
+      "status": "OPEN",
+      "open_fill_source": "exchange_confirmed",
+      "open_fill_source_reason": "reconcile:filled_confirmed"
+    },
+    "short_lot": {
+      "id": 9,
+      "symbol": "SOL/USDT:USDT",
+      "side": "SHORT",
+      "source_action_id": 15,
+      "source_created_by": "streamlit_v2:seed",
+      "qty_remaining": 1.0,
+      "entry_price": 83.68,
+      "target_price": 83.12213333333334,
+      "target_roi_pct": 200.0,
+      "leverage": 300.0,
+      "status": "OPEN",
+      "open_fill_source": "exchange_confirmed",
+      "open_fill_source_reason": "reconcile:filled_confirmed"
+    }
+  },
+  "market_price_used": {
+    "lastPrice": 84.26,
+    "bid": 84.26,
+    "ask": 84.27,
+    "fairPrice": 84.27,
+    "indexPrice": 84.3,
+    "timestamp": "2026-05-03T19:09:04.693000+00:00",
+    "stale": false
+  },
+  "expected_eligibility": {
+    "sol_long_target_reached": true,
+    "sol_short_target_reached": false,
+    "expected_eligible_lots": 1,
+    "long_lot_roi_pct": 258.55877423988466
+  },
+  "actual_strategy": {
+    "raw_current_last_price": 84.26,
+    "raw_lot_debug": {
+      "open_lots_count": 2,
+      "eligible_open_lots_count": 1,
+      "eligible_long_lots_count": 1,
+      "eligible_short_lots_count": 0
+    },
+    "lot_trim_ready": true,
+    "leg_trim_ready": false,
+    "strategy_state": "BLOCKED",
+    "no_action_reason": "AUTO_CLOSE_LOSS_FORBIDDEN_LONG",
+    "decision": null,
+    "aggregate_long_contracts": 13.0,
+    "aggregate_long_entry_price": 179.2,
+    "aggregate_long_unrealized_pnl": -123.35699999999997,
+    "aggregate_short_contracts": 12.0,
+    "aggregate_short_entry_price": 83.03,
+    "aggregate_short_unrealized_pnl": -1.5360000000000014
+  },
+  "actual_scanner": {
+    "candidate_type": "NO_ACTION",
+    "recommended_action": "BLOCKED",
     "display_recommended_action": "WAIT",
-    "operator_message": "Strategy proposed OPEN_LIMIT, but symbol policy is close-only / allow_open=false."
-  },
-  "best_candidate": {
-    "best_candidate_symbol": null,
-    "recommended_next_action": "WAIT",
-    "reason_if_none": "Only policy-blocked or non-actionable rows are present."
-  },
-  "ui": {
-    "scanner_table_display_fields": [
-      "actionable",
-      "display_readiness_state",
-      "display_safety_state",
-      "display_recommended_action",
-      "operator_message"
+    "eligible_lots": 0,
+    "target_reached_lots": 0,
+    "blockers": [
+      {
+        "kind": "LIVE_PROPOSAL_VALIDATION",
+        "reason": "No live action in proposal."
+      }
     ],
-    "operations_best_candidate_message": "No actionable candidate; AT strategy proposed OPEN_LIMIT but open is disabled by symbol policy.",
-    "protected_live_command_guard": "Selected policy-blocked candidate shows warning and remains text-only/guarded."
+    "reporting_note": "Scanner top-level eligible_lots is stale/wrong for NO_ACTION because batch lot_profit_context was built with decision side '-' and filtered out both SOL lots."
   },
-  "tests": {
-    "open_disabled_blocks": true,
-    "best_candidate_ignores_policy_blocked": true,
-    "close_candidate_remains_actionable": true,
-    "live_disabled_blocks": true,
-    "ui_no_actionable_candidate": true
+  "cause": {
+    "classification": "OTHER",
+    "specific_cause": "AGGREGATE_LEG_LOSS_GUARD_OVERRIDES_ELIGIBLE_SEED_LOT",
+    "explanation": "Seed-created SOL lots are included, symbol normalization works, and current price is fresh. The strategy engine sees one eligible LONG lot, but then blocks CLOSE because winner_profitable_close uses aggregate LONG leg profitability. The aggregate SOL LONG leg is deeply negative due older exposure, so AUTO_CLOSE_LOSS_FORBIDDEN_LONG suppresses the lot-level profitable seed close. A secondary scanner reporting issue hides the eligible lot after NO_ACTION."
+  },
+  "fix_proposal": {
+    "files": [
+      "core/streamlit_services/strategy_engine.py",
+      "core/streamlit_services/strategy_service.py if helper extraction is desired",
+      "core/test_strategy_engine_one_sided_close.py or new focused strategy test",
+      "scripts/automation_read_only_runner.py for scanner reporting normalization"
+    ],
+    "minimal_change": [
+      "When lot_trim_ready is true and eligible_lots_df has the chosen side, treat winner_profitable_close as true from eligible lot evidence instead of aggregate leg UPNL.",
+      "Keep AUTO_CLOSE_LOSS_FORBIDDEN for leg-target closes without eligible lot proof.",
+      "For scanner/batch reporting, compute lot_profit_context with side=None when decision side is missing or '-'."
+    ],
+    "tests": [
+      "seeded LONG lot with current price above target and aggregate LONG leg negative -> CLOSE_LIMIT LONG",
+      "seeded SHORT lot with current price below target and aggregate SHORT leg negative -> CLOSE_LIMIT SHORT",
+      "seeded LONG below target -> NO_ACTION or existing open logic",
+      "seed lots included only if status=OPEN and exchange_confirmed/open fill confirmed",
+      "SOL/USDT:USDT aliases include SOL_USDT and SOL/USDT",
+      "CLOSE_LIMIT allowed under close_only/allow_close policy",
+      "OPEN_LIMIT remains blocked under allow_open=false",
+      "scanner top-level target_reached_lots uses all sides when decision is NO_ACTION"
+    ]
   },
   "safety_confirmation": {
     "live_submit": false,
     "action_queue_write": false,
     "cancel_replace_chase": false,
+    "backfill": false,
     "db_schema_changes": false,
-    "strategy_logic_changes": false,
-    "api_executor_mexc_direct_changes": false,
-    "policy_rules_changed": false
+    "execution_api_changes": false
   },
-  "summary": "Scanner output now separates raw strategy readiness from operator display readiness. Policy-blocked candidates, including AT OPEN_LIMIT under close-only allow_open=false policy, are marked actionable=false/live_ready=false/queue_ready=false with display_readiness_state=POLICY_BLOCKED and operator guidance. Best candidate selection only considers actionable rows."
+  "summary": "Read-only diagnosis found seeded SOL LONG lot is recognized and target-reached, but strategy blocks close because aggregate LONG leg UPNL is negative. This is not seed exclusion, stale price, symbol mismatch, target comparison, or policy close block. Minimal fix should let eligible exchange-confirmed lot evidence override aggregate leg loss guard for LOT_TRIM only, while preserving loss guard for leg-level closes."
 }
