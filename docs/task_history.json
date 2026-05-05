@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-03T23:15:00Z",
+  "updated_at": "2026-05-05T10:55:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-05-001",
+      "title": "Implement Seed Coverage Planner",
+      "status": "completed",
+      "completed_at": "2026-05-05T10:55:00Z",
+      "result_summary": "Added read-only seed_coverage_plan mode and a compact Protected Seed Mode planner UI. The planner counts confirmed open LONG/SHORT lots, applies policy/conflict/meta/liquidity/leverage gates, recommends at most one next seed preflight, and never writes queue or submits. Current state recommends SOL LONG seed preflight only."
+    },
     {
       "task_id": "2026-05-03-004",
       "title": "Add locked supervisor_live_once path",

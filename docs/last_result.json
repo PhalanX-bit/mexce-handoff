@@ -1,15 +1,14 @@
 {
-  "task_id": "2026-05-03-004",
-  "updated_at": "2026-05-03T23:15:00Z",
+  "task_id": "2026-05-05-001",
+  "updated_at": "2026-05-05T10:55:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add locked supervisor_live_once path",
-  "result_type": "supervisor_live_once_locked_path_verification",
+  "title": "Implement Seed Coverage Planner",
+  "result_type": "seed_coverage_planner_verification",
   "scope": {
     "live_submit": false,
     "action_queue_write": false,
-    "seed_action": false,
-    "open_action": false,
+    "seed_action_executed": false,
     "cancel_replace_chase": false,
     "market_enabled": false,
     "db_schema_changes": false,
@@ -25,63 +24,53 @@
     "task_history.json"
   ],
   "commands_run": [
-    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "$env:PYTHONPYCACHEPREFIX='.pycache_supervisor_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_coverage_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode supervisor_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode supervisor_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "supervisor_live_once": {
-    "implemented": true,
-    "supervisor_state": "WAIT",
-    "selected_symbol": null,
-    "selected_candidate": null,
-    "decision": "supervisor_wait",
-    "confirmation_ok": false,
-    "confirmation_missing_reasons": [
-      "live_flag_missing",
-      "confirm_live_missing",
-      "confirm_supervisor_live_once_missing"
-    ],
-    "max_actions_per_run": 1,
-    "live_submit_allowed": false,
-    "queue_write_allowed": false,
-    "seed_allowed_in_supervisor": false,
-    "open_allowed_in_supervisor": false,
-    "market_allowed": false,
-    "actual_queue_write": false,
-    "actual_submit": false
+  "planner": {
+    "planner_state": "READY_ONE_SEED",
+    "next_seed_symbol": "SOL/USDT:USDT",
+    "next_seed_side": "LONG",
+    "next_seed_payload_preview": {
+      "panel_mode": "OPEN",
+      "intent": "seed_open",
+      "side": "LONG",
+      "qty": 1.0,
+      "order_kind": "LIMIT",
+      "reduce_only": 0,
+      "post_only": true,
+      "maker_only": true,
+      "mexc_order_type": 2,
+      "openType": 2,
+      "leverage": 300
+    },
+    "safety_summary": {
+      "live_submit_allowed": false,
+      "queue_write_allowed": false,
+      "max_seed_actions_per_run": 0,
+      "market_allowed": false,
+      "multi_seed_submit": false
+    }
   },
-  "candidate_rules": {
-    "close_limit_only": true,
-    "reduce_only_required": true,
-    "qty_one_required": true,
-    "market_forbidden": true,
-    "open_forbidden": true,
-    "seed_forbidden": true,
-    "conflicts_blocked": true,
-    "unresolved_lifecycle_blocked": true
-  },
-  "current_no_live_smoke": {
-    "AT": "No actionable close candidate; no queue write or submit.",
-    "ADA": "No actionable close candidate; live disabled / scan-only.",
-    "BTC": "No actionable close candidate; live disabled / scan-only.",
-    "ETH": "No actionable close candidate; live disabled / scan-only.",
-    "SOL": "No current CLOSE_READY candidate; supervisor waits."
+  "per_symbol": {
+    "AT": "BLOCKED_BY_POLICY: allow_seed=false; no recommendation.",
+    "ADA": "BLOCKED_BY_POLICY: enabled_for_live=false; no recommendation.",
+    "BTC": "BLOCKED_BY_POLICY: enabled_for_live=false; no recommendation.",
+    "ETH": "BLOCKED_BY_POLICY: enabled_for_live=false; no recommendation.",
+    "SOL": "NEED_LONG: confirmed SHORT lot exists, LONG coverage missing, policy allows seed; one read-only LONG seed preflight recommended."
   },
   "tests": {
-    "no_live_blocks": true,
-    "missing_confirmations": true,
-    "wait_state": true,
-    "ready_locked": true,
-    "open_ignored": true,
-    "policy_blocked_ignored": true,
-    "live_disabled_ignored": true,
-    "conflicts_blocked": true,
-    "max_one_action": true,
-    "json_serializable": true,
-    "dry_run_unchanged": true
+    "covered_both": true,
+    "need_long": true,
+    "need_short": true,
+    "need_both": true,
+    "policy_blocked": true,
+    "conflict_blocked": true,
+    "leverage_blocked": true,
+    "one_recommendation_only": true,
+    "json_serializable": true
   },
-  "summary": "Added locked supervisor_live_once mode. It reuses supervisor dry-run selection, only considers actionable CLOSE_LIMIT reduce-only qty=1 candidates, remains locked without --live/--confirm-live/--confirm-supervisor-live-once, and performed no queue writes or live submits during verification."
+  "summary": "Added read-only seed_coverage_plan mode and a compact Protected Seed Mode planner UI. The planner counts confirmed open LONG/SHORT lots, applies policy/conflict/meta/liquidity/leverage gates, recommends at most one next seed preflight, and never writes queue or submits. Current state recommends SOL LONG seed preflight only."
 }
