@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-05T10:55:00Z",
+  "updated_at": "2026-05-05T13:30:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-05-002",
+      "title": "Add locked seed_live_once path",
+      "status": "completed",
+      "completed_at": "2026-05-05T13:30:00Z",
+      "result_summary": "Added locked seed_live_once mode. It reruns Seed Coverage Planner, selects at most one protected seed OPEN qty=1 post-only type=2 recommendation, remains locked without --live/--confirm-live/--confirm-seed-live-once, and performed no queue writes or live submits during verification."
+    },
     {
       "task_id": "2026-05-05-001",
       "title": "Implement Seed Coverage Planner",

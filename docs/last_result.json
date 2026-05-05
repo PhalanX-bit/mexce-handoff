@@ -1,15 +1,16 @@
 {
-  "task_id": "2026-05-05-001",
-  "updated_at": "2026-05-05T10:55:00Z",
+  "task_id": "2026-05-05-002",
+  "updated_at": "2026-05-05T13:30:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Implement Seed Coverage Planner",
-  "result_type": "seed_coverage_planner_verification",
+  "title": "Add locked seed_live_once path",
+  "result_type": "seed_live_once_locked_path_verification",
   "scope": {
     "live_submit": false,
     "action_queue_write": false,
     "seed_action_executed": false,
     "cancel_replace_chase": false,
+    "backfill": false,
     "market_enabled": false,
     "db_schema_changes": false,
     "strategy_logic_changes": false,
@@ -24,16 +25,33 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_coverage_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_live_once_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
+    "python scripts\\automation_read_only_runner.py --mode seed_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
     "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "planner": {
+  "mode": {
+    "seed_live_once_implemented": true,
+    "max_seed_actions_per_run": 1,
+    "live_without_confirmations": "locked",
+    "queue_write_allowed": false,
+    "actual_queue_write": false,
+    "actual_submit": false
+  },
+  "current_no_live_smoke": {
     "planner_state": "READY_ONE_SEED",
-    "next_seed_symbol": "SOL/USDT:USDT",
-    "next_seed_side": "LONG",
-    "next_seed_payload_preview": {
+    "selected_symbol": "SOL/USDT:USDT",
+    "selected_seed_side": "LONG",
+    "decision": "seed_live_confirmation_missing",
+    "confirmation_ok": false,
+    "confirmation_missing_reasons": [
+      "live_flag_missing",
+      "confirm_live_missing",
+      "confirm_seed_live_once_missing"
+    ],
+    "next_manual_step": "run seed preflight manually for SOL/USDT:USDT LONG",
+    "selected_seed_payload_preview": {
       "panel_mode": "OPEN",
       "intent": "seed_open",
       "side": "LONG",
@@ -45,32 +63,31 @@
       "mexc_order_type": 2,
       "openType": 2,
       "leverage": 300
-    },
-    "safety_summary": {
-      "live_submit_allowed": false,
-      "queue_write_allowed": false,
-      "max_seed_actions_per_run": 0,
-      "market_allowed": false,
-      "multi_seed_submit": false
     }
   },
-  "per_symbol": {
-    "AT": "BLOCKED_BY_POLICY: allow_seed=false; no recommendation.",
-    "ADA": "BLOCKED_BY_POLICY: enabled_for_live=false; no recommendation.",
-    "BTC": "BLOCKED_BY_POLICY: enabled_for_live=false; no recommendation.",
-    "ETH": "BLOCKED_BY_POLICY: enabled_for_live=false; no recommendation.",
-    "SOL": "NEED_LONG: confirmed SHORT lot exists, LONG coverage missing, policy allows seed; one read-only LONG seed preflight recommended."
+  "allowed_future_seed_rules": {
+    "qty_1": true,
+    "limit_only": true,
+    "post_only_required": true,
+    "type_2_required": true,
+    "reduce_only_0": true,
+    "market_forbidden": true,
+    "multi_seed_forbidden": true,
+    "conflicts_blocked": true,
+    "unresolved_lifecycle_blocked": true,
+    "leverage_validation": true
   },
   "tests": {
-    "covered_both": true,
-    "need_long": true,
-    "need_short": true,
-    "need_both": true,
+    "no_live_blocks": true,
+    "missing_confirmations": true,
+    "wait_state": true,
+    "ready_locked": true,
     "policy_blocked": true,
-    "conflict_blocked": true,
+    "live_disabled": true,
+    "conflicts_blocked": true,
     "leverage_blocked": true,
-    "one_recommendation_only": true,
+    "max_one_seed": true,
     "json_serializable": true
   },
-  "summary": "Added read-only seed_coverage_plan mode and a compact Protected Seed Mode planner UI. The planner counts confirmed open LONG/SHORT lots, applies policy/conflict/meta/liquidity/leverage gates, recommends at most one next seed preflight, and never writes queue or submits. Current state recommends SOL LONG seed preflight only."
+  "summary": "Added locked seed_live_once mode. It reruns Seed Coverage Planner, selects at most one protected seed OPEN qty=1 post-only type=2 recommendation, remains locked without --live/--confirm-live/--confirm-seed-live-once, and performed no queue writes or live submits during verification."
 }
