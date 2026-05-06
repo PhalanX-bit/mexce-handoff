@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-06T13:35:00Z",
+  "updated_at": "2026-05-06T14:15:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-06-006",
+      "title": "Fix seed coverage LOCAL_NO_SUBMIT conflict handling",
+      "status": "completed",
+      "completed_at": "2026-05-06T14:15:00Z",
+      "result_summary": "Seed coverage now ignores local no-submit cleanup rows as exchange lifecycle conflicts and verifies stale local OPEN rows against exchange state. Action 26 LOCAL_NO_SUBMIT no longer blocks SOL; action 25 is shown as stale local OPEN with exchange CANCELED_NO_FILL, not a blocker. Current planner_state=READY_ONE_SEED for SOL LONG with no live action or queue write."
+    },
     {
       "task_id": "2026-05-06-005",
       "title": "Add orphan seed replacement cleanup preview",

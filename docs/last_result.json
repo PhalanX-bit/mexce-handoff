@@ -1,16 +1,15 @@
 {
-  "task_id": "2026-05-06-005",
-  "updated_at": "2026-05-06T13:35:00Z",
+  "task_id": "2026-05-06-006",
+  "updated_at": "2026-05-06T14:15:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add orphan seed replacement cleanup preview",
-  "result_type": "orphan_seed_replace_action_cleanup_verification",
+  "title": "Fix seed coverage LOCAL_NO_SUBMIT conflict handling",
+  "result_type": "seed_coverage_local_no_submit_conflict_fix_verification",
   "scope": {
     "live_submit": false,
-    "live_cancel_replace": false,
-    "exchange_action": false,
+    "queue_write": false,
+    "cancel_replace": false,
     "backfill": false,
-    "db_update_performed": false,
     "db_schema_changes": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false
@@ -22,48 +21,58 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_orphan_seed_cleanup_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_local_no_submit_conflict_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode cleanup_orphan_seed_replace --symbol SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
+    "read-only DB inspect SOL open-order conflict source"
   ],
-  "action_26": {
-    "status_before": "ARMED",
+  "action_26_handling": {
+    "status": "FAILED",
+    "reconcile_state": "LOCAL_NO_SUBMIT",
     "api_order_id": null,
-    "created_by": "streamlit_v2:seed_replace",
-    "intent": "seed_open",
-    "panel_mode": "OPEN",
-    "side": "LONG",
-    "qty": 1.0,
-    "limit_price": 89.62,
-    "attempts": 0,
-    "cleanup_candidate": true,
-    "cleanup_reason": "orphan_seed_replace_no_submit",
-    "source_old_action_id": 25,
-    "source_cancel_state": "CANCELED_NO_FILL",
-    "source_deal_qty": 0.0,
-    "no_confirm_actual_db_update": false
+    "blocks_unresolved_lifecycle": false,
+    "creates_open_order_conflict": false
   },
-  "cleanup_behavior": {
-    "mode": "cleanup_orphan_seed_replace",
-    "confirmed_command": "python scripts\\automation_read_only_runner.py --mode cleanup_orphan_seed_replace --symbol SOL/USDT:USDT --json --confirm-cleanup-orphan-seed-replace",
-    "new_status_if_confirmed": "FAILED",
-    "reconcile_state_if_confirmed": "LOCAL_NO_SUBMIT",
-    "last_error_if_confirmed": "orphan seed replacement was enqueued but never submitted; safe local cleanup",
-    "active_queue_conflict_after_confirmed_cleanup": false,
-    "current_active_queue_conflict_without_confirm": true
+  "sol_coverage_after_fix": {
+    "coverage_state": "NEED_LONG",
+    "open_order_conflict": false,
+    "unresolved_lifecycle_conflict": false,
+    "next_allowed_seed_side": "LONG",
+    "planner_state": "READY_ONE_SEED",
+    "next_seed_symbol": "SOL/USDT:USDT",
+    "block_reason": null,
+    "next_seed_payload_preview": {
+      "panel_mode": "OPEN",
+      "intent": "seed_open",
+      "side": "LONG",
+      "qty": 1.0,
+      "order_kind": "LIMIT",
+      "post_only": true,
+      "maker_only": true,
+      "mexc_order_type": 2,
+      "openType": 2,
+      "reduce_only": 0,
+      "leverage": 300
+    }
+  },
+  "stale_local_open_order": {
+    "action_id": 25,
+    "api_order_id": "806700949795404288",
+    "local_reconcile_state": "OPEN",
+    "exchange_lifecycle_state": "CANCELED_NO_FILL",
+    "exchange_deal_qty": 0.0,
+    "source": "exchange_confirms_canceled_no_fill",
+    "blocks_seed_coverage": false
   },
   "tests": {
-    "orphan_candidate": true,
-    "no_confirm_no_update": true,
-    "confirm_updates": true,
-    "api_order_id_blocks_cleanup": true,
-    "non_seed_replace_blocks": true,
-    "strategy_action_blocks": true,
-    "source_cancel_required": true,
-    "coverage_conflict_removed_after_confirmed_cleanup": true,
+    "local_no_submit_not_blocking": true,
+    "failed_api_order_null_no_submit_not_open_conflict": true,
+    "real_open_order_blocking": true,
+    "active_armed_blocks": true,
+    "unknown_failed_with_api_order_id_blocks": true,
+    "coverage_ready_after_cleanup": true,
     "json_serializable": true
   },
-  "summary": "Added cleanup_orphan_seed_replace mode. It detects orphan streamlit_v2:seed_replace rows that were enqueued but never submitted, verifies the referenced old order is canceled/no-fill, and reports the local cleanup command. Without --confirm-cleanup-orphan-seed-replace it performs no DB update. Tests cover confirmed local FAILED/LOCAL_NO_SUBMIT cleanup and active conflict removal, but no confirmed cleanup was run against live DB."
+  "summary": "Seed coverage now distinguishes local no-submit cleanup and stale local OPEN rows from real exchange conflicts. Action 26 LOCAL_NO_SUBMIT no longer blocks lifecycle or open-order checks. Action 25 remains visible as stale local OPEN with exchange CANCELED_NO_FILL, but does not block coverage. Current SOL coverage is NEED_LONG and planner_state is READY_ONE_SEED with no live action or queue write."
 }
