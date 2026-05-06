@@ -1,16 +1,16 @@
 {
-  "task_id": "2026-05-06-004",
-  "updated_at": "2026-05-06T13:00:00Z",
+  "task_id": "2026-05-06-005",
+  "updated_at": "2026-05-06T13:35:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Fix seed replacement action guard failure",
-  "result_type": "seed_replace_guard_failure_fix_verification",
+  "title": "Add orphan seed replacement cleanup preview",
+  "result_type": "orphan_seed_replace_action_cleanup_verification",
   "scope": {
     "live_submit": false,
-    "live_cancel": false,
-    "live_replace": false,
-    "new_seed": false,
+    "live_cancel_replace": false,
+    "exchange_action": false,
     "backfill": false,
+    "db_update_performed": false,
     "db_schema_changes": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false
@@ -22,77 +22,48 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_replace_guard_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_orphan_seed_cleanup_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "read-only DB inspect action 26",
-    "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode seed_replace_preview --symbol SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode seed_replace_once --symbol SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode cleanup_orphan_seed_replace --symbol SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "action_26_diagnostic": {
-    "status": "ARMED",
+  "action_26": {
+    "status_before": "ARMED",
+    "api_order_id": null,
     "created_by": "streamlit_v2:seed_replace",
-    "panel_mode": "OPEN",
     "intent": "seed_open",
+    "panel_mode": "OPEN",
     "side": "LONG",
     "qty": 1.0,
     "limit_price": 89.62,
-    "reduce_only": 0,
-    "order_kind": "LIMIT",
-    "order_type": "limit",
-    "leverage": 300,
-    "last_error": null,
-    "api_order_id": null,
-    "note": "protected seed replace open | old_action_id=25 | old_api_order_id=806700949795404288 | side=LONG | qty=1 | post_only/type=2 | operator confirmed",
-    "active_queue_conflict": true
+    "attempts": 0,
+    "cleanup_candidate": true,
+    "cleanup_reason": "orphan_seed_replace_no_submit",
+    "source_old_action_id": 25,
+    "source_cancel_state": "CANCELED_NO_FILL",
+    "source_deal_qty": 0.0,
+    "no_confirm_actual_db_update": false
   },
-  "cause": {
-    "classification": "SEED_REPLACE_CREATED_BY_NOT_ALLOWED",
-    "explanation": "_validate_submit_action(... allow_seed=True) accepted only streamlit_v2:seed for seed_open actions. The future replacement payload correctly used streamlit_v2:seed_replace, so the submit guard rejected it before MEXC submit."
-  },
-  "fix": {
-    "allowed_created_by": [
-      "streamlit_v2:seed",
-      "streamlit_v2:seed_replace"
-    ],
-    "required_seed_replace_note_markers": [
-      "protected seed replace open",
-      "old_action_id=",
-      "old_api_order_id=",
-      "post_only/type=2",
-      "cancel_verified_no_fill=true"
-    ],
-    "guard_behavior": "streamlit_v2:seed_replace is accepted only for strict OPEN seed_open LIMIT qty=1 reduce_only=0 leverage>0 rows with source-order and cancel-verified no-fill note markers.",
-    "action_state_handling": "Future replacement guard failure after enqueue marks the replacement action FAILED with the guard reason before returning STOP_AND_DIAGNOSE."
-  },
-  "current_smoke_state": {
-    "seed_coverage_plan": {
-      "planner_state": "BLOCKED",
-      "sol_coverage_state": "BLOCKED_BY_CONFLICT",
-      "sol_block_reason": "active_queue_conflict"
-    },
-    "seed_replace_preview": {
-      "preview_state": "BLOCKED_ORDER_NOT_OPEN",
-      "block_reason": "order_not_open",
-      "exchange_status": "CANCELED_NO_FILL"
-    },
-    "seed_replace_once_no_live": {
-      "decision": "seed_replace_not_ready",
-      "guard_failure": "order_not_open",
-      "actual_cancel": false,
-      "actual_queue_write": false,
-      "actual_submit": false
-    }
+  "cleanup_behavior": {
+    "mode": "cleanup_orphan_seed_replace",
+    "confirmed_command": "python scripts\\automation_read_only_runner.py --mode cleanup_orphan_seed_replace --symbol SOL/USDT:USDT --json --confirm-cleanup-orphan-seed-replace",
+    "new_status_if_confirmed": "FAILED",
+    "reconcile_state_if_confirmed": "LOCAL_NO_SUBMIT",
+    "last_error_if_confirmed": "orphan seed replacement was enqueued but never submitted; safe local cleanup",
+    "active_queue_conflict_after_confirmed_cleanup": false,
+    "current_active_queue_conflict_without_confirm": true
   },
   "tests": {
-    "protected_seed_replace_accepted": true,
-    "missing_cancel_verification_blocks": true,
-    "generic_created_by_blocks": true,
-    "wrong_payload_blocks": true,
-    "guard_failure_marks_non_active": true,
-    "duplicate_blocked": true,
+    "orphan_candidate": true,
+    "no_confirm_no_update": true,
+    "confirm_updates": true,
+    "api_order_id_blocks_cleanup": true,
+    "non_seed_replace_blocks": true,
+    "strategy_action_blocks": true,
+    "source_cancel_required": true,
+    "coverage_conflict_removed_after_confirmed_cleanup": true,
     "json_serializable": true
   },
-  "summary": "Fixed protected seed replacement submit guard consistency. Future streamlit_v2:seed_replace replacement rows are accepted only with strict protected-source and cancel_verified_no_fill evidence; failed replacement guards after enqueue mark the row FAILED. No live submit, cancel, replace, new seed, or backfill was run during verification."
+  "summary": "Added cleanup_orphan_seed_replace mode. It detects orphan streamlit_v2:seed_replace rows that were enqueued but never submitted, verifies the referenced old order is canceled/no-fill, and reports the local cleanup command. Without --confirm-cleanup-orphan-seed-replace it performs no DB update. Tests cover confirmed local FAILED/LOCAL_NO_SUBMIT cleanup and active conflict removal, but no confirmed cleanup was run against live DB."
 }

@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-06T13:00:00Z",
+  "updated_at": "2026-05-06T13:35:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-06-005",
+      "title": "Add orphan seed replacement cleanup preview",
+      "status": "completed",
+      "completed_at": "2026-05-06T13:35:00Z",
+      "result_summary": "Added cleanup_orphan_seed_replace mode. Action 26 is detected as an orphan streamlit_v2:seed_replace ARMED row with api_order_id=null and attempts=0, referencing action 25 which is confirmed CANCELED_NO_FILL. No-confirm preview performs no DB update; tests cover confirmed local FAILED/LOCAL_NO_SUBMIT cleanup and active conflict removal. No live submit, cancel/replace, backfill, or exchange action was run."
+    },
     {
       "task_id": "2026-05-06-004",
       "title": "Fix seed replacement action guard failure",
