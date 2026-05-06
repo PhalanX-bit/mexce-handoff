@@ -1,16 +1,17 @@
 {
-  "task_id": "2026-05-06-001",
-  "updated_at": "2026-05-06T11:50:00Z",
+  "task_id": "2026-05-06-002",
+  "updated_at": "2026-05-06T12:05:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add read-only stale seed order replace preview",
-  "result_type": "seed_replace_preview_phase_1_verification",
+  "title": "Fix active seed order lookup mismatch",
+  "result_type": "active_seed_order_lookup_fix_verification",
   "scope": {
     "live_cancel": false,
     "live_replace": false,
     "new_seed": false,
     "action_queue_write": false,
     "submit": false,
+    "backfill": false,
     "market_enabled": false,
     "db_schema_changes": false,
     "api_executor_changed": false,
@@ -19,52 +20,64 @@
   "changed_files": [
     "scripts/automation_read_only_runner.py",
     "scripts/test_automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_replace_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_order_lookup_fix_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode seed_replace_preview --symbol SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode seed_replace_preview --symbol SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode order_lookup_diagnostic --symbol SOL/USDT:USDT --action-id 25 --json"
   ],
-  "current_sol_preview": {
-    "preview_state": "BLOCKED_ORDER_NOT_OPEN",
-    "recommended_next_action": "VERIFY_ORDER_LIFECYCLE",
-    "open_seed_action_id": 25,
-    "api_order_id": "806700949795404288",
-    "side": "LONG",
-    "old_limit_price": 85.29,
-    "exchange_status": "NOT_FOUND",
-    "exchange_filled_qty": 0.0,
-    "block_reason": "order_not_open",
+  "action_25_lookup": {
+    "api_order_id_db": "806700949795404288",
+    "api_order_id_lookup_string": "806700949795404288",
+    "canonical_symbol": "SOL/USDT:USDT",
+    "raw_symbol": "SOL_USDT",
+    "endpoints_tried": [
+      "open_orders",
+      "history_orders",
+      "orders",
+      "deals",
+      "direct_open_lookup"
+    ],
+    "direct_lookup_result": "OPEN",
+    "open_list_lookup_result": {
+      "open_orders_count": 2,
+      "matched_by_api_order_id": true
+    },
+    "matched_by": "reconcile_open_orders_exact_order_id",
+    "exchange_status": "OPEN",
+    "filled_qty": 0.0,
+    "order_price": 85.29,
+    "current_bid": 89.78,
+    "distance_bps": 500.11
+  },
+  "cause": {
+    "classification": "DIRECT_LOOKUP_MISSING_OPEN_LIST_FALLBACK",
+    "explanation": "The preview path now separates true final/non-open states from unconfirmed lookup failures and adds explicit exact open-list matching diagnostics. In the verified read-only run, action 25 was found OPEN by exact orderId in open orders."
+  },
+  "seed_replace_preview_after_fix": {
+    "preview_state": "REPLACE_RECOMMENDED",
+    "recommended_next_action": "CANCEL_AND_REPLACE_SEED_ORDER_PREVIEW_ONLY",
+    "stale_by_age": true,
+    "stale_by_distance": true,
+    "proposed_new_limit_price": 89.72,
     "actual_queue_write": false,
     "actual_submit": false,
     "actual_cancel": false,
     "actual_replace": false
   },
-  "preview_behavior": {
-    "requires_exactly_one_open_seed_order": true,
-    "requires_fresh_exchange_open_status": true,
-    "requires_zero_fill": true,
-    "stale_threshold_age_sec": 1800,
-    "stale_threshold_distance_bps": 100,
-    "maker_offset_bps": 5,
-    "replace_recommendation_is_preview_only": true
-  },
   "tests": {
-    "no_open_seed": true,
-    "stale_long": true,
-    "stale_short": true,
-    "keep_waiting": true,
-    "multiple_open_orders": true,
-    "partial_fill_blocks": true,
-    "lookup_failure_blocks": true,
-    "price_rounding": true,
-    "json_serializable": true,
-    "ui_command_read_only": true
+    "large_api_order_id_preserved": true,
+    "open_order_list_exact_match": true,
+    "post_only_type2_not_filtered": true,
+    "symbol_normalization_sol_raw": true,
+    "direct_not_found_open_list_match_opens": true,
+    "no_exact_match_blocks_lookup_unconfirmed": true,
+    "seed_replace_preview_recommends_only_after_open_confirmed": true,
+    "no_live_actions": true
   },
-  "summary": "Added read-only seed_replace_preview mode and a Protected Seed Mode UI command/run preview. The mode finds exactly one open seed order, verifies fresh exchange OPEN/no-fill status, computes age/distance staleness, and proposes a maker-safe post-only type=2 replacement payload as preview only. Current SOL smoke failed safe because the exchange lookup no longer reports the order as OPEN."
+  "summary": "Added order_lookup_diagnostic mode and hardened seed_replace_preview lookup handling. The runner now preserves large api_order_id as string, reports canonical/raw symbols and endpoint diagnostics, retries exact open-orders matching when direct/reconcile lookup is NOT_FOUND, returns BLOCKED_LOOKUP_UNCONFIRMED when exact match cannot be confirmed, and recommends replace only after confirmed OPEN/no-fill status. Current action 25 is confirmed OPEN and stale, with preview-only replacement price 89.72."
 }

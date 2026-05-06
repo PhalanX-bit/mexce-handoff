@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-06T11:50:00Z",
+  "updated_at": "2026-05-06T12:05:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-06-002",
+      "title": "Fix active seed order lookup mismatch",
+      "status": "completed",
+      "completed_at": "2026-05-06T12:05:00Z",
+      "result_summary": "Added order_lookup_diagnostic mode and hardened seed_replace_preview exact open-order confirmation. Action 25 is now confirmed OPEN by exact orderId in SOL_USDT open orders, with seed_replace_preview returning REPLACE_RECOMMENDED and preview-only new price 89.72; no cancel, replace, queue write, or submit occurred."
+    },
     {
       "task_id": "2026-05-06-001",
       "title": "Add read-only stale seed order replace preview",
