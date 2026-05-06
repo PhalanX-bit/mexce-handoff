@@ -1,18 +1,16 @@
 {
-  "task_id": "2026-05-06-003",
-  "updated_at": "2026-05-06T12:20:00Z",
+  "task_id": "2026-05-06-004",
+  "updated_at": "2026-05-06T13:00:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add locked protected seed_replace_once path",
-  "result_type": "seed_replace_once_locked_path_verification",
+  "title": "Fix seed replacement action guard failure",
+  "result_type": "seed_replace_guard_failure_fix_verification",
   "scope": {
-    "live_cancel_executed": false,
-    "live_replace_executed": false,
-    "new_seed_submitted": false,
-    "action_queue_write": false,
-    "submit": false,
+    "live_submit": false,
+    "live_cancel": false,
+    "live_replace": false,
+    "new_seed": false,
     "backfill": false,
-    "market_enabled": false,
     "db_schema_changes": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false
@@ -24,61 +22,77 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_replace_once_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_replace_guard_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode seed_replace_once --symbol SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode seed_replace_preview --symbol SOL/USDT:USDT --json"
+    "read-only DB inspect action 26",
+    "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode seed_replace_preview --symbol SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode seed_replace_once --symbol SOL/USDT:USDT --json"
   ],
-  "no_live_current_sol": {
-    "preview_state": "REPLACE_RECOMMENDED",
-    "decision": "seed_replace_confirmation_missing",
-    "selected_action_id": 25,
-    "selected_api_order_id": "806700949795404288",
-    "selected_symbol": "SOL/USDT:USDT",
-    "selected_side": "LONG",
-    "old_limit_price": 85.29,
-    "proposed_new_limit_price": 89.43,
-    "confirmation_ok": false,
-    "confirmation_missing_reasons": [
-      "live_flag_missing",
-      "confirm_live_missing",
-      "confirm_seed_replace_once_missing"
-    ],
-    "actual_cancel": false,
-    "actual_queue_write": false,
-    "actual_submit": false
+  "action_26_diagnostic": {
+    "status": "ARMED",
+    "created_by": "streamlit_v2:seed_replace",
+    "panel_mode": "OPEN",
+    "intent": "seed_open",
+    "side": "LONG",
+    "qty": 1.0,
+    "limit_price": 89.62,
+    "reduce_only": 0,
+    "order_kind": "LIMIT",
+    "order_type": "limit",
+    "leverage": 300,
+    "last_error": null,
+    "api_order_id": null,
+    "note": "protected seed replace open | old_action_id=25 | old_api_order_id=806700949795404288 | side=LONG | qty=1 | post_only/type=2 | operator confirmed",
+    "active_queue_conflict": true
   },
-  "allowed_future_behavior": {
-    "exact_lookup_required": true,
-    "cancel_old_first": true,
-    "verify_no_fill_cancel": true,
-    "replacement_payload": {
-      "panel_mode": "OPEN",
-      "intent": "seed_open",
-      "qty": 1.0,
-      "order_kind": "LIMIT",
-      "post_only": true,
-      "maker_only": true,
-      "mexc_order_type": 2,
-      "reduce_only": 0,
-      "openType": 2,
-      "leverage": 300
+  "cause": {
+    "classification": "SEED_REPLACE_CREATED_BY_NOT_ALLOWED",
+    "explanation": "_validate_submit_action(... allow_seed=True) accepted only streamlit_v2:seed for seed_open actions. The future replacement payload correctly used streamlit_v2:seed_replace, so the submit guard rejected it before MEXC submit."
+  },
+  "fix": {
+    "allowed_created_by": [
+      "streamlit_v2:seed",
+      "streamlit_v2:seed_replace"
+    ],
+    "required_seed_replace_note_markers": [
+      "protected seed replace open",
+      "old_action_id=",
+      "old_api_order_id=",
+      "post_only/type=2",
+      "cancel_verified_no_fill=true"
+    ],
+    "guard_behavior": "streamlit_v2:seed_replace is accepted only for strict OPEN seed_open LIMIT qty=1 reduce_only=0 leverage>0 rows with source-order and cancel-verified no-fill note markers.",
+    "action_state_handling": "Future replacement guard failure after enqueue marks the replacement action FAILED with the guard reason before returning STOP_AND_DIAGNOSE."
+  },
+  "current_smoke_state": {
+    "seed_coverage_plan": {
+      "planner_state": "BLOCKED",
+      "sol_coverage_state": "BLOCKED_BY_CONFLICT",
+      "sol_block_reason": "active_queue_conflict"
     },
-    "max_one_replacement": true,
-    "market_forbidden": true,
-    "partial_fill_blocked": true
+    "seed_replace_preview": {
+      "preview_state": "BLOCKED_ORDER_NOT_OPEN",
+      "block_reason": "order_not_open",
+      "exchange_status": "CANCELED_NO_FILL"
+    },
+    "seed_replace_once_no_live": {
+      "decision": "seed_replace_not_ready",
+      "guard_failure": "order_not_open",
+      "actual_cancel": false,
+      "actual_queue_write": false,
+      "actual_submit": false
+    }
   },
   "tests": {
-    "locked_no_live": true,
-    "missing_confirmations": true,
-    "keep_waiting": true,
-    "multiple_open_orders": true,
-    "unconfirmed_lookup": true,
-    "partial_fill": true,
-    "cancel_failure_blocks": true,
-    "replacement_payload": true,
+    "protected_seed_replace_accepted": true,
+    "missing_cancel_verification_blocks": true,
+    "generic_created_by_blocks": true,
+    "wrong_payload_blocks": true,
+    "guard_failure_marks_non_active": true,
+    "duplicate_blocked": true,
     "json_serializable": true
   },
-  "summary": "Added locked seed_replace_once mode. It runs fresh seed_replace_preview, remains locked without --live/--confirm-live/--confirm-seed-replace-once, selects exactly one confirmed stale open seed order, and future live branch is guarded to cancel the old no-fill order before enqueuing/submitting exactly one post-only type=2 replacement seed order. Verification used no --live and performed no cancel, queue write, submit, replace, or backfill."
+  "summary": "Fixed protected seed replacement submit guard consistency. Future streamlit_v2:seed_replace replacement rows are accepted only with strict protected-source and cancel_verified_no_fill evidence; failed replacement guards after enqueue mark the row FAILED. No live submit, cancel, replace, new seed, or backfill was run during verification."
 }

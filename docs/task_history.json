@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-06T12:20:00Z",
+  "updated_at": "2026-05-06T13:00:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-06-004",
+      "title": "Fix seed replacement action guard failure",
+      "status": "completed",
+      "completed_at": "2026-05-06T13:00:00Z",
+      "result_summary": "Diagnosed action 26 replacement guard failure as seed_replace created_by not being accepted by the seed submit guard. The guard now accepts streamlit_v2:seed_replace only with strict source-order and cancel_verified_no_fill markers, and future guard failure after enqueue marks the replacement row FAILED. No live submit, cancel, replace, new seed, or backfill was run."
+    },
     {
       "task_id": "2026-05-06-003",
       "title": "Add locked protected seed_replace_once path",
