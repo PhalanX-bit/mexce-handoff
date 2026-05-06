@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-06T12:05:00Z",
+  "updated_at": "2026-05-06T12:20:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-06-003",
+      "title": "Add locked protected seed_replace_once path",
+      "status": "completed",
+      "completed_at": "2026-05-06T12:20:00Z",
+      "result_summary": "Added locked seed_replace_once mode. Current SOL action 25 returns REPLACE_RECOMMENDED but remains locked with seed_replace_confirmation_missing unless --live, --confirm-live, and --confirm-seed-replace-once are all present; no cancel, replace, queue write, submit, or backfill occurred."
+    },
     {
       "task_id": "2026-05-06-002",
       "title": "Fix active seed order lookup mismatch",
