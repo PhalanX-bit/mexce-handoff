@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-06-006",
-  "updated_at": "2026-05-06T14:15:00Z",
+  "task_id": "2026-05-06-007",
+  "updated_at": "2026-05-06T15:05:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Fix seed coverage LOCAL_NO_SUBMIT conflict handling",
-  "result_type": "seed_coverage_local_no_submit_conflict_fix_verification",
+  "title": "Fix seed preflight conflict logic consistency",
+  "result_type": "seed_preflight_conflict_logic_consistency_fix_verification",
   "scope": {
     "live_submit": false,
     "queue_write": false,
@@ -21,28 +21,31 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_local_no_submit_conflict_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_preflight_conflict_consistency'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
-    "read-only DB inspect SOL open-order conflict source"
+    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side LONG --json",
+    "python scripts\\automation_read_only_runner.py --mode seed_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "action_26_handling": {
-    "status": "FAILED",
-    "reconcile_state": "LOCAL_NO_SUBMIT",
-    "api_order_id": null,
-    "blocks_unresolved_lifecycle": false,
-    "creates_open_order_conflict": false
+  "action_25_stale_handling": {
+    "local_reconcile_state": "OPEN",
+    "exchange_lifecycle": "CANCELED_NO_FILL",
+    "exchange_lifecycle_reason": "history_confirms_canceled_no_fill",
+    "exchange_deal_qty": 0.0,
+    "found_in_open_orders": false,
+    "blocks_seed_coverage": false,
+    "blocks_seed_preflight": false,
+    "warning_only": true
   },
-  "sol_coverage_after_fix": {
-    "coverage_state": "NEED_LONG",
+  "sol_seed_preflight_after_fix": {
+    "seed_allowed_now": true,
     "open_order_conflict": false,
-    "unresolved_lifecycle_conflict": false,
-    "next_allowed_seed_side": "LONG",
-    "planner_state": "READY_ONE_SEED",
-    "next_seed_symbol": "SOL/USDT:USDT",
-    "block_reason": null,
-    "next_seed_payload_preview": {
+    "stale_local_open_order_items": [
+      25
+    ],
+    "policy_block_reason": null,
+    "seed_payload_preview": {
       "panel_mode": "OPEN",
       "intent": "seed_open",
       "side": "LONG",
@@ -53,26 +56,33 @@
       "mexc_order_type": 2,
       "openType": 2,
       "reduce_only": 0,
-      "leverage": 300
-    }
+      "leverage": 300,
+      "limit_price": 88.34
+    },
+    "actual_queue_write": false,
+    "actual_submit": false
   },
-  "stale_local_open_order": {
-    "action_id": 25,
-    "api_order_id": "806700949795404288",
-    "local_reconcile_state": "OPEN",
-    "exchange_lifecycle_state": "CANCELED_NO_FILL",
-    "exchange_deal_qty": 0.0,
-    "source": "exchange_confirms_canceled_no_fill",
-    "blocks_seed_coverage": false
+  "sol_seed_live_once_no_live_after_fix": {
+    "planner_state": "READY_ONE_SEED",
+    "selected_symbol": "SOL/USDT:USDT",
+    "selected_seed_side": "LONG",
+    "decision": "seed_live_confirmation_missing",
+    "confirmation_missing_reasons": [
+      "live_flag_missing",
+      "confirm_live_missing",
+      "confirm_seed_live_once_missing"
+    ],
+    "actual_queue_write": false,
+    "actual_submit": false
   },
   "tests": {
-    "local_no_submit_not_blocking": true,
-    "failed_api_order_null_no_submit_not_open_conflict": true,
-    "real_open_order_blocking": true,
-    "active_armed_blocks": true,
-    "unknown_failed_with_api_order_id_blocks": true,
-    "coverage_ready_after_cleanup": true,
+    "stale_canceled_no_fill_not_blocking": true,
+    "exchange_open_blocks": true,
+    "lookup_failure_blocks": true,
+    "planner_preflight_consistency": true,
+    "live_once_fresh_preflight_consistency": true,
+    "controls_parsing": true,
     "json_serializable": true
   },
-  "summary": "Seed coverage now distinguishes local no-submit cleanup and stale local OPEN rows from real exchange conflicts. Action 26 LOCAL_NO_SUBMIT no longer blocks lifecycle or open-order checks. Action 25 remains visible as stale local OPEN with exchange CANCELED_NO_FILL, but does not block coverage. Current SOL coverage is NEED_LONG and planner_state is READY_ONE_SEED with no live action or queue write."
+  "summary": "Seed preflight and seed_live_once now use the same exchange-aware stale local open-order conflict handling as seed_coverage_plan. Action 25 remains visible as a stale local OPEN warning with exchange CANCELED_NO_FILL and deal_qty=0, but no longer blocks SOL seed preflight or locked seed_live_once. Current no-live smoke shows SOL seed_allowed_now=true and seed_live_once READY_ONE_SEED/locked with no queue write or submit."
 }

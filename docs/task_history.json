@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-06T14:15:00Z",
+  "updated_at": "2026-05-06T15:05:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-06-007",
+      "title": "Fix seed preflight conflict logic consistency",
+      "status": "completed",
+      "completed_at": "2026-05-06T15:05:00Z",
+      "result_summary": "Seed preflight and seed_live_once now share seed_coverage_plan's exchange-aware stale local open-order logic. Action 25 is warning-only when exchange confirms CANCELED_NO_FILL/deal_qty=0/not open, so current SOL LONG seed preflight is allowed and seed_live_once is READY_ONE_SEED but locked without confirmations. No live submit, queue write, cancel/replace, backfill, schema, or API execution changes."
+    },
     {
       "task_id": "2026-05-06-006",
       "title": "Fix seed coverage LOCAL_NO_SUBMIT conflict handling",
