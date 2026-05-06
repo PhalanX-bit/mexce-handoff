@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-05T13:30:00Z",
+  "updated_at": "2026-05-06T11:50:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-06-001",
+      "title": "Add read-only stale seed order replace preview",
+      "status": "completed",
+      "completed_at": "2026-05-06T11:50:00Z",
+      "result_summary": "Added read-only seed_replace_preview mode and a Protected Seed Mode UI command/run preview. It verifies exactly one fresh OPEN/no-fill seed order before recommending a preview-only cancel/replace. Current SOL smoke failed safe with BLOCKED_ORDER_NOT_OPEN because the exchange lookup no longer reports action 25 as OPEN."
+    },
     {
       "task_id": "2026-05-05-002",
       "title": "Add locked seed_live_once path",

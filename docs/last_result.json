@@ -1,19 +1,18 @@
 {
-  "task_id": "2026-05-05-002",
-  "updated_at": "2026-05-05T13:30:00Z",
+  "task_id": "2026-05-06-001",
+  "updated_at": "2026-05-06T11:50:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add locked seed_live_once path",
-  "result_type": "seed_live_once_locked_path_verification",
+  "title": "Add read-only stale seed order replace preview",
+  "result_type": "seed_replace_preview_phase_1_verification",
   "scope": {
-    "live_submit": false,
+    "live_cancel": false,
+    "live_replace": false,
+    "new_seed": false,
     "action_queue_write": false,
-    "seed_action_executed": false,
-    "cancel_replace_chase": false,
-    "backfill": false,
+    "submit": false,
     "market_enabled": false,
     "db_schema_changes": false,
-    "strategy_logic_changes": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false
   },
@@ -21,73 +20,51 @@
     "scripts/automation_read_only_runner.py",
     "scripts/test_automation_read_only_runner.py",
     "app/V2/ui/controls_tab.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_live_once_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_replace_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode seed_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode seed_replace_preview --symbol SOL/USDT:USDT --json"
   ],
-  "mode": {
-    "seed_live_once_implemented": true,
-    "max_seed_actions_per_run": 1,
-    "live_without_confirmations": "locked",
-    "queue_write_allowed": false,
+  "current_sol_preview": {
+    "preview_state": "BLOCKED_ORDER_NOT_OPEN",
+    "recommended_next_action": "VERIFY_ORDER_LIFECYCLE",
+    "open_seed_action_id": 25,
+    "api_order_id": "806700949795404288",
+    "side": "LONG",
+    "old_limit_price": 85.29,
+    "exchange_status": "NOT_FOUND",
+    "exchange_filled_qty": 0.0,
+    "block_reason": "order_not_open",
     "actual_queue_write": false,
-    "actual_submit": false
+    "actual_submit": false,
+    "actual_cancel": false,
+    "actual_replace": false
   },
-  "current_no_live_smoke": {
-    "planner_state": "READY_ONE_SEED",
-    "selected_symbol": "SOL/USDT:USDT",
-    "selected_seed_side": "LONG",
-    "decision": "seed_live_confirmation_missing",
-    "confirmation_ok": false,
-    "confirmation_missing_reasons": [
-      "live_flag_missing",
-      "confirm_live_missing",
-      "confirm_seed_live_once_missing"
-    ],
-    "next_manual_step": "run seed preflight manually for SOL/USDT:USDT LONG",
-    "selected_seed_payload_preview": {
-      "panel_mode": "OPEN",
-      "intent": "seed_open",
-      "side": "LONG",
-      "qty": 1.0,
-      "order_kind": "LIMIT",
-      "reduce_only": 0,
-      "post_only": true,
-      "maker_only": true,
-      "mexc_order_type": 2,
-      "openType": 2,
-      "leverage": 300
-    }
-  },
-  "allowed_future_seed_rules": {
-    "qty_1": true,
-    "limit_only": true,
-    "post_only_required": true,
-    "type_2_required": true,
-    "reduce_only_0": true,
-    "market_forbidden": true,
-    "multi_seed_forbidden": true,
-    "conflicts_blocked": true,
-    "unresolved_lifecycle_blocked": true,
-    "leverage_validation": true
+  "preview_behavior": {
+    "requires_exactly_one_open_seed_order": true,
+    "requires_fresh_exchange_open_status": true,
+    "requires_zero_fill": true,
+    "stale_threshold_age_sec": 1800,
+    "stale_threshold_distance_bps": 100,
+    "maker_offset_bps": 5,
+    "replace_recommendation_is_preview_only": true
   },
   "tests": {
-    "no_live_blocks": true,
-    "missing_confirmations": true,
-    "wait_state": true,
-    "ready_locked": true,
-    "policy_blocked": true,
-    "live_disabled": true,
-    "conflicts_blocked": true,
-    "leverage_blocked": true,
-    "max_one_seed": true,
-    "json_serializable": true
+    "no_open_seed": true,
+    "stale_long": true,
+    "stale_short": true,
+    "keep_waiting": true,
+    "multiple_open_orders": true,
+    "partial_fill_blocks": true,
+    "lookup_failure_blocks": true,
+    "price_rounding": true,
+    "json_serializable": true,
+    "ui_command_read_only": true
   },
-  "summary": "Added locked seed_live_once mode. It reruns Seed Coverage Planner, selects at most one protected seed OPEN qty=1 post-only type=2 recommendation, remains locked without --live/--confirm-live/--confirm-seed-live-once, and performed no queue writes or live submits during verification."
+  "summary": "Added read-only seed_replace_preview mode and a Protected Seed Mode UI command/run preview. The mode finds exactly one open seed order, verifies fresh exchange OPEN/no-fill status, computes age/distance staleness, and proposes a maker-safe post-only type=2 replacement payload as preview only. Current SOL smoke failed safe because the exchange lookup no longer reports the order as OPEN."
 }
