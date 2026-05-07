@@ -1,42 +1,37 @@
 {
-  "task_id": "2026-05-07-005",
-  "updated_at": "2026-05-07T06:48:00Z",
+  "task_id": "2026-05-07-006",
+  "updated_at": "2026-05-07T06:56:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Enable ETH baseline import policy and verify locked no-confirm path",
-  "result_type": "eth_baseline_import_policy_enablement_verification",
+  "title": "Decouple baseline import permission from live trading policy",
+  "result_type": "baseline_import_live_policy_decoupling_verification",
   "scope": {
     "confirmed_import_run": false,
     "db_write": false,
     "position_lots_created": false,
     "action_queue_write": false,
     "live_submit": false,
-    "enabled_for_live_changed": false,
-    "allow_seed_changed": false,
+    "seed_live_trading_enabled": false,
     "db_schema_changes": false,
     "strategy_api_changes": false
   },
   "changed_files": [
-    "config/symbol_live_policy.json",
+    "scripts/automation_read_only_runner.py",
+    "scripts/test_automation_read_only_runner.py",
+    "scripts/sync_handoff_to_docs.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_eth_baseline_policy_enable'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_baseline_import_decouple'; python -m py_compile scripts\\automation_read_only_runner.py scripts\\sync_handoff_to_docs.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol ETH/USDT:USDT --json",
     "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols ETH/USDT:USDT --json"
   ],
-  "eth_policy": {
-    "allow_baseline_import": true,
+  "eth_no_confirm_import_once": {
     "enabled_for_live": false,
-    "allow_seed": false,
-    "allow_open": false,
-    "allow_close": true,
-    "market_orders_allowed": false
-  },
-  "no_confirm_import_once": {
+    "allow_baseline_import": true,
     "decision": "baseline_import_confirmation_missing",
     "candidate_import_count": 2,
     "would_import_sides": [
@@ -44,10 +39,10 @@
       "SHORT"
     ],
     "actual_db_write": false,
-    "policy_block_reason": "live_disabled_for_symbol",
-    "note": "No-confirm path remains locked. Confirmed import is still blocked while enabled_for_live=false, as requested."
+    "block_reason": null,
+    "warning": "live trading disabled, baseline import only"
   },
-  "candidate_preview": {
+  "preview": {
     "LONG": {
       "qty": 9.0,
       "entry": 3422.59,
@@ -59,5 +54,16 @@
       "target": 1997.15928
     }
   },
-  "summary": "Enabled allow_baseline_import=true only for ETH/USDT:USDT while keeping enabled_for_live=false and allow_seed=false. baseline_lot_import_once without confirmation shows LONG/SHORT candidate imports and remains locked with actual_db_write=false; confirmed import remains blocked by live_disabled_for_symbol until a later explicit policy step."
+  "tests": {
+    "baseline_allowed_while_live_disabled": true,
+    "allow_baseline_import_false_blocks": true,
+    "missing_policy_blocks": true,
+    "confirmation_required": true,
+    "no_live_queue_action": true
+  },
+  "handoff_improvement": {
+    "file": "scripts/sync_handoff_to_docs.py",
+    "change": "Added --public-retries and --public-retry-delay so --verify-public waits/retries through GitHub Pages propagation instead of failing immediately on stale public files."
+  },
+  "summary": "Baseline import permission is now decoupled from enabled_for_live. allow_baseline_import=true is sufficient for baseline import policy while live trading remains disabled; no-confirm ETH import once is blocked only by missing confirmation, with warning 'live trading disabled, baseline import only'. No DB write or live action occurred."
 }

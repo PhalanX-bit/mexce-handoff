@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T06:48:00Z",
+  "updated_at": "2026-05-07T06:56:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-006",
+      "title": "Decouple baseline import permission from live trading policy",
+      "status": "completed",
+      "completed_at": "2026-05-07T06:56:00Z",
+      "result_summary": "Baseline import policy no longer requires enabled_for_live=true. ETH allow_baseline_import=true with enabled_for_live=false now returns policy_block_reason=null and warning='live trading disabled, baseline import only', while still locked by missing --confirm-baseline-import and actual_db_write=false. Added retry options to sync_handoff_to_docs.py to reduce repeated GitHub Pages propagation failures."
+    },
     {
       "task_id": "2026-05-07-005",
       "title": "Enable ETH baseline import policy and verify locked no-confirm path",
