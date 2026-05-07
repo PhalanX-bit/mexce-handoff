@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T15:32:00Z",
+  "updated_at": "2026-05-07T16:02:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-021",
+      "title": "Automation Cockpit Phase 4 locked live control",
+      "status": "completed",
+      "completed_at": "2026-05-07T16:02:00Z",
+      "result_summary": "Added locked Phase 4 live-control wiring to the Automation Operator Cockpit. The UI now shows an Execute One Action section, keeps it disabled for no-result/WAIT/stale/unsafe dry-run states, requires four explicit confirmations for READY_ONE_ACTION, and calls automation_cycle_live_once only through the existing guarded runner path if the operator manually enables it."
+    },
     {
       "task_id": "2026-05-07-020",
       "title": "Automation Flowchart Phase 3.1 WAIT summaries",

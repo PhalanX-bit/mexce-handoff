@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-020",
-  "updated_at": "2026-05-07T15:32:00Z",
+  "task_id": "2026-05-07-021",
+  "updated_at": "2026-05-07T16:02:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Automation Flowchart Phase 3.1 WAIT summaries",
-  "result_type": "automation_flowchart_phase_3_1_wait_summary_verification",
+  "title": "Automation Cockpit Phase 4 locked live control",
+  "result_type": "automation_cockpit_phase_4_locked_live_control_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
@@ -23,27 +23,37 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_flowchart_phase31'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_cockpit_phase4'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py"
   ],
   "ui": {
-    "wait_summary_box": true,
-    "wait_reason_humanized": "No safe action is available right now.",
-    "rerun_later_humanized": "Rerun check later.",
-    "live_action_text": "Not allowed / not needed",
-    "decision_wait_not_active": true,
-    "close_wait_when_no_safe_close": true,
-    "lot_add_wait_when_no_safe_add": true,
-    "raw_code_blocks_removed_from_main_cockpit": true,
-    "raw_json_collapsed": true
+    "execute_section": true,
+    "disabled_when_wait": true,
+    "disabled_when_no_result": true,
+    "ready_one_action_summary": true,
+    "confirmations": [
+      "I confirm live exchange action",
+      "I confirm max one action",
+      "I confirm automation cycle live once",
+      "I confirm selected symbol/side"
+    ],
+    "guarded_live_button": true,
+    "stale_result_guard": true,
+    "post_run_warning": "Do not run again until Verify / Reconcile is complete.",
+    "verify_reconcile_block": true,
+    "raw_json_collapsed": true,
+    "advanced_controls_collapsed": true
   },
   "tests": {
-    "wait_summary_human_readable": true,
-    "flowchart_wait_path": true,
-    "source_labels_present": true,
-    "copyable_commands_not_in_main_cockpit": true,
-    "no_live_execution_button_added": true
+    "no_result_blocks": true,
+    "wait_blocks": true,
+    "stale_allowlist_blocks": true,
+    "ready_with_confirmations_allows": true,
+    "confirm_labels_exist": true,
+    "automation_cycle_live_once_command_exists": true,
+    "post_run_warning_exists": true,
+    "no_unguarded_live_button": true
   },
-  "summary": "Updated the Automation Operator Cockpit WAIT state to use human-readable operator language. WAIT now shows a top summary card, translates no_planner_ready_candidate and rerun later, keeps Close/Lot Add/Decision in WAIT when no safe action exists, and removes copyable command blocks from the main cockpit."
+  "summary": "Added locked Phase 4 live-control wiring to the Automation Operator Cockpit. The UI now shows an Execute One Action section, keeps it disabled for no-result/WAIT/stale/unsafe dry-run states, requires four explicit confirmations for READY_ONE_ACTION, and calls automation_cycle_live_once only through the existing guarded runner path if the operator manually enables it."
 }
