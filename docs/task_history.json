@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T04:12:00Z",
+  "updated_at": "2026-05-07T04:32:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-002",
+      "title": "Add read-only baseline lot import preview",
+      "status": "completed",
+      "completed_at": "2026-05-07T04:32:00Z",
+      "result_summary": "Added baseline_lot_import_preview mode. It compares live MEXC open-position qty/avg/leverage by side against internal OPEN position_lots, computes untracked exposure, and emits preview-only exchange_position_import lot payloads with target prices. Current SOL shows untracked LONG=12 and SHORT=11; no DB writes, queue writes, live submits, cancel/replace, backfill, schema, API execution, or strategy logic changes."
+    },
     {
       "task_id": "2026-05-07-001",
       "title": "Implement read-only exchange realized PnL guard",
