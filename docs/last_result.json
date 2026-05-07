@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-018",
-  "updated_at": "2026-05-07T14:52:00Z",
+  "task_id": "2026-05-07-019",
+  "updated_at": "2026-05-07T15:13:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Automation Operator Cockpit Phase 2",
-  "result_type": "automation_operator_cockpit_phase_2_verification",
+  "title": "Automation Flowchart UI Phase 3",
+  "result_type": "automation_flowchart_ui_phase_3_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
@@ -23,31 +23,41 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_operator_cockpit'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_flowchart_phase3'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py"
   ],
   "ui": {
-    "main_cockpit_added": true,
-    "decide_next_action_primary_button": true,
-    "status_card": true,
-    "flow_cards": true,
-    "execute_placeholder_single_disabled": true,
+    "flowchart_added": true,
+    "boxes": [
+      "Check State",
+      "Baseline Coverage",
+      "Seed Coverage",
+      "Open Order / Replace",
+      "Close / Harvest",
+      "Lot Add",
+      "Decision",
+      "Execute Locked",
+      "Verify / Reconcile"
+    ],
+    "arrows": true,
+    "active_path": true,
+    "current_state_display": true,
+    "next_safe_step": true,
+    "selected_action_display": true,
+    "execute_locked_single": true,
     "raw_json_collapsed": true,
-    "advanced_controls_collapsed": true,
-    "legacy_controls_preserved": true,
-    "no_live_button_added": true
+    "advanced_controls_collapsed": true
   },
   "tests": {
-    "operator_cockpit_title_exists": true,
-    "decide_next_action_button_exists": true,
-    "main_status_card_exists": true,
-    "flow_cards_exist": true,
-    "execute_disabled_placeholder_once": true,
-    "raw_json_expanders_exist": true,
-    "advanced_legacy_controls_expander_exists": true,
+    "flowchart_title_exists": true,
+    "flow_boxes_exist": true,
+    "arrow_markers_exist": true,
+    "status_labels_exist": true,
+    "execute_locked_once": true,
+    "raw_json_collapsed": true,
     "no_live_execution_button_added": true,
-    "existing_protected_controls_preserved_in_advanced": true
+    "advanced_controls_collapsed": true
   },
-  "summary": "Refined the Controls tab into an Automation Operator Cockpit. The cockpit now appears first, centers the question of what follows next, uses compact status metrics and flow cards, keeps raw JSON and command blocks collapsed, shows a single disabled execute placeholder, and moves legacy controls under Advanced / legacy controls."
+  "summary": "Replaced the Automation Operator Cockpit flow cards with a vertical logical flowchart. The UI now renders boxed steps connected by arrows, highlights the active/ready path from automation_cycle_dry_run, keeps Execute locked as a single disabled placeholder, and leaves raw JSON and legacy controls collapsed."
 }

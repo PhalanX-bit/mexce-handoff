@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T14:52:00Z",
+  "updated_at": "2026-05-07T15:13:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-019",
+      "title": "Automation Flowchart UI Phase 3",
+      "status": "completed",
+      "completed_at": "2026-05-07T15:13:00Z",
+      "result_summary": "Replaced the Automation Operator Cockpit flow cards with a vertical logical flowchart. The UI now renders boxed steps connected by arrows, highlights the active/ready path from automation_cycle_dry_run, keeps Execute locked as a single disabled placeholder, and leaves raw JSON and legacy controls collapsed."
+    },
     {
       "task_id": "2026-05-07-018",
       "title": "Automation Operator Cockpit Phase 2",
