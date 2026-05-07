@@ -1,18 +1,19 @@
 {
-  "task_id": "2026-05-06-007",
-  "updated_at": "2026-05-06T15:05:00Z",
+  "task_id": "2026-05-07-001",
+  "updated_at": "2026-05-07T04:12:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Fix seed preflight conflict logic consistency",
-  "result_type": "seed_preflight_conflict_logic_consistency_fix_verification",
+  "title": "Implement read-only exchange realized PnL guard",
+  "result_type": "exchange_realized_pnl_guard_verification",
   "scope": {
     "live_submit": false,
     "queue_write": false,
-    "cancel_replace": false,
+    "cancel_replace_chase": false,
     "backfill": false,
     "db_schema_changes": false,
     "api_executor_changed": false,
-    "mexc_direct_changed": false
+    "mexc_direct_changed": false,
+    "market_enabled": false
   },
   "changed_files": [
     "scripts/automation_read_only_runner.py",
@@ -21,68 +22,97 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_seed_preflight_conflict_consistency'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_exchange_pnl_guard_check'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode seed_coverage_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --symbol SOL/USDT:USDT --mode seed_preflight --seed-side LONG --json",
-    "python scripts\\automation_read_only_runner.py --mode seed_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --mode scan --json --close-only --max-spread-bps 50",
+    "python scripts\\automation_read_only_runner.py --mode supervisor_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode supervisor_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "action_25_stale_handling": {
-    "local_reconcile_state": "OPEN",
-    "exchange_lifecycle": "CANCELED_NO_FILL",
-    "exchange_lifecycle_reason": "history_confirms_canceled_no_fill",
-    "exchange_deal_qty": 0.0,
-    "found_in_open_orders": false,
-    "blocks_seed_coverage": false,
-    "blocks_seed_preflight": false,
-    "warning_only": true
-  },
-  "sol_seed_preflight_after_fix": {
-    "seed_allowed_now": true,
-    "open_order_conflict": false,
-    "stale_local_open_order_items": [
-      25
+  "guard_implementation": {
+    "helper": "_exchange_realized_pnl_guard",
+    "data_sources": [
+      "MEXC private open positions endpoint for live holdAvgPrice/openAvgPrice",
+      "contract meta contract_size",
+      "selected exchange-confirmed target-reached internal position_lot",
+      "candidate close side, qty, and limit price"
     ],
-    "policy_block_reason": null,
-    "seed_payload_preview": {
-      "panel_mode": "OPEN",
-      "intent": "seed_open",
-      "side": "LONG",
-      "qty": 1.0,
-      "order_kind": "LIMIT",
-      "post_only": true,
-      "maker_only": true,
-      "mexc_order_type": 2,
-      "openType": 2,
-      "reduce_only": 0,
-      "leverage": 300,
-      "limit_price": 88.34
+    "formula": {
+      "LONG": "(candidate_close_price - exchange_position_avg_entry) * qty * contract_size",
+      "SHORT": "(exchange_position_avg_entry - candidate_close_price) * qty * contract_size"
     },
-    "actual_queue_write": false,
-    "actual_submit": false
+    "reasons": [
+      "exchange_pnl_guard_pass",
+      "exchange_pnl_guard_negative_expected_pnl",
+      "exchange_pnl_guard_missing_position_avg",
+      "exchange_pnl_guard_missing_contract_size",
+      "exchange_pnl_guard_not_close_limit",
+      "exchange_pnl_guard_not_reduce_only",
+      "exchange_pnl_guard_no_position_for_side",
+      "exchange_pnl_guard_unknown"
+    ]
   },
-  "sol_seed_live_once_no_live_after_fix": {
-    "planner_state": "READY_ONE_SEED",
-    "selected_symbol": "SOL/USDT:USDT",
-    "selected_seed_side": "LONG",
-    "decision": "seed_live_confirmation_missing",
-    "confirmation_missing_reasons": [
-      "live_flag_missing",
-      "confirm_live_missing",
-      "confirm_seed_live_once_missing"
+  "scanner_supervisor_behavior": {
+    "guard_fields_added": [
+      "selected_lot_id",
+      "selected_lot_entry_price",
+      "selected_lot_target_price",
+      "internal_lot_roi_pct",
+      "internal_lot_pnl_estimate",
+      "exchange_position_avg_entry",
+      "exchange_position_avg_source",
+      "exchange_position_side",
+      "exchange_position_qty",
+      "contract_size",
+      "expected_exchange_realized_pnl",
+      "exchange_pnl_guard_pass",
+      "exchange_pnl_guard_reason"
     ],
-    "actual_queue_write": false,
-    "actual_submit": false
+    "failed_guard_actionability": "CLOSE candidates with exchange_pnl_guard_pass=false display as BLOCKED_BY_EXCHANGE_PNL_GUARD/WAIT and are not supervisor candidates.",
+    "supervisor_dry_run": {
+      "supervisor_state": "WAIT",
+      "selected_symbol": null,
+      "reason": "no_actionable_close_ready_candidate",
+      "actual_queue_write": false,
+      "actual_submit": false
+    },
+    "supervisor_live_once_no_live": {
+      "supervisor_state": "WAIT",
+      "selected_symbol": null,
+      "decision": "supervisor_wait",
+      "confirmation_missing_reasons": [
+        "live_flag_missing",
+        "confirm_live_missing",
+        "confirm_supervisor_live_once_missing"
+      ],
+      "actual_queue_write": false,
+      "actual_submit": false
+    }
+  },
+  "sol_guard_sample": {
+    "source": "historical SOL close action 24 diagnostic and live position guard model",
+    "candidate_type": "CLOSE_LIMIT",
+    "side": "LONG",
+    "selected_lot_id": 8,
+    "selected_lot_entry_price": 83.54,
+    "candidate_close_price": 84.38,
+    "exchange_position_avg_entry": 179.2,
+    "contract_size": 0.1,
+    "expected_exchange_realized_pnl": -9.482,
+    "exchange_pnl_guard_pass": false,
+    "exchange_pnl_guard_reason": "exchange_pnl_guard_negative_expected_pnl",
+    "current_smoke_note": "At smoke time SOL had no active CLOSE candidate; scanner reported NO_ACTION with target gap still positive."
   },
   "tests": {
-    "stale_canceled_no_fill_not_blocking": true,
-    "exchange_open_blocks": true,
-    "lookup_failure_blocks": true,
-    "planner_preflight_consistency": true,
-    "live_once_fresh_preflight_consistency": true,
-    "controls_parsing": true,
+    "long_internal_profit_but_exchange_loss": true,
+    "short_internal_profit_but_exchange_loss": true,
+    "long_exchange_profit": true,
+    "short_exchange_profit": true,
+    "missing_avg": true,
+    "missing_contract_size": true,
+    "supervisor_ignores_failed_guard": true,
+    "seed_open_unaffected": true,
     "json_serializable": true
   },
-  "summary": "Seed preflight and seed_live_once now use the same exchange-aware stale local open-order conflict handling as seed_coverage_plan. Action 25 remains visible as a stale local OPEN warning with exchange CANCELED_NO_FILL and deal_qty=0, but no longer blocks SOL seed preflight or locked seed_live_once. Current no-live smoke shows SOL seed_allowed_now=true and seed_live_once READY_ONE_SEED/locked with no queue write or submit."
+  "summary": "Added a read-only exchange realized PnL guard for CLOSE candidates. Scanner/preflight/supervisor reporting now compares selected internal lot close price against live MEXC position average entry and contract size, fail-closing supervisor actionability when expected exchange realized PnL is negative or unknown. Current scanner/supervisor smokes made no queue writes and no live submits."
 }

@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-06T15:05:00Z",
+  "updated_at": "2026-05-07T04:12:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-001",
+      "title": "Implement read-only exchange realized PnL guard",
+      "status": "completed",
+      "completed_at": "2026-05-07T04:12:00Z",
+      "result_summary": "Added a read-only exchange realized PnL guard for CLOSE candidates using live MEXC position average entry plus contract_size. Internal lot-profit closes are now blocked for supervisor/actionability when expected exchange realized PnL is negative or unknown; scanner/preflight output includes guard fields. Current scanner and supervisor smokes stayed read-only with WAIT/no selected symbol, actual_queue_write=false, and actual_submit=false."
+    },
     {
       "task_id": "2026-05-06-007",
       "title": "Fix seed preflight conflict logic consistency",
