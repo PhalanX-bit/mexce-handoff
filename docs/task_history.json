@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T08:40:00Z",
+  "updated_at": "2026-05-07T09:31:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-010",
+      "title": "Add read-only lot spacing add planner",
+      "status": "completed",
+      "completed_at": "2026-05-07T09:31:00Z",
+      "result_summary": "Added lot_spacing_add_plan read-only mode. It evaluates spacing for adding one protected OPEN lot per side using ROI/leverage-derived spacing bps, baseline coverage, meta/liquidity/leverage, limits, and conflict gates. Current smoke over AT/ADA/BTC/ETH/SOL is BLOCKED because allow_lot_add remains false or live is disabled; no queue write, live submit, cancel/replace, backfill, schema, or API execution change."
+    },
     {
       "task_id": "2026-05-07-009",
       "title": "Enable AT baseline import policy and verify locked no-confirm path",

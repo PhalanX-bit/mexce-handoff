@@ -1,61 +1,67 @@
 {
-  "task_id": "2026-05-07-009",
-  "updated_at": "2026-05-07T08:40:00Z",
+  "task_id": "2026-05-07-010",
+  "updated_at": "2026-05-07T09:31:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Enable AT baseline import policy and verify locked no-confirm path",
-  "result_type": "at_baseline_import_policy_enablement_verification",
+  "title": "Add read-only lot spacing add planner",
+  "result_type": "lot_spacing_add_planner_verification",
   "scope": {
-    "confirmed_import_run": false,
-    "db_write": false,
-    "position_lots_created": false,
-    "action_queue_write": false,
     "live_submit": false,
-    "allow_seed_changed": false,
-    "allow_open_changed": false,
+    "action_queue_write": false,
+    "cancel_replace_chase": false,
+    "backfill": false,
+    "market_enabled": false,
     "db_schema_changes": false,
-    "strategy_api_changes": false
+    "api_executor_mexc_direct_changes": false
   },
   "changed_files": [
+    "scripts/automation_read_only_runner.py",
+    "scripts/test_automation_read_only_runner.py",
     "config/symbol_live_policy.json",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_at_baseline_policy_enable'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_lot_spacing_add_plan'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol AT/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols AT/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode lot_spacing_add_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "at_policy": {
-    "allow_baseline_import": true,
-    "enabled_for_live": true,
-    "allow_seed": false,
-    "allow_open": false,
-    "allow_close": true,
-    "market_orders_allowed": false
+  "planner": {
+    "mode": "lot_spacing_add_plan",
+    "planner_state": "BLOCKED",
+    "next_add_symbol": null,
+    "next_add_side": null,
+    "next_add_payload_preview": null,
+    "live_submit_allowed": false,
+    "queue_write_allowed": false,
+    "max_lot_add_actions_per_run": 0,
+    "market_allowed": false
   },
-  "no_confirm_import_once": {
-    "decision": "baseline_import_confirmation_missing",
-    "candidate_import_count": 1,
-    "would_import_sides": [
-      "SHORT"
-    ],
-    "actual_db_write": false,
-    "block_reason": null
+  "policy": {
+    "allow_lot_add_default": false,
+    "symbols_enabled": [],
+    "blocked_by_policy": true
   },
-  "candidate_preview": {
-    "LONG": {
-      "exchange_qty": 0.0,
-      "coverage_state": "NO_EXCHANGE_POSITION"
+  "sample_spacing": {
+    "SOL_LONG": {
+      "required_spacing_bps": 66.66666666666666,
+      "actual_distance_bps": 4819.997677389386,
+      "spacing_pass": true,
+      "block_reason": "lot_add_disabled_for_symbol"
     },
-    "SHORT": {
-      "qty": 394.0,
-      "entry": 0.12966,
-      "leverage": 50.0,
-      "target": 0.12447359999999999
+    "SOL_SHORT": {
+      "required_spacing_bps": 66.66666666666666,
+      "actual_distance_bps": 745.5136697579186,
+      "spacing_pass": true,
+      "block_reason": "lot_add_disabled_for_symbol"
+    },
+    "AT_SHORT": {
+      "required_spacing_bps": 400.0,
+      "actual_distance_bps": 2687.798858553138,
+      "spacing_pass": true,
+      "block_reason": "lot_add_disabled_for_symbol"
     }
   },
-  "summary": "Enabled allow_baseline_import=true only for AT/USDT:USDT while keeping allow_seed=false and allow_open=false. baseline_lot_import_once without confirmation shows one SHORT candidate import and remains locked with actual_db_write=false; no position_lots, queue write, live submit, schema, strategy, or API change."
+  "summary": "Added read-only lot_spacing_add_plan. The planner evaluates per-side spacing from current price to existing OPEN lots, requires explicit allow_lot_add policy, baseline coverage, meta/liquidity/leverage validity, and no conflicts, and emits preview-only post-only LIMIT type=2 payloads only when ready. Current live smoke is BLOCKED because allow_lot_add remains false for all symbols; no queue write or live submit occurred."
 }
