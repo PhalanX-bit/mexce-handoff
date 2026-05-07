@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-016",
-  "updated_at": "2026-05-07T13:56:00Z",
+  "task_id": "2026-05-07-017",
+  "updated_at": "2026-05-07T14:24:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add watch mode for automation cycle dry-run",
-  "result_type": "automation_cycle_dry_run_watch_verification",
+  "title": "Add Automation Flow Control Panel Phase 1",
+  "result_type": "automation_flow_control_panel_phase_1_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
@@ -13,48 +13,49 @@
     "backfill": false,
     "market_enabled": false,
     "db_schema_changes": false,
+    "strategy_logic_changes": false,
     "api_executor_mexc_direct_changes": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "scripts/test_automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_cycle_watch'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\test_automation_read_only_runner.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_flow_panel'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --watch --interval-sec 1 --max-iterations 1 --json"
+    "python scripts\\test_automation_read_only_runner.py"
   ],
-  "watch_mode": {
-    "implemented": true,
-    "interval_sec": "configurable, normalized to >=0",
-    "max_iterations": "configurable, normalized to >=1",
-    "stop_on_ready": true,
-    "stop_on_error": true,
-    "continue_on_ready_option": true,
-    "actual_queue_write": false,
-    "actual_submit": false
+  "ui": {
+    "panel_added": true,
+    "location": "Controls tab below Operations / Control Center",
+    "baseline_button": true,
+    "seed_coverage_button": true,
+    "close_harvest_button": true,
+    "lot_add_button": true,
+    "decide_next_action_button": true,
+    "result_panel": true,
+    "raw_json_expander": true,
+    "execute_block_disabled": true,
+    "safety_banner": "Phase 1 is read-only. No live submit, no queue write, no DB write."
   },
-  "smoke_result": {
-    "final_state": "ERROR_STOP",
-    "iterations_completed": 1,
-    "stopped_early": true,
-    "ready_iteration": null,
-    "first_ready_action": null,
-    "reason": "scan_error",
-    "actual_queue_write": false,
-    "actual_submit": false
+  "commands_exposed": {
+    "baseline_lot_import_preview": true,
+    "seed_coverage_plan": true,
+    "supervisor_dry_run": true,
+    "lot_spacing_add_plan": true,
+    "automation_cycle_dry_run": true,
+    "automation_cycle_live_once": "copy-only future command in disabled execute block"
   },
   "tests": {
-    "wait_timeout": true,
-    "ready_stop": true,
-    "error_stop": true,
-    "continue_on_ready": true,
-    "no_writes_submits": true,
-    "json_serializable": true,
-    "invalid_interval_max_iterations": true
+    "panel_title_exists": true,
+    "read_only_buttons_labels_exist": true,
+    "safety_banner_exists": true,
+    "live_execution_button_not_active": true,
+    "result_panel_labels_exist": true,
+    "raw_json_expander_exists": true,
+    "no_protected_live_button_added_in_section": true
   },
-  "summary": "Added automation_cycle_dry_run watch mode. It wraps repeated dry-run selector calls into automation_cycle_dry_run_watch, stops early on READY_ONE_ACTION by default, stops on ERROR_STOP, supports --continue-on-ready, and never writes or submits. Current smoke completed one read-only iteration and stopped safely on ERROR_STOP/scan_error with actual_queue_write=false and actual_submit=false."
+  "summary": "Added Automation Flow Control Phase 1 to the Controls tab as a read-only operator flow panel. It shows the logical blocks from baseline coverage through verify/reconcile, runs only read-only planner/check modes, summarizes the latest result, keeps raw JSON collapsed, and displays Execute One Action as a disabled Phase 1 placeholder."
 }

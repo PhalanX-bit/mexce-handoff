@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T13:56:00Z",
+  "updated_at": "2026-05-07T14:24:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-017",
+      "title": "Add Automation Flow Control Panel Phase 1",
+      "status": "completed",
+      "completed_at": "2026-05-07T14:24:00Z",
+      "result_summary": "Added Automation Flow Control Phase 1 to the Controls tab as a read-only operator flow panel. It shows the logical blocks from baseline coverage through verify/reconcile, runs only read-only planner/check modes, summarizes the latest result, keeps raw JSON collapsed, and displays Execute One Action as a disabled Phase 1 placeholder."
+    },
     {
       "task_id": "2026-05-07-016",
       "title": "Add watch mode for automation cycle dry-run",
