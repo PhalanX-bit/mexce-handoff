@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T15:13:00Z",
+  "updated_at": "2026-05-07T15:32:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-020",
+      "title": "Automation Flowchart Phase 3.1 WAIT summaries",
+      "status": "completed",
+      "completed_at": "2026-05-07T15:32:00Z",
+      "result_summary": "Updated the Automation Operator Cockpit WAIT state to use human-readable operator language. WAIT now shows a top summary card, translates no_planner_ready_candidate and rerun later, keeps Close/Lot Add/Decision in WAIT when no safe action exists, and removes copyable command blocks from the main cockpit."
+    },
     {
       "task_id": "2026-05-07-019",
       "title": "Automation Flowchart UI Phase 3",

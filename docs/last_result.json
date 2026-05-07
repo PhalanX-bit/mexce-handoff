@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-019",
-  "updated_at": "2026-05-07T15:13:00Z",
+  "task_id": "2026-05-07-020",
+  "updated_at": "2026-05-07T15:32:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Automation Flowchart UI Phase 3",
-  "result_type": "automation_flowchart_ui_phase_3_verification",
+  "title": "Automation Flowchart Phase 3.1 WAIT summaries",
+  "result_type": "automation_flowchart_phase_3_1_wait_summary_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
@@ -23,41 +23,27 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_flowchart_phase3'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_flowchart_phase31'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py"
   ],
   "ui": {
-    "flowchart_added": true,
-    "boxes": [
-      "Check State",
-      "Baseline Coverage",
-      "Seed Coverage",
-      "Open Order / Replace",
-      "Close / Harvest",
-      "Lot Add",
-      "Decision",
-      "Execute Locked",
-      "Verify / Reconcile"
-    ],
-    "arrows": true,
-    "active_path": true,
-    "current_state_display": true,
-    "next_safe_step": true,
-    "selected_action_display": true,
-    "execute_locked_single": true,
-    "raw_json_collapsed": true,
-    "advanced_controls_collapsed": true
+    "wait_summary_box": true,
+    "wait_reason_humanized": "No safe action is available right now.",
+    "rerun_later_humanized": "Rerun check later.",
+    "live_action_text": "Not allowed / not needed",
+    "decision_wait_not_active": true,
+    "close_wait_when_no_safe_close": true,
+    "lot_add_wait_when_no_safe_add": true,
+    "raw_code_blocks_removed_from_main_cockpit": true,
+    "raw_json_collapsed": true
   },
   "tests": {
-    "flowchart_title_exists": true,
-    "flow_boxes_exist": true,
-    "arrow_markers_exist": true,
-    "status_labels_exist": true,
-    "execute_locked_once": true,
-    "raw_json_collapsed": true,
-    "no_live_execution_button_added": true,
-    "advanced_controls_collapsed": true
+    "wait_summary_human_readable": true,
+    "flowchart_wait_path": true,
+    "source_labels_present": true,
+    "copyable_commands_not_in_main_cockpit": true,
+    "no_live_execution_button_added": true
   },
-  "summary": "Replaced the Automation Operator Cockpit flow cards with a vertical logical flowchart. The UI now renders boxed steps connected by arrows, highlights the active/ready path from automation_cycle_dry_run, keeps Execute locked as a single disabled placeholder, and leaves raw JSON and legacy controls collapsed."
+  "summary": "Updated the Automation Operator Cockpit WAIT state to use human-readable operator language. WAIT now shows a top summary card, translates no_planner_ready_candidate and rerun later, keeps Close/Lot Add/Decision in WAIT when no safe action exists, and removes copyable command blocks from the main cockpit."
 }
