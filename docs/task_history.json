@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T12:47:00Z",
+  "updated_at": "2026-05-07T13:12:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-015",
+      "title": "Add locked automation cycle live-once path",
+      "status": "completed",
+      "completed_at": "2026-05-07T13:12:00Z",
+      "result_summary": "Added automation_cycle_live_once as a locked live-capable wrapper over automation_cycle_dry_run. It requires --live, --confirm-live, and --confirm-automation-cycle-live-once before dispatching exactly one selected child mode. Current no-live smoke is WAIT, calls no child mode, and keeps actual_queue_write=false and actual_submit=false."
+    },
     {
       "task_id": "2026-05-07-014",
       "title": "Add read-only lot add replace preview",

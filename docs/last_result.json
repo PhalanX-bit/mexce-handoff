@@ -1,20 +1,19 @@
 {
-  "task_id": "2026-05-07-014",
-  "updated_at": "2026-05-07T12:47:00Z",
+  "task_id": "2026-05-07-015",
+  "updated_at": "2026-05-07T13:12:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add read-only lot add replace preview",
-  "result_type": "lot_add_replace_preview_verification",
+  "title": "Add locked automation cycle live-once path",
+  "result_type": "automation_cycle_live_once_locked_path_verification",
   "scope": {
-    "live_cancel": false,
-    "live_replace": false,
-    "new_lot_add": false,
+    "live_submit_executed": false,
     "action_queue_write": false,
-    "submit": false,
+    "cancel_replace_executed": false,
     "backfill": false,
     "market_enabled": false,
     "db_schema_changes": false,
-    "api_executor_mexc_direct_changes": false
+    "api_executor_mexc_direct_changes": false,
+    "child_mode_behavior_changed": false
   },
   "changed_files": [
     "scripts/automation_read_only_runner.py",
@@ -23,51 +22,57 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_lot_add_replace_preview'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_cycle_live_once'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode lot_add_replace_preview --symbol SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode automation_cycle_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "current_sol_preview": {
-    "preview_state": "KEEP_WAITING",
-    "recommended_next_action": "VERIFY_ORDER_LATER",
-    "open_lot_add_action_id": 29,
-    "api_order_id": "807344467723316736",
-    "side": "SHORT",
-    "old_limit_price": 90.01,
-    "current_bid": 89.86,
-    "current_ask": 89.87,
-    "distance_bps": 15.578057193724332,
-    "order_age_sec": 1595.549769,
-    "stale_by_age": false,
-    "stale_by_distance": false,
-    "proposed_new_limit_price": 89.92,
-    "proposed_replace_payload_preview": {
-      "panel_mode": "OPEN",
-      "intent": "lot_add_open",
-      "side": "SHORT",
-      "qty": 1.0,
-      "order_kind": "LIMIT",
-      "post_only": true,
-      "maker_only": true,
-      "type": 2,
-      "reduce_only": 0,
-      "openType": 2,
-      "leverage": 300,
-      "preview_only": true
-    }
+  "mode": {
+    "automation_cycle_live_once_implemented": true,
+    "max_actions_per_run": 1,
+    "live_without_confirmations": "locked",
+    "queue_write_allowed": false,
+    "actual_queue_write": false,
+    "actual_submit": false
+  },
+  "current_no_live_smoke": {
+    "cycle_state": "WAIT",
+    "selected_action_type": null,
+    "selected_mode": null,
+    "selected_symbol": null,
+    "selected_side": null,
+    "decision": "automation_cycle_wait",
+    "confirmation_ok": false,
+    "confirmation_missing_reasons": [
+      "live_flag_missing",
+      "confirm_live_missing",
+      "confirm_automation_cycle_live_once_missing"
+    ],
+    "next_safe_action": "rerun later",
+    "actual_queue_write": false,
+    "actual_submit": false
+  },
+  "dispatch_rules": {
+    "CLOSE": "supervisor_live_once",
+    "SEED": "seed_live_once",
+    "LOT_ADD": "lot_add_live_once",
+    "SEED_REPLACE": "seed_replace_once",
+    "max_one_action": true
   },
   "tests": {
-    "no_open_lot_add": true,
-    "stale_long": true,
-    "stale_short": true,
-    "keep_waiting": true,
-    "multiple_open_orders": true,
-    "partial_fill_blocks": true,
-    "lookup_failure_blocks": true,
-    "exact_match": true,
-    "price_rounding": true,
+    "no_live_blocks": true,
+    "missing_confirmations": true,
+    "wait_state": true,
+    "close_dispatch": true,
+    "seed_dispatch": true,
+    "lot_add_dispatch": true,
+    "replace_dispatch": true,
+    "guard_fail_ignored": true,
+    "conflict_blocks": true,
+    "lookup_error_blocks": true,
+    "one_action_only": true,
     "json_serializable": true
   },
-  "summary": "Added lot_add_replace_preview read-only mode. It finds exactly one open lot_add_open order, confirms exact exchange/open-order lookup by api_order_id, computes age/distance staleness, and previews a same-side post-only type=2 replacement payload without canceling, writing, or submitting. Current SOL action 29 is still OPEN with deal_qty=0 but is not stale enough, so preview_state=KEEP_WAITING."
+  "summary": "Added automation_cycle_live_once as a locked live-capable wrapper over automation_cycle_dry_run. It requires --live, --confirm-live, and --confirm-automation-cycle-live-once before dispatching exactly one selected child mode. Current no-live smoke is WAIT, calls no child mode, and keeps actual_queue_write=false and actual_submit=false."
 }
