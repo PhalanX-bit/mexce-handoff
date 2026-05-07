@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T05:08:00Z",
+  "updated_at": "2026-05-07T05:48:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-004",
+      "title": "Enable SOL baseline import policy and verify locked no-confirm path",
+      "status": "completed",
+      "completed_at": "2026-05-07T05:48:00Z",
+      "result_summary": "Enabled allow_baseline_import=true only for SOL/USDT:USDT. baseline_lot_import_once no-confirm now shows policy_block_reason=null and candidates LONG qty=12 / SHORT qty=11, but remains locked with decision=baseline_import_confirmation_missing and actual_db_write=false. No confirmed import, DB write, position_lot creation, queue write, live submit, schema, strategy, or API change."
+    },
     {
       "task_id": "2026-05-07-003",
       "title": "Add locked protected baseline lot import path",

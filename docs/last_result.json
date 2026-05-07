@@ -1,90 +1,65 @@
 {
-  "task_id": "2026-05-07-003",
-  "updated_at": "2026-05-07T05:08:00Z",
+  "task_id": "2026-05-07-004",
+  "updated_at": "2026-05-07T05:48:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add locked protected baseline lot import path",
-  "result_type": "baseline_lot_import_locked_path_verification",
+  "title": "Enable SOL baseline import policy and verify locked no-confirm path",
+  "result_type": "sol_baseline_import_policy_enablement_verification",
   "scope": {
-    "db_write_on_real_db": false,
-    "live_submit": false,
+    "confirmed_import_run": false,
+    "db_write": false,
+    "position_lots_created": false,
     "action_queue_write": false,
+    "live_submit": false,
     "cancel_replace_chase": false,
     "backfill": false,
-    "lot_realization_created": false,
     "db_schema_changes": false,
-    "api_executor_changed": false,
-    "mexc_direct_changed": false,
-    "strategy_logic_changed": false
+    "strategy_api_changes": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "scripts/test_automation_read_only_runner.py",
     "config/symbol_live_policy.json",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_baseline_import_once'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols SOL/USDT:USDT --json",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols SOL/USDT:USDT --json"
+    "$env:PYTHONPYCACHEPREFIX='.pycache_sol_baseline_policy_enable'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py"
   ],
-  "mode": {
-    "baseline_lot_import_once_implemented": true,
-    "confirmation_required": true,
-    "single_symbol_only": true,
-    "actual_db_write": false,
-    "action_queue_write": false,
-    "live_submit": false
+  "sol_policy": {
+    "allow_baseline_import": true,
+    "enabled_for_live": true,
+    "allow_seed": true,
+    "allow_open": false,
+    "allow_close": true,
+    "market_orders_allowed": false
   },
-  "policy": {
-    "allow_baseline_import_field": true,
-    "baseline_import_allowed_sides_field": true,
-    "SOL_allow_baseline_import": false,
-    "default_behavior": "false / fail closed"
-  },
-  "sol_no_confirm_import_once": {
+  "no_confirm_import_once": {
     "decision": "baseline_import_confirmation_missing",
-    "policy_block_reason": "baseline_import_disabled_for_symbol",
     "candidate_import_count": 2,
     "would_import_sides": [
       "LONG",
       "SHORT"
     ],
-    "would_import_qty_long": 12.0,
-    "would_import_qty_short": 11.0,
-    "actual_db_write": false
+    "actual_db_write": false,
+    "policy_block_reason": null,
+    "confirmation_missing_reasons": [
+      "confirm_baseline_import_missing"
+    ]
   },
-  "candidate_import_preview": {
+  "candidate_preview": {
     "LONG": {
       "qty": 12.0,
       "entry": 172.22,
-      "leverage": 300.0,
-      "target_price": 173.36813333333333,
-      "source_marker": "exchange_position_import / exchange_position_snapshot"
+      "target": 173.36813333333333
     },
     "SHORT": {
       "qty": 11.0,
       "entry": 83.03,
-      "leverage": 300.0,
-      "target_price": 82.47646666666667,
-      "source_marker": "exchange_position_import / exchange_position_snapshot"
+      "target": 82.47646666666667
     }
   },
-  "tests": {
-    "no_confirm_no_write": true,
-    "policy_block": true,
-    "single_symbol_only": true,
-    "need_import": true,
-    "covered": true,
-    "overtracked": true,
-    "missing_avg": true,
-    "duplicate_baseline": true,
-    "target_price": true,
-    "isolated_confirmed_import": true,
-    "json_serializable": true
-  },
-  "summary": "Added locked baseline_lot_import_once mode. It reruns a fresh single-symbol baseline preview, shows candidate imports without confirmation, requires --confirm-baseline-import plus allow_baseline_import=true for any future DB write, and imports only candidate NEED_BASELINE_IMPORT sides using existing position_lots schema. Current SOL no-confirm smoke shows LONG qty=12 and SHORT qty=11 candidates, but allow_baseline_import=false and actual_db_write=false."
+  "summary": "Enabled allow_baseline_import=true only for SOL/USDT:USDT. baseline_lot_import_once remains locked without --confirm-baseline-import: it shows LONG/SHORT candidate imports and policy_block_reason=null, but actual_db_write=false and no position_lots are created."
 }
