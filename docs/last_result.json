@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-017",
-  "updated_at": "2026-05-07T14:24:00Z",
+  "task_id": "2026-05-07-018",
+  "updated_at": "2026-05-07T14:52:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add Automation Flow Control Panel Phase 1",
-  "result_type": "automation_flow_control_panel_phase_1_verification",
+  "title": "Automation Operator Cockpit Phase 2",
+  "result_type": "automation_operator_cockpit_phase_2_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
@@ -23,39 +23,31 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_flow_panel'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_operator_cockpit'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py"
   ],
   "ui": {
-    "panel_added": true,
-    "location": "Controls tab below Operations / Control Center",
-    "baseline_button": true,
-    "seed_coverage_button": true,
-    "close_harvest_button": true,
-    "lot_add_button": true,
-    "decide_next_action_button": true,
-    "result_panel": true,
-    "raw_json_expander": true,
-    "execute_block_disabled": true,
-    "safety_banner": "Phase 1 is read-only. No live submit, no queue write, no DB write."
-  },
-  "commands_exposed": {
-    "baseline_lot_import_preview": true,
-    "seed_coverage_plan": true,
-    "supervisor_dry_run": true,
-    "lot_spacing_add_plan": true,
-    "automation_cycle_dry_run": true,
-    "automation_cycle_live_once": "copy-only future command in disabled execute block"
+    "main_cockpit_added": true,
+    "decide_next_action_primary_button": true,
+    "status_card": true,
+    "flow_cards": true,
+    "execute_placeholder_single_disabled": true,
+    "raw_json_collapsed": true,
+    "advanced_controls_collapsed": true,
+    "legacy_controls_preserved": true,
+    "no_live_button_added": true
   },
   "tests": {
-    "panel_title_exists": true,
-    "read_only_buttons_labels_exist": true,
-    "safety_banner_exists": true,
-    "live_execution_button_not_active": true,
-    "result_panel_labels_exist": true,
-    "raw_json_expander_exists": true,
-    "no_protected_live_button_added_in_section": true
+    "operator_cockpit_title_exists": true,
+    "decide_next_action_button_exists": true,
+    "main_status_card_exists": true,
+    "flow_cards_exist": true,
+    "execute_disabled_placeholder_once": true,
+    "raw_json_expanders_exist": true,
+    "advanced_legacy_controls_expander_exists": true,
+    "no_live_execution_button_added": true,
+    "existing_protected_controls_preserved_in_advanced": true
   },
-  "summary": "Added Automation Flow Control Phase 1 to the Controls tab as a read-only operator flow panel. It shows the logical blocks from baseline coverage through verify/reconcile, runs only read-only planner/check modes, summarizes the latest result, keeps raw JSON collapsed, and displays Execute One Action as a disabled Phase 1 placeholder."
+  "summary": "Refined the Controls tab into an Automation Operator Cockpit. The cockpit now appears first, centers the question of what follows next, uses compact status metrics and flow cards, keeps raw JSON and command blocks collapsed, shows a single disabled execute placeholder, and moves legacy controls under Advanced / legacy controls."
 }
