@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T09:41:00Z",
+  "updated_at": "2026-05-07T10:14:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-012",
+      "title": "Add locked lot_add_live_once path",
+      "status": "completed",
+      "completed_at": "2026-05-07T10:14:00Z",
+      "result_summary": "Added locked live-capable lot_add_live_once mode. It reuses lot_spacing_add_plan, selects at most one spacing-based protected OPEN lot add, and remains locked without --live/--confirm-live/--confirm-lot-add-live-once. Current no-live smoke selects SOL LONG with post-only LIMIT type=2 qty=1 leverage=300 preview, decision=lot_add_confirmation_missing, actual_queue_write=false, and actual_submit=false."
+    },
     {
       "task_id": "2026-05-07-011",
       "title": "Enable SOL lot-add policy and verify read-only planner",
