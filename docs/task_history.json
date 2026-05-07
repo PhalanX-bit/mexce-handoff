@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T09:31:00Z",
+  "updated_at": "2026-05-07T09:41:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-011",
+      "title": "Enable SOL lot-add policy and verify read-only planner",
+      "status": "completed",
+      "completed_at": "2026-05-07T09:41:00Z",
+      "result_summary": "Enabled allow_lot_add=true only for SOL/USDT:USDT while preserving allow_open=false and market_orders_allowed=false. lot_spacing_add_plan now returns READY_ONE_LOT_ADD with SOL LONG selected and preview-only OPEN lot_add_open qty=1 post_only=true type=2 leverage=300; actual_queue_write=false and actual_submit=false. Other symbols remain blocked by policy/live-disabled."
+    },
     {
       "task_id": "2026-05-07-010",
       "title": "Add read-only lot spacing add planner",

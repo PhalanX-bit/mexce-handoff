@@ -1,67 +1,76 @@
 {
-  "task_id": "2026-05-07-010",
-  "updated_at": "2026-05-07T09:31:00Z",
+  "task_id": "2026-05-07-011",
+  "updated_at": "2026-05-07T09:41:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add read-only lot spacing add planner",
-  "result_type": "lot_spacing_add_planner_verification",
+  "title": "Enable SOL lot-add policy and verify read-only planner",
+  "result_type": "sol_lot_add_policy_enablement_verification",
   "scope": {
     "live_submit": false,
     "action_queue_write": false,
+    "lot_opened": false,
     "cancel_replace_chase": false,
-    "backfill": false,
     "market_enabled": false,
     "db_schema_changes": false,
-    "api_executor_mexc_direct_changes": false
+    "api_executor_mexc_direct_changes": false,
+    "other_symbols_changed": false
   },
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "scripts/test_automation_read_only_runner.py",
     "config/symbol_live_policy.json",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_lot_spacing_add_plan'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_sol_lot_add_policy_enable'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\automation_read_only_runner.py --mode lot_spacing_add_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "planner": {
-    "mode": "lot_spacing_add_plan",
-    "planner_state": "BLOCKED",
-    "next_add_symbol": null,
-    "next_add_side": null,
-    "next_add_payload_preview": null,
-    "live_submit_allowed": false,
-    "queue_write_allowed": false,
-    "max_lot_add_actions_per_run": 0,
-    "market_allowed": false
+  "sol_policy": {
+    "allow_lot_add": true,
+    "lot_add_allowed_sides": [
+      "LONG",
+      "SHORT"
+    ],
+    "lot_add_max_qty": 1.0,
+    "lot_add_min_spacing_roi_pct": 200.0,
+    "lot_add_max_open_lots_per_side": 3,
+    "lot_add_requires_baseline_coverage": true,
+    "enabled_for_live": true,
+    "allow_seed": true,
+    "allow_baseline_import": true,
+    "allow_open": false,
+    "allow_close": true,
+    "market_orders_allowed": false
   },
-  "policy": {
-    "allow_lot_add_default": false,
-    "symbols_enabled": [],
-    "blocked_by_policy": true
-  },
-  "sample_spacing": {
-    "SOL_LONG": {
-      "required_spacing_bps": 66.66666666666666,
-      "actual_distance_bps": 4819.997677389386,
-      "spacing_pass": true,
-      "block_reason": "lot_add_disabled_for_symbol"
+  "planner_after_change": {
+    "planner_state": "READY_ONE_LOT_ADD",
+    "next_add_symbol": "SOL/USDT:USDT",
+    "next_add_side": "LONG",
+    "required_spacing_bps": 66.66666666666666,
+    "actual_distance_bps": 4811.287887585646,
+    "spacing_pass": true,
+    "payload_preview": {
+      "panel_mode": "OPEN",
+      "intent": "lot_add_open",
+      "qty": 1.0,
+      "order_kind": "LIMIT",
+      "post_only": true,
+      "maker_only": true,
+      "type": 2,
+      "reduce_only": 0,
+      "leverage": 300,
+      "limit_price": 89.31
     },
-    "SOL_SHORT": {
-      "required_spacing_bps": 66.66666666666666,
-      "actual_distance_bps": 745.5136697579186,
-      "spacing_pass": true,
-      "block_reason": "lot_add_disabled_for_symbol"
-    },
-    "AT_SHORT": {
-      "required_spacing_bps": 400.0,
-      "actual_distance_bps": 2687.798858553138,
-      "spacing_pass": true,
-      "block_reason": "lot_add_disabled_for_symbol"
-    }
+    "actual_queue_write": false,
+    "actual_submit": false
   },
-  "summary": "Added read-only lot_spacing_add_plan. The planner evaluates per-side spacing from current price to existing OPEN lots, requires explicit allow_lot_add policy, baseline coverage, meta/liquidity/leverage validity, and no conflicts, and emits preview-only post-only LIMIT type=2 payloads only when ready. Current live smoke is BLOCKED because allow_lot_add remains false for all symbols; no queue write or live submit occurred."
+  "per_symbol": {
+    "AT": "BLOCKED_BY_POLICY: lot_add_disabled_for_symbol",
+    "ADA": "BLOCKED_BY_POLICY: live_disabled_for_symbol",
+    "BTC": "BLOCKED_BY_POLICY: live_disabled_for_symbol",
+    "ETH": "BLOCKED_BY_POLICY: live_disabled_for_symbol",
+    "SOL": "READY_TO_ADD"
+  },
+  "summary": "Enabled allow_lot_add=true only for SOL/USDT:USDT while preserving allow_open=false, market_orders_allowed=false, and other symbol policies. lot_spacing_add_plan now returns READY_ONE_LOT_ADD with SOL LONG selected and a preview-only post-only LIMIT type=2 qty=1 payload; no queue write or live submit occurred."
 }
