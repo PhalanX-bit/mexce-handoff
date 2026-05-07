@@ -1,18 +1,18 @@
 {
-  "task_id": "2026-05-07-004",
-  "updated_at": "2026-05-07T05:48:00Z",
+  "task_id": "2026-05-07-005",
+  "updated_at": "2026-05-07T06:48:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Enable SOL baseline import policy and verify locked no-confirm path",
-  "result_type": "sol_baseline_import_policy_enablement_verification",
+  "title": "Enable ETH baseline import policy and verify locked no-confirm path",
+  "result_type": "eth_baseline_import_policy_enablement_verification",
   "scope": {
     "confirmed_import_run": false,
     "db_write": false,
     "position_lots_created": false,
     "action_queue_write": false,
     "live_submit": false,
-    "cancel_replace_chase": false,
-    "backfill": false,
+    "enabled_for_live_changed": false,
+    "allow_seed_changed": false,
     "db_schema_changes": false,
     "strategy_api_changes": false
   },
@@ -22,16 +22,16 @@
     "task_history.json"
   ],
   "commands_run": [
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols SOL/USDT:USDT --json",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_eth_baseline_policy_enable'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "$env:PYTHONPYCACHEPREFIX='.pycache_sol_baseline_policy_enable'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py"
+    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol ETH/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols ETH/USDT:USDT --json"
   ],
-  "sol_policy": {
+  "eth_policy": {
     "allow_baseline_import": true,
-    "enabled_for_live": true,
-    "allow_seed": true,
+    "enabled_for_live": false,
+    "allow_seed": false,
     "allow_open": false,
     "allow_close": true,
     "market_orders_allowed": false
@@ -44,22 +44,20 @@
       "SHORT"
     ],
     "actual_db_write": false,
-    "policy_block_reason": null,
-    "confirmation_missing_reasons": [
-      "confirm_baseline_import_missing"
-    ]
+    "policy_block_reason": "live_disabled_for_symbol",
+    "note": "No-confirm path remains locked. Confirmed import is still blocked while enabled_for_live=false, as requested."
   },
   "candidate_preview": {
     "LONG": {
-      "qty": 12.0,
-      "entry": 172.22,
-      "target": 173.36813333333333
+      "qty": 9.0,
+      "entry": 3422.59,
+      "target": 3436.28036
     },
     "SHORT": {
-      "qty": 11.0,
-      "entry": 83.03,
-      "target": 82.47646666666667
+      "qty": 4.0,
+      "entry": 2005.18,
+      "target": 1997.15928
     }
   },
-  "summary": "Enabled allow_baseline_import=true only for SOL/USDT:USDT. baseline_lot_import_once remains locked without --confirm-baseline-import: it shows LONG/SHORT candidate imports and policy_block_reason=null, but actual_db_write=false and no position_lots are created."
+  "summary": "Enabled allow_baseline_import=true only for ETH/USDT:USDT while keeping enabled_for_live=false and allow_seed=false. baseline_lot_import_once without confirmation shows LONG/SHORT candidate imports and remains locked with actual_db_write=false; confirmed import remains blocked by live_disabled_for_symbol until a later explicit policy step."
 }

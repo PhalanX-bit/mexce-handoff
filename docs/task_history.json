@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T05:48:00Z",
+  "updated_at": "2026-05-07T06:48:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-005",
+      "title": "Enable ETH baseline import policy and verify locked no-confirm path",
+      "status": "completed",
+      "completed_at": "2026-05-07T06:48:00Z",
+      "result_summary": "Enabled allow_baseline_import=true only for ETH/USDT:USDT while keeping enabled_for_live=false and allow_seed=false. baseline_lot_import_once no-confirm shows candidate imports LONG qty=9 and SHORT qty=4, remains locked with decision=baseline_import_confirmation_missing and actual_db_write=false. Confirmed import is still blocked by live_disabled_for_symbol until a later explicit policy step."
+    },
     {
       "task_id": "2026-05-07-004",
       "title": "Enable SOL baseline import policy and verify locked no-confirm path",
