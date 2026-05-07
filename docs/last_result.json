@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-021",
-  "updated_at": "2026-05-07T16:02:00Z",
+  "task_id": "2026-05-07-022",
+  "updated_at": "2026-05-07T17:56:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Automation Cockpit Phase 4 locked live control",
-  "result_type": "automation_cockpit_phase_4_locked_live_control_verification",
+  "title": "Automation cycle performance snapshot/cache pass",
+  "result_type": "automation_cycle_performance_snapshot_cache_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
@@ -14,46 +14,91 @@
     "market_enabled": false,
     "db_schema_changes": false,
     "strategy_logic_changes": false,
-    "api_executor_mexc_direct_changes": false
+    "api_executor_mexc_direct_execution_changes": false
   },
   "changed_files": [
+    "scripts/automation_read_only_runner.py",
     "app/V2/ui/controls_tab.py",
+    "scripts/test_automation_read_only_runner.py",
     "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_cockpit_phase4'; python -m py_compile app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py scripts\\automation_read_only_runner.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_perf_pass'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\test_automation_read_only_runner.py"
+    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "ui": {
-    "execute_section": true,
-    "disabled_when_wait": true,
-    "disabled_when_no_result": true,
-    "ready_one_action_summary": true,
-    "confirmations": [
-      "I confirm live exchange action",
-      "I confirm max one action",
-      "I confirm automation cycle live once",
-      "I confirm selected symbol/side"
+  "snapshot_cache": {
+    "snapshot_helper": "build_automation_cycle_snapshot",
+    "cached_data_types": [
+      "symbol_policy",
+      "contract_meta",
+      "market",
+      "positions",
+      "open_orders"
     ],
-    "guarded_live_button": true,
-    "stale_result_guard": true,
-    "post_run_warning": "Do not run again until Verify / Reconcile is complete.",
-    "verify_reconcile_block": true,
-    "raw_json_collapsed": true,
-    "advanced_controls_collapsed": true
+    "ttls_sec": {
+      "symbol_policy": 60,
+      "contract_meta": 3600,
+      "market": 5,
+      "positions": 15,
+      "open_orders": 5
+    },
+    "lazy_checks": [
+      "seed_replace_skipped_no_open_seed_orders",
+      "lot_add_replace_skipped_no_open_lot_add_orders"
+    ],
+    "live_mode_cache_safety": "automation_cycle_live_once clears read-only cache before fresh dry-run and before child dispatch"
+  },
+  "performance_smoke": {
+    "first_measured_total_elapsed_ms_before_market_cycle_reuse": 192271.476,
+    "final_run_total_elapsed_ms": 187866.408,
+    "best_final_run_total_elapsed_ms": 134864.55,
+    "cache_hits": {
+      "contract_meta": 15,
+      "market": 11
+    },
+    "cache_misses": {
+      "symbol_policy": 5,
+      "contract_meta": 5,
+      "market": 5,
+      "positions": 5
+    },
+    "exchange_calls_count_by_type": {
+      "market": 5,
+      "positions": 5
+    },
+    "skipped_expensive_checks": [
+      "seed_replace_skipped_no_open_seed_orders"
+    ]
+  },
+  "decision_consistency": {
+    "previous_cycle_state": "WAIT",
+    "new_cycle_state": "WAIT",
+    "selected_action_type": null,
+    "selected_symbol": null,
+    "selected_side": null,
+    "actual_queue_write": false,
+    "actual_submit": false
+  },
+  "ui": {
+    "timing_summary": true,
+    "cache_summary": true,
+    "lookup_timeout_warning": true,
+    "raw_performance_expander": true
   },
   "tests": {
-    "no_result_blocks": true,
-    "wait_blocks": true,
-    "stale_allowlist_blocks": true,
-    "ready_with_confirmations_allows": true,
-    "confirm_labels_exist": true,
-    "automation_cycle_live_once_command_exists": true,
-    "post_run_warning_exists": true,
-    "no_unguarded_live_button": true
+    "snapshot_reuse": true,
+    "contract_meta_cache": true,
+    "market_ttl_cache": true,
+    "positions_ttl_cache": true,
+    "policy_cache_invalidation": true,
+    "lazy_replace_skips": true,
+    "timeout_fail_closed": true,
+    "live_fresh_check_preserved": true,
+    "json_serializable": true
   },
-  "summary": "Added locked Phase 4 live-control wiring to the Automation Operator Cockpit. The UI now shows an Execute One Action section, keeps it disabled for no-result/WAIT/stale/unsafe dry-run states, requires four explicit confirmations for READY_ONE_ACTION, and calls automation_cycle_live_once only through the existing guarded runner path if the operator manually enables it."
+  "summary": "Added a read-only automation cycle snapshot/cache layer, cycle-local market/meta/position reuse, lazy seed replace skipping when there is no local open seed order candidate, fail-closed lookup diagnostics, and compact UI performance reporting. Current read-only smoke remains WAIT with no selected action, actual_queue_write=false, and actual_submit=false."
 }
