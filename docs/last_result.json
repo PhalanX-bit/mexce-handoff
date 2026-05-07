@@ -1,16 +1,17 @@
 {
-  "task_id": "2026-05-07-002",
-  "updated_at": "2026-05-07T04:32:00Z",
+  "task_id": "2026-05-07-003",
+  "updated_at": "2026-05-07T05:08:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add read-only baseline lot import preview",
-  "result_type": "baseline_lot_import_preview_verification",
+  "title": "Add locked protected baseline lot import path",
+  "result_type": "baseline_lot_import_locked_path_verification",
   "scope": {
-    "db_write": false,
+    "db_write_on_real_db": false,
     "live_submit": false,
     "action_queue_write": false,
     "cancel_replace_chase": false,
     "backfill": false,
+    "lot_realization_created": false,
     "db_schema_changes": false,
     "api_executor_changed": false,
     "mexc_direct_changed": false,
@@ -19,62 +20,71 @@
   "changed_files": [
     "scripts/automation_read_only_runner.py",
     "scripts/test_automation_read_only_runner.py",
+    "config/symbol_live_policy.json",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_baseline_import_preview'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_baseline_import_once'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol SOL/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols SOL/USDT:USDT --json"
   ],
-  "preview": {
-    "mode": "baseline_lot_import_preview",
-    "preview_state": "IMPORTS_AVAILABLE",
-    "target_roi_pct": 200.0,
-    "candidate_import_count": 9,
-    "warnings": [],
+  "mode": {
+    "baseline_lot_import_once_implemented": true,
+    "confirmation_required": true,
+    "single_symbol_only": true,
     "actual_db_write": false,
-    "actual_queue_write": false,
-    "actual_submit": false,
+    "action_queue_write": false,
     "live_submit": false
   },
-  "sol": {
-    "long": {
-      "exchange_qty": 13.0,
-      "internal_open_lot_qty": 1.0,
-      "untracked_qty": 12.0,
-      "coverage_state": "NEED_BASELINE_IMPORT",
-      "exchange_avg_entry": 172.22,
-      "exchange_leverage": 300.0,
+  "policy": {
+    "allow_baseline_import_field": true,
+    "baseline_import_allowed_sides_field": true,
+    "SOL_allow_baseline_import": false,
+    "default_behavior": "false / fail closed"
+  },
+  "sol_no_confirm_import_once": {
+    "decision": "baseline_import_confirmation_missing",
+    "policy_block_reason": "baseline_import_disabled_for_symbol",
+    "candidate_import_count": 2,
+    "would_import_sides": [
+      "LONG",
+      "SHORT"
+    ],
+    "would_import_qty_long": 12.0,
+    "would_import_qty_short": 11.0,
+    "actual_db_write": false
+  },
+  "candidate_import_preview": {
+    "LONG": {
+      "qty": 12.0,
+      "entry": 172.22,
+      "leverage": 300.0,
       "target_price": 173.36813333333333,
-      "baseline_preview": true
+      "source_marker": "exchange_position_import / exchange_position_snapshot"
     },
-    "short": {
-      "exchange_qty": 12.0,
-      "internal_open_lot_qty": 1.0,
-      "untracked_qty": 11.0,
-      "coverage_state": "NEED_BASELINE_IMPORT",
-      "exchange_avg_entry": 83.03,
-      "exchange_leverage": 300.0,
+    "SHORT": {
+      "qty": 11.0,
+      "entry": 83.03,
+      "leverage": 300.0,
       "target_price": 82.47646666666667,
-      "baseline_preview": true
+      "source_marker": "exchange_position_import / exchange_position_snapshot"
     }
   },
-  "other_symbols": {
-    "AT": "LONG NO_EXCHANGE_POSITION; SHORT NEED_BASELINE_IMPORT qty=394",
-    "ADA": "LONG NEED_BASELINE_IMPORT qty=280; SHORT NEED_BASELINE_IMPORT qty=104",
-    "BTC": "LONG NEED_BASELINE_IMPORT qty=50; SHORT NEED_BASELINE_IMPORT qty=16",
-    "ETH": "LONG NEED_BASELINE_IMPORT qty=9; SHORT NEED_BASELINE_IMPORT qty=4"
-  },
   "tests": {
+    "no_confirm_no_write": true,
+    "policy_block": true,
+    "single_symbol_only": true,
     "need_import": true,
     "covered": true,
     "overtracked": true,
     "missing_avg": true,
-    "existing_baseline": true,
+    "duplicate_baseline": true,
     "target_price": true,
+    "isolated_confirmed_import": true,
     "json_serializable": true
   },
-  "summary": "Added read-only baseline_lot_import_preview mode. It compares live MEXC open-position qty/avg/leverage by side against internal OPEN position_lots, computes untracked exposure, and produces preview-only exchange_position_import lot payloads with target prices. Current SOL shows untracked LONG=12 and SHORT=11. No DB writes, queue writes, live submits, cancel/replace, backfill, schema, API execution, or strategy logic changes."
+  "summary": "Added locked baseline_lot_import_once mode. It reruns a fresh single-symbol baseline preview, shows candidate imports without confirmation, requires --confirm-baseline-import plus allow_baseline_import=true for any future DB write, and imports only candidate NEED_BASELINE_IMPORT sides using existing position_lots schema. Current SOL no-confirm smoke shows LONG qty=12 and SHORT qty=11 candidates, but allow_baseline_import=false and actual_db_write=false."
 }

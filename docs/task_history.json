@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T04:32:00Z",
+  "updated_at": "2026-05-07T05:08:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-003",
+      "title": "Add locked protected baseline lot import path",
+      "status": "completed",
+      "completed_at": "2026-05-07T05:08:00Z",
+      "result_summary": "Added locked baseline_lot_import_once mode and allow_baseline_import policy fields. The mode reruns a fresh single-symbol preview, stays locked without --confirm-baseline-import, and future confirmed writes require allow_baseline_import=true plus clean NEED_BASELINE_IMPORT candidates. Current SOL shows LONG qty=12 and SHORT qty=11 candidates, but allow_baseline_import=false and actual_db_write=false; no live, queue, schema, API, strategy, cancel/replace, backfill, or lot_realization changes."
+    },
     {
       "task_id": "2026-05-07-002",
       "title": "Add read-only baseline lot import preview",
