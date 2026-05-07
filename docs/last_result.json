@@ -1,13 +1,14 @@
 {
-  "task_id": "2026-05-07-012",
-  "updated_at": "2026-05-07T10:14:00Z",
+  "task_id": "2026-05-07-013",
+  "updated_at": "2026-05-07T12:14:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add locked lot_add_live_once path",
-  "result_type": "lot_add_live_once_locked_path_verification",
+  "title": "Add unified automation cycle dry-run selector",
+  "result_type": "automation_cycle_dry_run_selector_verification",
   "scope": {
-    "live_submit_executed": false,
+    "live_submit": false,
     "action_queue_write": false,
+    "db_write": false,
     "cancel_replace_chase": false,
     "backfill": false,
     "market_enabled": false,
@@ -25,25 +26,18 @@
     "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode lot_spacing_add_plan --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode lot_add_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "mode": {
-    "lot_add_live_once_implemented": true,
-    "max_add_actions_per_run": 1,
-    "live_without_confirmations": "locked",
-    "queue_write_allowed": false,
-    "actual_queue_write": false,
-    "actual_submit": false
-  },
-  "current_no_live_smoke": {
-    "planner_state": "READY_ONE_LOT_ADD",
+  "cycle_result": {
+    "cycle_state": "READY_ONE_ACTION",
+    "selected_action_type": "LOT_ADD",
+    "selected_mode": "lot_add_live_once",
     "selected_symbol": "SOL/USDT:USDT",
-    "selected_side": "LONG",
+    "selected_side": "SHORT",
     "selected_payload_preview": {
       "panel_mode": "OPEN",
       "intent": "lot_add_open",
-      "side": "LONG",
+      "side": "SHORT",
       "qty": 1.0,
       "order_kind": "LIMIT",
       "post_only": true,
@@ -52,42 +46,41 @@
       "mexc_order_type": 2,
       "reduce_only": 0,
       "leverage": 300,
-      "limit_price": 89.15
+      "limit_price": 89.83
     },
-    "decision": "lot_add_confirmation_missing",
-    "confirmation_ok": false,
-    "confirmation_missing_reasons": [
-      "live_flag_missing",
-      "confirm_live_missing",
-      "confirm_lot_add_live_once_missing"
-    ],
-    "next_manual_step": "run lot add planner/preflight manually for SOL/USDT:USDT LONG",
+    "would_run_command": "python scripts\\automation_read_only_runner.py --mode lot_add_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json --live --confirm-live --confirm-lot-add-live-once",
     "actual_queue_write": false,
     "actual_submit": false
   },
-  "allowed_future_rules": {
-    "qty_1": true,
-    "limit_only": true,
-    "post_only_required": true,
-    "mexc_type_2": true,
-    "reduce_only_0": true,
-    "market_forbidden": true,
-    "spacing_pass_required": true,
-    "baseline_coverage_required": true,
-    "conflicts_blocked": true,
-    "unresolved_lifecycle_blocked": true
+  "planner_summaries": {
+    "supervisor": {
+      "state": "WAIT",
+      "best_symbol": null,
+      "reason": "no_actionable_close_ready_candidate"
+    },
+    "seed_coverage": {
+      "state": "WAIT",
+      "next_seed_symbol": null,
+      "reason": "no_seed_needed_or_allowed"
+    },
+    "lot_spacing_add": {
+      "state": "READY_ONE_LOT_ADD",
+      "next_add_symbol": "SOL/USDT:USDT",
+      "next_add_side": "SHORT",
+      "reason": "one_lot_add_spacing_candidate_available"
+    },
+    "seed_replace": null
   },
-  "tests": {
-    "no_live_blocks": true,
-    "missing_confirmations": true,
+  "priority_tests": {
+    "close_wins": true,
+    "close_guard_fail_ignored": true,
+    "seed_before_lot_add": true,
+    "lot_add_selected": true,
     "wait_state": true,
-    "ready_locked": true,
-    "policy_block": true,
-    "live_disabled": true,
-    "spacing_fail": true,
-    "conflicts_blocked": true,
-    "max_one_add": true,
+    "conflict_blocks": true,
+    "seed_replace_after_no_close_seed_or_lot_add": true,
+    "one_action_only": true,
     "json_serializable": true
   },
-  "summary": "Added locked live-capable lot_add_live_once mode. It reuses lot_spacing_add_plan, selects at most one spacing-based protected OPEN lot add, and remains locked without --live/--confirm-live/--confirm-lot-add-live-once. Current no-live smoke selects SOL LONG with a post-only LIMIT type=2 qty=1 leverage=300 preview, decision=lot_add_confirmation_missing, actual_queue_write=false, and actual_submit=false."
+  "summary": "Added automation_cycle_dry_run as a read-only selector over the existing planners. It checks CLOSE via supervisor_dry_run first, then seed coverage, then lot spacing add, then stale seed replace preview, and selects at most one future live mode without writing or submitting. Current smoke selects SOL SHORT LOT_ADD via lot_add_live_once with actual_queue_write=false and actual_submit=false."
 }

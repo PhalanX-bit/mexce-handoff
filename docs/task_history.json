@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T10:14:00Z",
+  "updated_at": "2026-05-07T12:14:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-013",
+      "title": "Add unified automation cycle dry-run selector",
+      "status": "completed",
+      "completed_at": "2026-05-07T12:14:00Z",
+      "result_summary": "Added automation_cycle_dry_run as a read-only selector over the existing planners. It checks CLOSE via supervisor_dry_run first, then seed coverage, then lot spacing add, then stale seed replace preview, and selects at most one future live mode without writing or submitting. Current smoke selects SOL SHORT LOT_ADD via lot_add_live_once with actual_queue_write=false and actual_submit=false."
+    },
     {
       "task_id": "2026-05-07-012",
       "title": "Add locked lot_add_live_once path",
