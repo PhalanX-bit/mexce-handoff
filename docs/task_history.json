@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T12:14:00Z",
+  "updated_at": "2026-05-07T12:47:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-014",
+      "title": "Add read-only lot add replace preview",
+      "status": "completed",
+      "completed_at": "2026-05-07T12:47:00Z",
+      "result_summary": "Added lot_add_replace_preview read-only mode. It finds exactly one open lot_add_open order, confirms exact exchange/open-order lookup by api_order_id, computes age/distance staleness, and previews a same-side post-only type=2 replacement payload without canceling, writing, or submitting. Current SOL action 29 is still OPEN with deal_qty=0 but is not stale enough, so preview_state=KEEP_WAITING."
+    },
     {
       "task_id": "2026-05-07-013",
       "title": "Add unified automation cycle dry-run selector",
