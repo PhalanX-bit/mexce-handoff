@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-007",
-  "updated_at": "2026-05-07T07:22:00Z",
+  "task_id": "2026-05-07-008",
+  "updated_at": "2026-05-07T07:28:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Enable BTC baseline import policy and verify locked no-confirm path",
-  "result_type": "btc_baseline_import_policy_enablement_verification",
+  "title": "Enable ADA baseline import policy and verify locked no-confirm path",
+  "result_type": "ada_baseline_import_policy_enablement_verification",
   "scope": {
     "confirmed_import_run": false,
     "db_write": false,
@@ -22,13 +22,13 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_btc_baseline_policy_enable'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_ada_baseline_policy_enable'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol BTC/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols BTC/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_once --symbol ADA/USDT:USDT --json",
+    "python scripts\\automation_read_only_runner.py --mode baseline_lot_import_preview --symbols ADA/USDT:USDT --json"
   ],
-  "btc_policy": {
+  "ada_policy": {
     "allow_baseline_import": true,
     "enabled_for_live": false,
     "allow_seed": false,
@@ -49,15 +49,15 @@
   },
   "candidate_preview": {
     "LONG": {
-      "qty": 50.0,
-      "entry": 107694.8,
-      "target": 108125.57920000001
+      "qty": 280.0,
+      "entry": 0.4191,
+      "target": 0.42189399999999994
     },
     "SHORT": {
-      "qty": 16.0,
-      "entry": 66882.3,
-      "target": 66614.7708
+      "qty": 104.0,
+      "entry": 0.2418,
+      "target": 0.24018799999999998
     }
   },
-  "summary": "Enabled allow_baseline_import=true only for BTC/USDT:USDT while keeping enabled_for_live=false and allow_seed=false. baseline_lot_import_once without confirmation shows LONG/SHORT candidate imports and remains locked with actual_db_write=false; live/seed trading remains disabled."
+  "summary": "Enabled allow_baseline_import=true only for ADA/USDT:USDT while keeping enabled_for_live=false and allow_seed=false. baseline_lot_import_once without confirmation shows LONG/SHORT candidate imports and remains locked with actual_db_write=false; live/seed trading remains disabled."
 }
