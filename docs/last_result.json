@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-022",
-  "updated_at": "2026-05-07T17:56:00Z",
+  "task_id": "2026-05-07-023",
+  "updated_at": "2026-05-07T18:40:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Automation cycle performance snapshot/cache pass",
-  "result_type": "automation_cycle_performance_snapshot_cache_verification",
+  "title": "Automation cycle performance pass 2 fast-path",
+  "result_type": "automation_cycle_performance_pass_2_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
@@ -14,92 +14,66 @@
     "market_enabled": false,
     "db_schema_changes": false,
     "strategy_logic_changes": false,
-    "api_executor_mexc_direct_execution_changes": false
+    "api_executor_mexc_direct_live_behavior_changes": false
   },
   "changed_files": [
     "scripts/automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
     "scripts/test_automation_read_only_runner.py",
-    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_perf_pass'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_perf_pass2'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
   ],
-  "snapshot_cache": {
-    "snapshot_helper": "build_automation_cycle_snapshot",
-    "cached_data_types": [
-      "symbol_policy",
-      "contract_meta",
-      "market",
-      "positions",
-      "open_orders"
+  "performance": {
+    "previous_total_elapsed_ms": 187866.408,
+    "new_total_elapsed_ms": 4733.019,
+    "position_lookup_strategy": "filtered live-enabled symbols plus close/seed/lot prefilters",
+    "position_symbols_requested": [
+      "AT/USDT:USDT",
+      "SOL/USDT:USDT"
     ],
-    "ttls_sec": {
-      "symbol_policy": 60,
-      "contract_meta": 3600,
-      "market": 5,
-      "positions": 15,
-      "open_orders": 5
-    },
-    "lazy_checks": [
-      "seed_replace_skipped_no_open_seed_orders",
-      "lot_add_replace_skipped_no_open_lot_add_orders"
+    "position_symbols_skipped": [
+      "ADA/USDT:USDT",
+      "BTC/USDT:USDT",
+      "ETH/USDT:USDT"
     ],
-    "live_mode_cache_safety": "automation_cycle_live_once clears read-only cache before fresh dry-run and before child dispatch"
-  },
-  "performance_smoke": {
-    "first_measured_total_elapsed_ms_before_market_cycle_reuse": 192271.476,
-    "final_run_total_elapsed_ms": 187866.408,
-    "best_final_run_total_elapsed_ms": 134864.55,
-    "cache_hits": {
-      "contract_meta": 15,
-      "market": 11
-    },
-    "cache_misses": {
-      "symbol_policy": 5,
-      "contract_meta": 5,
-      "market": 5,
-      "positions": 5
-    },
     "exchange_calls_count_by_type": {
-      "market": 5,
-      "positions": 5
+      "market": 4
     },
+    "timeout_profile": {
+      "position_lookup_timeout_sec": 4,
+      "market_lookup_timeout_sec": 4,
+      "total_soft_budget_sec": 15
+    },
+    "fail_fast_behavior": "market/position lookup errors fail closed with no queue write and no submit",
     "skipped_expensive_checks": [
+      "live_disabled_symbols_skipped_for_positions",
+      "supervisor_skipped_no_target_reached_lots",
+      "seed_coverage_skipped_already_covered",
+      "lot_spacing_add_skipped_open_lot_add_order_conflict",
       "seed_replace_skipped_no_open_seed_orders"
     ]
   },
-  "decision_consistency": {
-    "previous_cycle_state": "WAIT",
-    "new_cycle_state": "WAIT",
+  "decision": {
+    "cycle_state": "WAIT",
     "selected_action_type": null,
     "selected_symbol": null,
-    "selected_side": null,
+    "reason": "no_planner_ready_candidate",
     "actual_queue_write": false,
     "actual_submit": false
   },
-  "ui": {
-    "timing_summary": true,
-    "cache_summary": true,
-    "lookup_timeout_warning": true,
-    "raw_performance_expander": true
-  },
   "tests": {
-    "snapshot_reuse": true,
-    "contract_meta_cache": true,
-    "market_ttl_cache": true,
-    "positions_ttl_cache": true,
-    "policy_cache_invalidation": true,
-    "lazy_replace_skips": true,
-    "pnl_guard_lazy": true,
+    "live_disabled_symbols_skipped": true,
+    "sol_live_enabled_fast_path": true,
+    "close_prefilter_skips_supervisor": true,
     "timeout_fail_closed": true,
-    "live_fresh_check_preserved": true,
-    "json_serializable": true
+    "no_live_queue_writes": true,
+    "json_serializable": true,
+    "live_fresh_check_preserved": true
   },
-  "summary": "Added a read-only automation cycle snapshot/cache layer, cycle-local market/meta/position reuse, lazy seed replace skipping when there is no local open seed order candidate, fail-closed lookup diagnostics, and compact UI performance reporting. Current read-only smoke remains WAIT with no selected action, actual_queue_write=false, and actual_submit=false."
+  "summary": "Added automation_cycle_dry_run fast-path prefilters. The cycle now skips live-disabled symbols for decision lookups, avoids supervisor when no target-reached lots exist, skips seed coverage when coverage is already complete, and skips lot spacing when a local open lot_add order conflict exists. Current smoke stays WAIT with no live action and completes in about 4.7 seconds."
 }
