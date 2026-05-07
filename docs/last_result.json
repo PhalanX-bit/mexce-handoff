@@ -1,19 +1,19 @@
 {
-  "task_id": "2026-05-07-015",
-  "updated_at": "2026-05-07T13:12:00Z",
+  "task_id": "2026-05-07-016",
+  "updated_at": "2026-05-07T13:56:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Add locked automation cycle live-once path",
-  "result_type": "automation_cycle_live_once_locked_path_verification",
+  "title": "Add watch mode for automation cycle dry-run",
+  "result_type": "automation_cycle_dry_run_watch_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
+    "db_write": false,
     "cancel_replace_executed": false,
     "backfill": false,
     "market_enabled": false,
     "db_schema_changes": false,
-    "api_executor_mexc_direct_changes": false,
-    "child_mode_behavior_changed": false
+    "api_executor_mexc_direct_changes": false
   },
   "changed_files": [
     "scripts/automation_read_only_runner.py",
@@ -22,57 +22,39 @@
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_cycle_live_once'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_cycle_watch'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode automation_cycle_live_once --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json",
-    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --watch --interval-sec 1 --max-iterations 1 --json"
   ],
-  "mode": {
-    "automation_cycle_live_once_implemented": true,
-    "max_actions_per_run": 1,
-    "live_without_confirmations": "locked",
-    "queue_write_allowed": false,
+  "watch_mode": {
+    "implemented": true,
+    "interval_sec": "configurable, normalized to >=0",
+    "max_iterations": "configurable, normalized to >=1",
+    "stop_on_ready": true,
+    "stop_on_error": true,
+    "continue_on_ready_option": true,
     "actual_queue_write": false,
     "actual_submit": false
   },
-  "current_no_live_smoke": {
-    "cycle_state": "WAIT",
-    "selected_action_type": null,
-    "selected_mode": null,
-    "selected_symbol": null,
-    "selected_side": null,
-    "decision": "automation_cycle_wait",
-    "confirmation_ok": false,
-    "confirmation_missing_reasons": [
-      "live_flag_missing",
-      "confirm_live_missing",
-      "confirm_automation_cycle_live_once_missing"
-    ],
-    "next_safe_action": "rerun later",
+  "smoke_result": {
+    "final_state": "ERROR_STOP",
+    "iterations_completed": 1,
+    "stopped_early": true,
+    "ready_iteration": null,
+    "first_ready_action": null,
+    "reason": "scan_error",
     "actual_queue_write": false,
     "actual_submit": false
-  },
-  "dispatch_rules": {
-    "CLOSE": "supervisor_live_once",
-    "SEED": "seed_live_once",
-    "LOT_ADD": "lot_add_live_once",
-    "SEED_REPLACE": "seed_replace_once",
-    "max_one_action": true
   },
   "tests": {
-    "no_live_blocks": true,
-    "missing_confirmations": true,
-    "wait_state": true,
-    "close_dispatch": true,
-    "seed_dispatch": true,
-    "lot_add_dispatch": true,
-    "replace_dispatch": true,
-    "guard_fail_ignored": true,
-    "conflict_blocks": true,
-    "lookup_error_blocks": true,
-    "one_action_only": true,
-    "json_serializable": true
+    "wait_timeout": true,
+    "ready_stop": true,
+    "error_stop": true,
+    "continue_on_ready": true,
+    "no_writes_submits": true,
+    "json_serializable": true,
+    "invalid_interval_max_iterations": true
   },
-  "summary": "Added automation_cycle_live_once as a locked live-capable wrapper over automation_cycle_dry_run. It requires --live, --confirm-live, and --confirm-automation-cycle-live-once before dispatching exactly one selected child mode. Current no-live smoke is WAIT, calls no child mode, and keeps actual_queue_write=false and actual_submit=false."
+  "summary": "Added automation_cycle_dry_run watch mode. It wraps repeated dry-run selector calls into automation_cycle_dry_run_watch, stops early on READY_ONE_ACTION by default, stops on ERROR_STOP, supports --continue-on-ready, and never writes or submits. Current smoke completed one read-only iteration and stopped safely on ERROR_STOP/scan_error with actual_queue_write=false and actual_submit=false."
 }

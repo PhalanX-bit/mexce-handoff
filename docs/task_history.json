@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T13:12:00Z",
+  "updated_at": "2026-05-07T13:56:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-016",
+      "title": "Add watch mode for automation cycle dry-run",
+      "status": "completed",
+      "completed_at": "2026-05-07T13:56:00Z",
+      "result_summary": "Added automation_cycle_dry_run watch mode. It wraps repeated dry-run selector calls into automation_cycle_dry_run_watch, stops early on READY_ONE_ACTION by default, stops on ERROR_STOP, supports --continue-on-ready, and never writes or submits. Current smoke completed one read-only iteration and stopped safely on ERROR_STOP/scan_error with actual_queue_write=false and actual_submit=false."
+    },
     {
       "task_id": "2026-05-07-015",
       "title": "Add locked automation cycle live-once path",
