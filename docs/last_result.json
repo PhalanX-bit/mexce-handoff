@@ -96,6 +96,7 @@
     "positions_ttl_cache": true,
     "policy_cache_invalidation": true,
     "lazy_replace_skips": true,
+    "pnl_guard_lazy": true,
     "timeout_fail_closed": true,
     "live_fresh_check_preserved": true,
     "json_serializable": true
