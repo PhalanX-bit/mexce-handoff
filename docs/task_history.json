@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T18:40:00Z",
+  "updated_at": "2026-05-07T18:58:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-07-024",
+      "title": "Automation cycle dry-run watch mode",
+      "status": "completed",
+      "completed_at": "2026-05-07T18:58:00Z",
+      "result_summary": "automation_cycle_dry_run --watch now returns compact per-iteration summaries by default, includes elapsed_ms and total_elapsed_ms, stops on READY_ONE_ACTION or ERROR_STOP unless --continue-on-ready is set, and supports --verbose for raw per-iteration records. A copyable read-only watch command was added to the cockpit."
+    },
     {
       "task_id": "2026-05-07-023",
       "title": "Automation cycle performance pass 2 fast-path",

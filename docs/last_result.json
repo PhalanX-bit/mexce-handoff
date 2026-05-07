@@ -1,10 +1,10 @@
 {
-  "task_id": "2026-05-07-023",
-  "updated_at": "2026-05-07T18:40:00Z",
+  "task_id": "2026-05-07-024",
+  "updated_at": "2026-05-07T18:58:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Automation cycle performance pass 2 fast-path",
-  "result_type": "automation_cycle_performance_pass_2_verification",
+  "title": "Automation cycle dry-run watch mode",
+  "result_type": "automation_cycle_dry_run_watch_verification",
   "scope": {
     "live_submit_executed": false,
     "action_queue_write": false,
@@ -14,66 +14,59 @@
     "market_enabled": false,
     "db_schema_changes": false,
     "strategy_logic_changes": false,
-    "api_executor_mexc_direct_live_behavior_changes": false
+    "api_executor_mexc_direct_changes": false
   },
   "changed_files": [
     "scripts/automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
     "scripts/test_automation_read_only_runner.py",
+    "scripts/test_controls_automation_parsing.py",
     "last_result.json",
     "task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_perf_pass2'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_cycle_watch2'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --json"
+    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --watch --interval-sec 1 --max-iterations 1 --json"
   ],
-  "performance": {
-    "previous_total_elapsed_ms": 187866.408,
-    "new_total_elapsed_ms": 4733.019,
-    "position_lookup_strategy": "filtered live-enabled symbols plus close/seed/lot prefilters",
-    "position_symbols_requested": [
-      "AT/USDT:USDT",
-      "SOL/USDT:USDT"
-    ],
-    "position_symbols_skipped": [
-      "ADA/USDT:USDT",
-      "BTC/USDT:USDT",
-      "ETH/USDT:USDT"
-    ],
-    "exchange_calls_count_by_type": {
-      "market": 4
-    },
-    "timeout_profile": {
-      "position_lookup_timeout_sec": 4,
-      "market_lookup_timeout_sec": 4,
-      "total_soft_budget_sec": 15
-    },
-    "fail_fast_behavior": "market/position lookup errors fail closed with no queue write and no submit",
-    "skipped_expensive_checks": [
-      "live_disabled_symbols_skipped_for_positions",
-      "supervisor_skipped_no_target_reached_lots",
-      "seed_coverage_skipped_already_covered",
-      "lot_spacing_add_skipped_open_lot_add_order_conflict",
-      "seed_replace_skipped_no_open_seed_orders"
-    ]
-  },
-  "decision": {
-    "cycle_state": "WAIT",
-    "selected_action_type": null,
-    "selected_symbol": null,
-    "reason": "no_planner_ready_candidate",
+  "watch_mode": {
+    "implemented": true,
+    "interval_sec": 1.0,
+    "max_iterations": 1,
+    "stop_on_ready": true,
+    "stop_on_error": true,
+    "continue_on_ready": false,
     "actual_queue_write": false,
-    "actual_submit": false
+    "actual_submit": false,
+    "compact_iterations_by_default": true,
+    "verbose_raw_records_flag": "--verbose"
+  },
+  "smoke": {
+    "final_state": "NO_ACTION_FOUND",
+    "iterations_completed": 1,
+    "stopped_early": false,
+    "ready_iteration": null,
+    "first_ready_action": null,
+    "last_cycle_state": "WAIT",
+    "last_reason": "no_planner_ready_candidate",
+    "total_elapsed_ms": 4913.767
   },
   "tests": {
-    "live_disabled_symbols_skipped": true,
-    "sol_live_enabled_fast_path": true,
-    "close_prefilter_skips_supervisor": true,
-    "timeout_fail_closed": true,
-    "no_live_queue_writes": true,
+    "wait_timeout": true,
+    "ready_stop": true,
+    "error_stop": true,
+    "continue_on_ready": true,
+    "invalid_args": true,
+    "no_writes_submits": true,
     "json_serializable": true,
-    "live_fresh_check_preserved": true
+    "verbose_raw_record": true,
+    "normal_dry_run_unchanged": true
   },
-  "summary": "Added automation_cycle_dry_run fast-path prefilters. The cycle now skips live-disabled symbols for decision lookups, avoids supervisor when no target-reached lots exist, skips seed coverage when coverage is already complete, and skips lot spacing when a local open lot_add order conflict exists. Current smoke stays WAIT with no live action and completes in about 4.7 seconds."
+  "ui": {
+    "copyable_watch_command": true,
+    "no_background_thread": true,
+    "no_live_button_added": true
+  },
+  "summary": "automation_cycle_dry_run --watch now returns compact per-iteration summaries by default, includes elapsed_ms and total_elapsed_ms, stops on READY_ONE_ACTION or ERROR_STOP unless --continue-on-ready is set, and supports --verbose for raw per-iteration records. A copyable read-only watch command was added to the cockpit."
 }
