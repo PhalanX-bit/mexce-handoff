@@ -1,11 +1,11 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-12T07:46:08Z",
+  "updated_at": "2026-05-12T10:20:49Z",
   "status_kind": "next_task",
   "status": "paused",
-  "title": "Await operator decision for optional SILVER directional entry local enqueue",
+  "title": "Await operator decision for optional SILVER directional sandbox local enqueue",
   "task_type": "operator_decision",
-  "objective": "Keep the system paused unless the operator explicitly wants to create one local action_queue row for the SILVER/USDT:USDT directional entry sandbox. This is local enqueue only and does not submit to MEXC.",
+  "objective": "SILVER/USDT:USDT is ready for a directional sandbox local enqueue, but no local action_queue row should be created unless the operator explicitly chooses to proceed. This remains local enqueue only and does not submit to MEXC.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
     "live_exchange_action_allowed": false,
@@ -15,16 +15,16 @@
     "database_schema_changes_allowed": false,
     "secrets_allowed": false
   },
-  "recommended_next_action": "Optional confirmed local enqueue only if the operator explicitly wants a local action_queue row; otherwise remain paused.",
+  "recommended_next_action": "Optional local enqueue only if the operator explicitly wants a local action_queue row.",
   "suggested_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json --confirm-directional-entry-enqueue-once",
+  "alternative_next_action": "Stay paused and do not enqueue.",
   "important_notes": [
     "This command creates at most one local action_queue row.",
     "This command does not submit to MEXC.",
-    "Do not run without explicit operator decision.",
-    "Alternative next task: keep paused and do not enqueue."
+    "Manual side remains required; LONG is only the suggested command shape.",
+    "automation_cycle_live_once remains excluded from SILVER directional sandbox execution."
   ],
   "expected_result": {
-    "preview_state": "READY",
     "state": "DONE if confirmed and no duplicate pending row exists",
     "actual_submit": false,
     "mexc_api_submit": false,

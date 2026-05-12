@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-12T07:46:08Z",
+  "updated_at": "2026-05-12T10:20:49Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-12-002",
+      "title": "SILVER sandbox preflight and symbol integration audit",
+      "status": "completed",
+      "completed_at": "2026-05-12T10:20:49Z",
+      "result_summary": "Added and verified silver_directional_sandbox_preflight and symbol_integration_audit_report. SILVER/USDT:USDT is READY_FOR_LOCAL_ENQUEUE / DIRECTIONAL_SANDBOX_READY with LONG/SHORT ready, qty=5, leverage=500, LIMIT post-only type=2, reduce_only=0, and no pending directional entry. XAUT/USDT:USDT remains BLOCKED_TOO_EXPENSIVE. Next state is paused awaiting explicit operator decision for optional local enqueue only."
+    },
     {
       "task_id": "2026-05-12-001",
       "title": "SILVER directional entry enqueue-once support",

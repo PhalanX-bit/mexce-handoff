@@ -1,59 +1,85 @@
 {
-  "task_id": "2026-05-12-001",
-  "updated_at": "2026-05-12T07:46:08Z",
+  "task_id": "2026-05-12-002",
+  "updated_at": "2026-05-12T10:20:49Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "SILVER directional entry enqueue-once support",
-  "result_type": "directional_entry_enqueue_once_silver_support_verification",
-  "summary": "directional_entry_enqueue_once now supports SILVER/USDT:USDT as a guarded local enqueue target in addition to ADA. The SILVER path requires a fresh READY enqueue preview proving no position, API allowed, liquidity OK, and economic entry allowed under the supplied hypothesis. No-confirm real-DB smoke blocked correctly with no DB, queue, or MEXC submit.",
+  "title": "SILVER sandbox preflight and symbol integration audit",
+  "result_type": "silver_directional_sandbox_preflight_and_symbol_integration_audit_verification",
+  "summary": "Added and verified read-only silver_directional_sandbox_preflight and symbol_integration_audit_report. SILVER/USDT:USDT is READY_FOR_LOCAL_ENQUEUE / DIRECTIONAL_SANDBOX_READY with manual LONG/SHORT previews ready, qty=5, leverage=500, LIMIT post-only type=2, reduce_only=0, and no pending directional entry. XAUT/USDT:USDT remains discovery/meta-only and BLOCKED_TOO_EXPENSIVE.",
   "changed_files": [
     "scripts/automation_read_only_runner.py",
     "scripts/test_automation_read_only_runner.py"
   ],
   "commands_run": [
+    "$env:PYTHONPYCACHEPREFIX='C:\\Users\\DADDY\\PycharmProjects\\Funding_strategies\\MEXC_anal_GPT\\mexce\\tmp_pycache_codex'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "$env:PYTHONPYCACHEPREFIX='C:\\Users\\DADDY\\PycharmProjects\\Funding_strategies\\MEXC_anal_GPT\\mexce\\tmp_pycache_codex'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json"
+    "python scripts\\automation_read_only_runner.py --mode silver_directional_sandbox_preflight --json",
+    "python scripts\\automation_read_only_runner.py --mode symbol_integration_audit_report --symbols SILVER_USDT,XAUT_USDT --json"
   ],
-  "smoke_result": {
-    "preview_state": "READY",
-    "state": "BLOCKED",
-    "reason": "confirmation_required",
-    "row_preview_symbol": "SILVER/USDT:USDT",
-    "side": "LONG",
+  "silver_directional_sandbox_preflight": {
+    "state": "READY_FOR_LOCAL_ENQUEUE",
+    "recommended_next_action": "LOCAL_ENQUEUE_ONLY",
+    "symbol": "SILVER/USDT:USDT",
+    "long_ready": true,
+    "short_ready": true,
     "qty": 5.0,
     "leverage": 500,
+    "order_kind": "LIMIT",
+    "post_only": true,
+    "reduce_only": 0,
     "type": 2,
     "openType": 2,
-    "reduce_only": 0,
-    "actual_queue_write": false,
-    "actual_submit": false,
-    "actual_db_write": false
+    "pending_directional_entry": null,
+    "best_side_if_manual": null
+  },
+  "symbol_integration_audit": {
+    "silver": {
+      "directional_candidate_status": "DIRECTIONAL_SANDBOX_READY",
+      "recommended_scope": "DIRECTIONAL_SANDBOX_ONLY",
+      "no_position": true,
+      "api_allowed": true,
+      "contract_meta_ok": true,
+      "ticker_ok": true,
+      "positions_lookup_ok": true,
+      "open_orders_lookup_ok": true,
+      "directional_preview_supported": true,
+      "directional_enqueue_preview_supported": true,
+      "directional_enqueue_once_supported": true,
+      "automation_cycle_integration_status": "EXCLUDED_INTENTIONALLY"
+    },
+    "xaut": {
+      "directional_candidate_status": "TOO_EXPENSIVE",
+      "recommended_scope": "BLOCKED_TOO_EXPENSIVE",
+      "discovery_meta_works": true,
+      "directional_preview_supported": false,
+      "directional_enqueue_preview_supported": false,
+      "directional_enqueue_once_supported": false
+    }
   },
   "tests": {
-    "no_confirmation_blocks_with_no_insert": true,
-    "silver_long_confirmed_inserts_one_local_row_in_test_db": true,
-    "silver_short_confirmed_inserts_one_local_row_in_test_db": true,
-    "inserted_row_uses_leverage_500_with_cap": true,
-    "duplicate_pending_silver_entry_blocks": true,
-    "silver_existing_position_blocks": true,
-    "blocked_preview_inserts_nothing": true,
-    "ada_existing_behavior_unchanged": true
+    "silver_preflight_both_sides_ready": true,
+    "silver_preflight_spread_wait": true,
+    "silver_preflight_existing_position_blocks": true,
+    "silver_preflight_pending_entry_blocks": true,
+    "silver_preflight_wrong_leverage_blocks": true,
+    "silver_preflight_market_enabled_blocks": true,
+    "symbol_integration_audit_silver_ready_xaut_too_expensive": true
   },
   "safety_summary": {
     "live_submit": false,
     "mexc_api_submit": false,
     "market": false,
-    "real_db_action_queue_write_during_smoke": false,
+    "real_queue_db_write_during_smoke": false,
     "automation_cycle_live_once_changes": false,
     "executor_changes": false,
     "policy_config_writes": false
   },
   "next_operator_decision": {
     "status": "paused",
-    "recommended_next_action": "Run optional confirmed local enqueue only if the operator explicitly wants a local action_queue row; otherwise remain paused.",
+    "recommended_next_action": "Optional local enqueue only if the operator explicitly wants a local action_queue row; otherwise remain paused.",
     "optional_confirmed_local_enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json --confirm-directional-entry-enqueue-once",
+    "alternative": "Stay paused and do not enqueue.",
     "important": "The optional command is local enqueue only and does not submit to MEXC."
   }
 }
