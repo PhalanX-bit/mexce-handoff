@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-07T18:58:00Z",
+  "updated_at": "2026-05-12T07:46:08Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-12-001",
+      "title": "SILVER directional entry enqueue-once support",
+      "status": "completed",
+      "completed_at": "2026-05-12T07:46:08Z",
+      "result_summary": "directional_entry_enqueue_once now supports SILVER/USDT:USDT as a guarded local enqueue target. Real no-confirm smoke reached READY preview but blocked with confirmation_required, with actual_queue_write=false, actual_submit=false, and actual_db_write=false. Next state is paused awaiting explicit operator decision for optional local enqueue only."
+    },
     {
       "task_id": "2026-05-07-024",
       "title": "Automation cycle dry-run watch mode",

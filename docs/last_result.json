@@ -1,72 +1,59 @@
 {
-  "task_id": "2026-05-07-024",
-  "updated_at": "2026-05-07T18:58:00Z",
+  "task_id": "2026-05-12-001",
+  "updated_at": "2026-05-12T07:46:08Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Automation cycle dry-run watch mode",
-  "result_type": "automation_cycle_dry_run_watch_verification",
-  "scope": {
-    "live_submit_executed": false,
-    "action_queue_write": false,
-    "db_write": false,
-    "cancel_replace_executed": false,
-    "backfill": false,
-    "market_enabled": false,
-    "db_schema_changes": false,
-    "strategy_logic_changes": false,
-    "api_executor_mexc_direct_changes": false
-  },
+  "title": "SILVER directional entry enqueue-once support",
+  "result_type": "directional_entry_enqueue_once_silver_support_verification",
+  "summary": "directional_entry_enqueue_once now supports SILVER/USDT:USDT as a guarded local enqueue target in addition to ADA. The SILVER path requires a fresh READY enqueue preview proving no position, API allowed, liquidity OK, and economic entry allowed under the supplied hypothesis. No-confirm real-DB smoke blocked correctly with no DB, queue, or MEXC submit.",
   "changed_files": [
     "scripts/automation_read_only_runner.py",
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_automation_read_only_runner.py",
-    "scripts/test_controls_automation_parsing.py",
-    "last_result.json",
-    "task_history.json"
+    "scripts/test_automation_read_only_runner.py"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='.pycache_automation_cycle_watch2'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
-    "python scripts\\test_automation_read_only_runner.py",
     "python scripts\\test_controls_automation_parsing.py",
-    "python scripts\\automation_read_only_runner.py --mode automation_cycle_dry_run --symbols AT/USDT:USDT,ADA/USDT:USDT,BTC/USDT:USDT,ETH/USDT:USDT,SOL/USDT:USDT --watch --interval-sec 1 --max-iterations 1 --json"
+    "python scripts\\test_automation_read_only_runner.py",
+    "$env:PYTHONPYCACHEPREFIX='C:\\Users\\DADDY\\PycharmProjects\\Funding_strategies\\MEXC_anal_GPT\\mexce\\tmp_pycache_codex'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json"
   ],
-  "watch_mode": {
-    "implemented": true,
-    "interval_sec": 1.0,
-    "max_iterations": 1,
-    "stop_on_ready": true,
-    "stop_on_error": true,
-    "continue_on_ready": false,
+  "smoke_result": {
+    "preview_state": "READY",
+    "state": "BLOCKED",
+    "reason": "confirmation_required",
+    "row_preview_symbol": "SILVER/USDT:USDT",
+    "side": "LONG",
+    "qty": 5.0,
+    "leverage": 500,
+    "type": 2,
+    "openType": 2,
+    "reduce_only": 0,
     "actual_queue_write": false,
     "actual_submit": false,
-    "compact_iterations_by_default": true,
-    "verbose_raw_records_flag": "--verbose"
-  },
-  "smoke": {
-    "final_state": "NO_ACTION_FOUND",
-    "iterations_completed": 1,
-    "stopped_early": false,
-    "ready_iteration": null,
-    "first_ready_action": null,
-    "last_cycle_state": "WAIT",
-    "last_reason": "no_planner_ready_candidate",
-    "total_elapsed_ms": 4913.767
+    "actual_db_write": false
   },
   "tests": {
-    "wait_timeout": true,
-    "ready_stop": true,
-    "error_stop": true,
-    "continue_on_ready": true,
-    "invalid_args": true,
-    "no_writes_submits": true,
-    "json_serializable": true,
-    "verbose_raw_record": true,
-    "normal_dry_run_unchanged": true
+    "no_confirmation_blocks_with_no_insert": true,
+    "silver_long_confirmed_inserts_one_local_row_in_test_db": true,
+    "silver_short_confirmed_inserts_one_local_row_in_test_db": true,
+    "inserted_row_uses_leverage_500_with_cap": true,
+    "duplicate_pending_silver_entry_blocks": true,
+    "silver_existing_position_blocks": true,
+    "blocked_preview_inserts_nothing": true,
+    "ada_existing_behavior_unchanged": true
   },
-  "ui": {
-    "copyable_watch_command": true,
-    "no_background_thread": true,
-    "no_live_button_added": true
+  "safety_summary": {
+    "live_submit": false,
+    "mexc_api_submit": false,
+    "market": false,
+    "real_db_action_queue_write_during_smoke": false,
+    "automation_cycle_live_once_changes": false,
+    "executor_changes": false,
+    "policy_config_writes": false
   },
-  "summary": "automation_cycle_dry_run --watch now returns compact per-iteration summaries by default, includes elapsed_ms and total_elapsed_ms, stops on READY_ONE_ACTION or ERROR_STOP unless --continue-on-ready is set, and supports --verbose for raw per-iteration records. A copyable read-only watch command was added to the cockpit."
+  "next_operator_decision": {
+    "status": "paused",
+    "recommended_next_action": "Run optional confirmed local enqueue only if the operator explicitly wants a local action_queue row; otherwise remain paused.",
+    "optional_confirmed_local_enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json --confirm-directional-entry-enqueue-once",
+    "important": "The optional command is local enqueue only and does not submit to MEXC."
+  }
 }
