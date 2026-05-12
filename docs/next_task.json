@@ -1,11 +1,11 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-12T13:03:02Z",
+  "updated_at": "2026-05-12T16:21:51Z",
   "status_kind": "next_task",
   "status": "paused",
   "title": "Await operator decision for optional SILVER directional sandbox local enqueue",
   "task_type": "operator_decision",
-  "objective": "SILVER/USDT:USDT now has complete read-only directional lifecycle coverage. No local action_queue row should be created unless the operator explicitly chooses to proceed. This remains local enqueue only and does not submit to MEXC.",
+  "objective": "SILVER/USDT:USDT directional lifecycle supervisor is verified and currently reports NO_ENTRY_READY_FOR_LOCAL_ENQUEUE. No local action_queue row should be created unless the operator explicitly chooses to proceed. This remains local enqueue only and does not submit to MEXC.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
     "live_exchange_action_allowed": false,
@@ -15,13 +15,14 @@
     "database_schema_changes_allowed": false,
     "secrets_allowed": false
   },
-  "recommended_next_action": "Optional local enqueue only if the operator explicitly wants a local action_queue row.",
+  "recommended_next_action": "Stay paused, or optionally create one local SILVER directional entry action_queue row after explicit operator decision.",
   "suggested_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json --confirm-directional-entry-enqueue-once",
   "alternative_next_action": "Stay paused and do not enqueue.",
   "important_notes": [
+    "Manual side remains required; LONG is only the suggested command shape.",
     "This command creates at most one local action_queue row.",
     "This command does not submit to MEXC.",
-    "Manual side remains required; LONG is only the suggested command shape.",
+    "No live submit should be performed.",
     "SILVER remains DIRECTIONAL_SANDBOX_ONLY.",
     "automation_cycle_live_once and guarded autopilot remain intentionally excluded from SILVER directional sandbox execution."
   ],

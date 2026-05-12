@@ -1,11 +1,11 @@
 {
-  "task_id": "2026-05-12-003",
-  "updated_at": "2026-05-12T13:03:02Z",
+  "task_id": "2026-05-12-004",
+  "updated_at": "2026-05-12T16:21:51Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "SILVER full read-only directional lifecycle coverage",
-  "result_type": "silver_full_read_only_directional_lifecycle_verification",
-  "summary": "Completed read-only SILVER/USDT:USDT directional sandbox lifecycle coverage. Entry preview/enqueue preview/local-only enqueue path exists, take-profit plan/enqueue preview exists, and repair plan/enqueue preview exists. SILVER remains DIRECTIONAL_SANDBOX_ONLY and intentionally excluded from automation_cycle_live_once/autopilot. XAUT/GOLD remains BLOCKED_TOO_EXPENSIVE.",
+  "title": "SILVER directional lifecycle supervisor verification",
+  "result_type": "silver_directional_lifecycle_supervisor_verification",
+  "summary": "Implemented and verified silver_directional_lifecycle_supervisor_report. The real local environment reports NO_ENTRY_READY_FOR_LOCAL_ENQUEUE with preflight READY_FOR_LOCAL_ENQUEUE, no pending entry, no filled directional lots, no pending take-profit close, and no pending repair action. SILVER remains fully read-only supervised and ready only for optional local enqueue after explicit operator decision.",
   "changed_files": [
     "scripts/automation_read_only_runner.py",
     "scripts/test_automation_read_only_runner.py"
@@ -14,90 +14,45 @@
     "$env:PYTHONPYCACHEPREFIX='C:\\Users\\DADDY\\PycharmProjects\\Funding_strategies\\MEXC_anal_GPT\\mexce\\tmp_pycache_codex'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_preview --symbol SILVER_USDT --entry-side LONG --entry-price 85 --entry-qty 5 --hypothetical-leverage-cap 500 --json",
-    "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_preview --symbol SILVER_USDT --entry-side LONG --entry-price 83 --entry-qty 5 --hypothetical-leverage-cap 500 --json"
+    "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --json"
   ],
-  "silver_directional_lifecycle": {
-    "scope": "DIRECTIONAL_SANDBOX_ONLY",
-    "automation_cycle_integration_status": "EXCLUDED_INTENTIONALLY",
-    "entry_branch": {
-      "silver_directional_sandbox_preflight": true,
-      "directional_entry_preview": true,
-      "directional_entry_enqueue_preview": true,
-      "directional_entry_enqueue_once": "exists_local_only_guarded",
-      "real_local_enqueue_executed": false
-    },
-    "take_profit_branch": {
-      "directional_entry_take_profit_plan_report": true,
-      "directional_entry_take_profit_enqueue_preview": true,
-      "verified_example": {
-        "entry_side": "LONG",
-        "entry_qty": 5,
-        "entry_price": 84,
-        "current_price_approx": 84.51,
-        "favorable_move_bps_approx": 60.71,
-        "state": "TAKE_PROFIT_TRIGGERED",
-        "preview_row": {
-          "intent": "directional_entry_take_profit_close",
-          "panel_mode": "CLOSE",
-          "reduce_only": 1,
-          "type": 1,
-          "openType": 2,
-          "leverage": 500,
-          "expected_state_after_close": "ENTRY_CLOSED_PROFIT"
-        }
-      }
-    },
-    "repair_branch": {
-      "directional_entry_repair_plan_report": true,
-      "directional_entry_repair_enqueue_preview": true,
-      "verified_example": {
-        "entry_side": "LONG",
-        "entry_qty": 5,
-        "entry_price": 85.5,
-        "current_price_approx": 84.75,
-        "adverse_move_bps_approx": 87.72,
-        "state": "REPAIR_TRIGGERED",
-        "preview_row": {
-          "intent": "directional_entry_repair_open",
-          "panel_mode": "OPEN",
-          "side": "SHORT",
-          "qty": 5,
-          "reduce_only": 0,
-          "type": 2,
-          "openType": 2,
-          "leverage": 500,
-          "expected_state_after_repair": "HEDGED_1_TO_1"
-        }
-      }
-    },
-    "xaut_gold": {
-      "status": "BLOCKED_TOO_EXPENSIVE",
-      "scope": "DISCOVERY_ONLY"
-    }
+  "silver_directional_lifecycle_supervisor": {
+    "mode": "silver_directional_lifecycle_supervisor_report",
+    "state": "NO_ENTRY_READY_FOR_LOCAL_ENQUEUE",
+    "recommended_next_action": "OPTIONAL_LOCAL_ENQUEUE_ONLY",
+    "preflight_summary_state": "READY_FOR_LOCAL_ENQUEUE",
+    "pending_entry_actions": [],
+    "filled_directional_lots": [],
+    "take_profit_pending_actions": [],
+    "repair_pending_actions": [],
+    "blocking_reasons": [],
+    "operator_note": "No SILVER directional entry is active. Optional local enqueue only after explicit operator decision."
   },
   "tests": {
-    "entry_branch_read_only_available": true,
-    "take_profit_plan_report": true,
-    "take_profit_enqueue_preview": true,
-    "repair_plan_report": true,
-    "repair_enqueue_preview": true,
+    "no_entry_preflight_ready": true,
+    "pending_entry": true,
+    "filled_entry_tp_ready": true,
+    "filled_entry_repair_ready": true,
+    "pending_repair_stale_replace": true,
+    "pending_tp_close": true,
+    "conflict_stop_and_diagnose": true,
     "read_only_flags_false": true
   },
   "safety_summary": {
     "live_submit": false,
     "mexc_api_submit": false,
     "market": false,
-    "real_queue_db_write_during_lifecycle_verification": false,
+    "real_queue_db_write": false,
+    "cancel": false,
     "automation_cycle_live_once_changes": false,
     "executor_changes": false,
     "policy_config_writes": false
   },
   "next_operator_decision": {
     "status": "paused",
-    "recommended_next_action": "Optional local enqueue only if the operator explicitly wants a local action_queue row; otherwise remain paused.",
+    "recommended_next_action": "Stay paused, or optionally create one local SILVER directional entry action_queue row after explicit operator decision.",
     "optional_confirmed_local_enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json --confirm-directional-entry-enqueue-once",
     "alternative": "Stay paused and do not enqueue.",
-    "important": "The optional command is local enqueue only and does not submit to MEXC."
+    "important": "Manual side remains required. The optional command is local enqueue only and does not submit to MEXC."
   }
 }
