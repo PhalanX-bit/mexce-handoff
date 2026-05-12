@@ -1,11 +1,11 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-12T10:20:49Z",
+  "updated_at": "2026-05-12T13:03:02Z",
   "status_kind": "next_task",
   "status": "paused",
   "title": "Await operator decision for optional SILVER directional sandbox local enqueue",
   "task_type": "operator_decision",
-  "objective": "SILVER/USDT:USDT is ready for a directional sandbox local enqueue, but no local action_queue row should be created unless the operator explicitly chooses to proceed. This remains local enqueue only and does not submit to MEXC.",
+  "objective": "SILVER/USDT:USDT now has complete read-only directional lifecycle coverage. No local action_queue row should be created unless the operator explicitly chooses to proceed. This remains local enqueue only and does not submit to MEXC.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
     "live_exchange_action_allowed": false,
@@ -22,7 +22,8 @@
     "This command creates at most one local action_queue row.",
     "This command does not submit to MEXC.",
     "Manual side remains required; LONG is only the suggested command shape.",
-    "automation_cycle_live_once remains excluded from SILVER directional sandbox execution."
+    "SILVER remains DIRECTIONAL_SANDBOX_ONLY.",
+    "automation_cycle_live_once and guarded autopilot remain intentionally excluded from SILVER directional sandbox execution."
   ],
   "expected_result": {
     "state": "DONE if confirmed and no duplicate pending row exists",
