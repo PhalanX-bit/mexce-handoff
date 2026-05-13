@@ -1,11 +1,11 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-13T07:17:05Z",
+  "updated_at": "2026-05-13T10:02:00Z",
   "status_kind": "next_task",
   "status": "paused",
-  "title": "Monitor active SILVER directional SHORT lot with guarded TP/repair paths",
+  "title": "Monitor active SILVER directional SHORT lot from Controls UI",
   "task_type": "operator_monitoring",
-  "objective": "Active SILVER/USDT:USDT directional SHORT lot_id=26 remains open. Use the read-only lifecycle supervisor watch to monitor until TAKE_PROFIT_READY, REPAIR_READY, STOP_AND_DIAGNOSE, or max iterations. TP/repair local enqueue and submit-live-once paths now exist but remain guarded and must only be used after explicit operator confirmation.",
+  "objective": "Active SILVER/USDT:USDT directional SHORT lot_id=26 remains open. Use Controls UI -> SILVER Directional Sandbox panel, or the read-only lifecycle supervisor watch CLI, to monitor until TAKE_PROFIT_READY, REPAIR_READY, STOP_AND_DIAGNOSE, or max iterations. No action is allowed while state is ENTRY_FILLED_WAIT or WAIT_MARKET_DATA.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
     "active_directional_lot_id": 26,
@@ -13,42 +13,43 @@
     "side": "SHORT",
     "qty": 5,
     "entry_price": 86.44,
+    "take_profit_price": 86.0078,
+    "repair_trigger_price": 87.0883,
     "live_exchange_action_allowed": false,
     "local_tp_or_repair_enqueue_allowed_only_with_future_confirmation": true,
-    "tp_or_repair_submit_live_once_allowed_only_with_future_confirmation": true,
     "market_orders_allowed": false,
     "cancel_allowed": false,
     "automation_cycle_live_once_integration_allowed": false,
     "executor_changes_allowed": false
   },
-  "recommended_next_action": "Run the read-only SILVER lifecycle supervisor watch and keep waiting while state is ENTRY_FILLED_WAIT.",
+  "recommended_next_action": "Use Controls UI -> SILVER Directional Sandbox panel, or run the read-only SILVER lifecycle supervisor watch and keep waiting while state is ENTRY_FILLED_WAIT or WAIT_MARKET_DATA.",
+  "ui_next_step": "Open Controls UI -> SILVER Directional Sandbox panel, click Refresh summary / Refresh supervisor, and monitor the displayed state and TP/repair distances.",
   "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
   "if_take_profit_ready": {
-    "next_candidate": "guarded local TP enqueue only after explicit confirmation, then TP submit preflight, then explicit TP submit live-once only if operator confirms",
-    "enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_once --lot-id 26 --symbol SILVER_USDT --confirm-directional-entry-take-profit-enqueue-once --json",
-    "submit_preflight_command_template": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_submit_preflight --action-id <TP_ACTION_ID> --symbol SILVER_USDT --json",
-    "submit_live_once_command_template": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_submit_live_once --action-id <TP_ACTION_ID> --symbol SILVER_USDT --json --live --confirm-live --confirm-directional-entry-take-profit-submit-live-once"
+    "next_candidate": "only guarded local TP enqueue may be considered after explicit checkbox/confirmation",
+    "enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_once --lot-id 26 --symbol SILVER_USDT --json --confirm-directional-entry-take-profit-enqueue-once"
   },
   "if_repair_ready": {
-    "next_candidate": "guarded local repair enqueue only after explicit confirmation, then repair submit preflight, then explicit repair submit live-once only if operator confirms",
-    "enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_once --lot-id 26 --symbol SILVER_USDT --confirm-directional-entry-repair-enqueue-once --json",
-    "submit_preflight_command_template": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_submit_preflight --action-id <REPAIR_ACTION_ID> --symbol SILVER_USDT --json",
-    "submit_live_once_command_template": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_submit_live_once --action-id <REPAIR_ACTION_ID> --symbol SILVER_USDT --json --live --confirm-live --confirm-directional-entry-repair-submit-live-once"
+    "next_candidate": "only guarded local repair enqueue may be considered after explicit checkbox/confirmation",
+    "enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_once --lot-id 26 --symbol SILVER_USDT --json --confirm-directional-entry-repair-enqueue-once"
   },
-  "if_entry_filled_wait": {
-    "next_candidate": "pause and monitor",
-    "recommended_action": "Do not enqueue TP/repair yet."
+  "if_entry_filled_wait_or_wait_market_data": {
+    "next_candidate": "monitor only",
+    "recommended_action": "Do not enqueue TP/repair."
   },
   "if_stop_and_diagnose": {
     "next_candidate": "pause and diagnose",
     "recommended_action": "Do not enqueue or submit any action."
   },
   "safety_summary": {
-    "new_live_submit_after_original_silver_entry": false,
+    "live_submit": false,
     "mexc_api_submit": false,
+    "queue_write": false,
+    "queue_write_exception": "future guarded local TP/repair enqueue with checkbox only",
+    "db_write": false,
+    "db_write_exception": "future guarded local enqueue if explicitly confirmed",
     "market": false,
     "cancel": false,
-    "tp_repair_queue_write_without_future_confirm": false,
     "automation_cycle_live_once_changes": false,
     "executor_behavior_changes": false
   },

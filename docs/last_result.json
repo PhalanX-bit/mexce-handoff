@@ -1,14 +1,14 @@
 {
-  "task_id": "2026-05-13-003",
-  "updated_at": "2026-05-13T07:17:05Z",
+  "task_id": "2026-05-13-004",
+  "updated_at": "2026-05-13T10:02:00Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "SILVER TP/repair guarded submit preflight and live-once scaffolding",
-  "result_type": "silver_directional_tp_repair_submit_guarding",
-  "summary": "Added protected submit preflight and guarded submit-live-once modes for SILVER directional take-profit close and repair open actions. TP close preflight maps SHORT closes to CLOSE_SHORT / MEXC side code 2 and LONG closes to CLOSE_LONG / side code 4 with LIMIT reduce-only type=1. Repair open preflight maps SHORT-source repair to OPEN_LONG / side code 1 and LONG-source repair to OPEN_SHORT / side code 3 with LIMIT post-only type=2. The live-once paths require --live, --confirm-live, and their dedicated confirmation flags, submit at most one existing ARMED action through the existing executor path, then reconcile once. They are not integrated into automation_cycle_live_once or autopilot. Real validation only ran read-only supervisor/watch smokes; no TP/repair enqueue, live submit, cancel, MARKET order, or executor behavior change occurred.",
+  "title": "SILVER Directional Sandbox operator panel",
+  "result_type": "silver_directional_operator_cockpit_panel",
+  "summary": "Added a compact SILVER Directional Sandbox panel to Controls UI. The panel shows active lot state, recommended_next_action, lot/action identifiers, side, qty, entry/current prices, unrealized PnL estimate, TP/repair thresholds and distances, branch states, blocking reasons, safety summary, and the watch command. Refresh summary and refresh supervisor are read-only. Guarded local TP/repair enqueue buttons only appear for TAKE_PROFIT_READY or REPAIR_READY and require explicit checkbox confirmation. No enqueue buttons are enabled for ENTRY_FILLED_WAIT, WAIT_MARKET_DATA, or STOP_AND_DIAGNOSE. No live submit, MEXC API submit, MARKET, cancel, automation_cycle_live_once, or executor changes were made.",
   "changed_files": [
-    "scripts/automation_read_only_runner.py",
-    "scripts/test_automation_read_only_runner.py",
+    "app/V2/ui/controls_tab.py",
+    "scripts/test_controls_automation_parsing.py",
     "next_task.json",
     "last_result.json",
     "task_history.json",
@@ -23,113 +23,57 @@
     "$env:PYTHONPYCACHEPREFIX='C:\\Users\\DADDY\\PycharmProjects\\Funding_strategies\\MEXC_anal_GPT\\mexce\\tmp_pycache_codex'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --json",
-    "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 1 --max-iterations 2 --json-lines"
+    "python scripts\\automation_read_only_runner.py --mode silver_directional_position_summary --json"
   ],
-  "implemented_modes": {
-    "directional_entry_take_profit_submit_preflight": {
-      "present": true,
-      "read_only": true,
-      "shape": "SILVER directional TP close, panel_mode=CLOSE, LIMIT, reduce_only=1, type=1, openType=2, leverage=500"
-    },
-    "directional_entry_take_profit_submit_live_once": {
-      "present": true,
-      "required_flags": [
-        "--live",
-        "--confirm-live",
-        "--confirm-directional-entry-take-profit-submit-live-once"
-      ],
-      "real_live_run": false
-    },
-    "directional_entry_repair_submit_preflight": {
-      "present": true,
-      "read_only": true,
-      "shape": "SILVER directional repair open, panel_mode=OPEN, LIMIT, post_only=true, reduce_only=0, type=2, openType=2, leverage=500"
-    },
-    "directional_entry_repair_submit_live_once": {
-      "present": true,
-      "required_flags": [
-        "--live",
-        "--confirm-live",
-        "--confirm-directional-entry-repair-submit-live-once"
-      ],
-      "real_live_run": false
-    }
+  "panel_behavior": {
+    "refresh_summary": "runs read-only silver_directional_position_summary",
+    "refresh_supervisor": "runs read-only silver_directional_lifecycle_supervisor_report",
+    "watch_command_visible": true,
+    "take_profit_enqueue": "shown only for TAKE_PROFIT_READY and locked behind checkbox",
+    "repair_enqueue": "shown only for REPAIR_READY and locked behind checkbox",
+    "entry_filled_wait": "monitor only; no enqueue enabled",
+    "wait_market_data": "market reference unavailable warning; no enqueue enabled",
+    "stop_and_diagnose": "red warning; no enqueue enabled"
   },
-  "supervisor": {
-    "final_state": "ENTRY_FILLED_WAIT",
-    "recommended_next_action": "WAIT_FOR_TP_OR_REPAIR",
-    "active_lot_summary": {
-      "lot_id": 26,
-      "source_action_id": 40,
-      "symbol": "SILVER/USDT:USDT",
-      "side": "SHORT",
-      "qty_remaining": 5,
-      "entry_price": 86.44
-    },
-    "thresholds": {
-      "take_profit_price": 86.0078,
-      "repair_trigger_price": 87.0883,
-      "current_reference_price": null,
-      "distance_to_take_profit_bps": null,
-      "distance_to_repair_bps": null
-    },
-    "branch_states": {
-      "take_profit_state": "BLOCKED",
-      "repair_state": "BLOCKED"
-    },
-    "market_lookup_note": "Real read-only smoke could not fetch SILVER current reference price/contract size, so TP/repair branch plans stayed fail-safe BLOCKED while the lifecycle state remained ENTRY_FILLED_WAIT."
-  },
-  "watch_mode": {
-    "real_smoke_final_state": "ENTRY_FILLED_WAIT",
-    "real_smoke_iterations_completed": 2,
-    "real_smoke_stopped_reason": "max_iterations",
-    "actual_queue_write": false,
-    "actual_submit": false,
-    "actual_db_write": false
+  "sample_state": {
+    "state": "WAIT_MARKET_DATA",
+    "lot_id": 26,
+    "source_action_id": 40,
+    "side": "SHORT",
+    "qty_remaining": 5,
+    "entry_price": 86.44,
+    "take_profit_price": 86.0078,
+    "repair_trigger_price": 87.0883,
+    "current_reference_price": null,
+    "warning": "market_price_unavailable"
   },
   "tests": {
-    "tp_short_maps_close_short_side_code_2": true,
-    "tp_long_maps_close_long_side_code_4": true,
-    "tp_missing_reduce_only_blocks": true,
-    "tp_wrong_intent_blocks": true,
-    "tp_missing_leverage_blocks": true,
-    "tp_bad_precision_blocks": true,
-    "tp_api_order_id_present_blocks": true,
-    "tp_missing_confirmations_block": true,
-    "tp_successful_mock_submit_calls_executor_once": true,
-    "tp_filled_confirmed_reduces_directional_lot": true,
-    "tp_not_filled_remains_pending": true,
-    "repair_short_source_maps_open_long_side_code_1": true,
-    "repair_long_source_maps_open_short_side_code_3": true,
-    "repair_wrong_side_blocks": true,
-    "repair_wrong_qty_blocks": true,
-    "repair_missing_post_only_blocks": true,
-    "repair_missing_leverage_blocks": true,
-    "repair_api_order_id_present_blocks": true,
-    "repair_missing_confirmations_block": true,
-    "repair_successful_mock_submit_calls_executor_once": true,
-    "repair_filled_confirmed_marks_repair_lot": true,
-    "repair_not_filled_remains_pending": true,
-    "market_shape_blocks": true,
-    "read_only_flags_false": true
+    "controls_parsing": true,
+    "automation_read_only_runner": true,
+    "compile": true,
+    "silver_commands_no_live": true,
+    "silver_enqueue_guard_requires_ready_state_and_checkbox": true,
+    "panel_source_contains_guarded_controls": true
   },
   "next_operator_decision": {
     "status": "paused",
-    "recommended_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
-    "if_take_profit_ready": "Local TP enqueue only, then TP submit preflight, then explicit TP submit live-once only if operator confirms.",
-    "if_repair_ready": "Local repair enqueue only, then repair submit preflight, then explicit repair submit live-once only if operator confirms.",
-    "if_entry_filled_wait": "Keep waiting.",
+    "ui_next_step": "Use Controls UI -> SILVER Directional Sandbox panel.",
+    "cli_alternative": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
+    "if_take_profit_ready": "Only guarded local TP enqueue may be considered.",
+    "if_repair_ready": "Only guarded local repair enqueue may be considered.",
+    "if_entry_filled_wait_or_wait_market_data": "Monitor only.",
     "if_stop_and_diagnose": "Pause and diagnose."
   },
   "safety_summary": {
-    "new_live_submit_after_original_silver_entry": false,
+    "live_submit": false,
     "mexc_api_submit": false,
+    "queue_write": false,
+    "queue_write_exception": "future guarded local TP/repair enqueue with checkbox only",
+    "db_write": false,
+    "db_write_exception": "future guarded local enqueue if explicitly confirmed",
     "market": false,
     "cancel": false,
-    "tp_repair_queue_write_without_future_confirm": false,
     "automation_cycle_live_once_changes": false,
-    "autopilot_integration": false,
     "executor_behavior_changes": false
   }
 }

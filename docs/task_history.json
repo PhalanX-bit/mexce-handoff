@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-13T07:17:05Z",
+  "updated_at": "2026-05-13T10:02:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-13-004",
+      "title": "SILVER Directional Sandbox operator panel",
+      "status": "completed",
+      "completed_at": "2026-05-13T10:02:00Z",
+      "result_summary": "Added compact SILVER Directional Sandbox panel to Controls UI. It shows lot 26 state, TP/repair thresholds and distances, PnL fields, branch states, blocking reasons, safety summary, and watch command. Refresh buttons are read-only; local TP/repair enqueue buttons only appear for TAKE_PROFIT_READY/REPAIR_READY and require checkbox confirmation. No live submit, MEXC submit, MARKET, cancel, automation_cycle_live_once, or executor changes."
+    },
     {
       "task_id": "2026-05-13-003",
       "title": "SILVER TP/repair guarded submit preflight and live-once scaffolding",
