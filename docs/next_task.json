@@ -1,11 +1,11 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-13T04:39:30Z",
+  "updated_at": "2026-05-13T06:20:55Z",
   "status_kind": "next_task",
   "status": "paused",
-  "title": "Monitor real SILVER directional SHORT lot and act only on TP/repair readiness",
-  "task_type": "operator_decision",
-  "objective": "A real SILVER/USDT:USDT directional SHORT entry has been filled and synced locally as lot_id=26. The operator should run the read-only lifecycle supervisor and only proceed if it reports TAKE_PROFIT_READY or REPAIR_READY. No TP/repair queue write or submit should occur without a later explicit guarded confirmation.",
+  "title": "Monitor active SILVER directional SHORT lot with supervisor watch",
+  "task_type": "operator_monitoring",
+  "objective": "Active SILVER/USDT:USDT directional SHORT lot_id=26 remains open. Use the read-only lifecycle supervisor watch to monitor until TAKE_PROFIT_READY, REPAIR_READY, STOP_AND_DIAGNOSE, or max iterations. Do not enqueue TP/repair unless a later explicit guarded confirmation command is chosen.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
     "active_directional_lot_id": 26,
@@ -15,38 +15,39 @@
     "entry_price": 86.44,
     "live_exchange_action_allowed": false,
     "local_tp_or_repair_enqueue_allowed_only_with_future_confirmation": true,
-    "code_changes_allowed": false,
-    "ui_changes_allowed": false,
-    "database_schema_changes_allowed": false,
-    "secrets_allowed": false
+    "market_orders_allowed": false,
+    "cancel_allowed": false,
+    "automation_cycle_live_once_integration_allowed": false,
+    "executor_changes_allowed": false
   },
-  "recommended_next_action": "Run silver_directional_lifecycle_supervisor_report and follow only if it says TAKE_PROFIT_READY or REPAIR_READY.",
-  "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --json",
+  "recommended_next_action": "Run the read-only SILVER lifecycle supervisor watch and keep waiting while state is ENTRY_FILLED_WAIT.",
+  "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
   "if_take_profit_ready": {
-    "next_candidate": "local TP enqueue preview / guarded enqueue only",
-    "preview_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json"
+    "next_candidate": "guarded local TP enqueue only after explicit confirmation",
+    "preview_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json",
+    "enqueue_mode_present": true
   },
   "if_repair_ready": {
-    "next_candidate": "local repair enqueue preview / guarded enqueue only",
-    "preview_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json"
+    "next_candidate": "guarded local repair enqueue only after explicit confirmation",
+    "preview_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json",
+    "enqueue_mode_present": true
   },
   "if_entry_filled_wait": {
     "next_candidate": "pause and monitor",
     "recommended_action": "Do not enqueue TP/repair yet."
   },
-  "important_notes": [
-    "Manual/operator confirmation remains required for any future local TP or repair enqueue.",
-    "No TP or repair action has been enqueued or submitted yet.",
-    "No MARKET orders are allowed.",
-    "No cancel/replace should be performed from this next task.",
-    "SILVER remains DIRECTIONAL_SANDBOX_ONLY and intentionally excluded from automation_cycle_live_once/autopilot."
-  ],
-  "expected_result": {
-    "supervisor_state": "ENTRY_FILLED_WAIT, TAKE_PROFIT_READY, or REPAIR_READY",
-    "actual_submit": false,
+  "if_stop_and_diagnose": {
+    "next_candidate": "pause and diagnose",
+    "recommended_action": "Do not enqueue or submit any action."
+  },
+  "safety_summary": {
+    "live_submit": false,
     "mexc_api_submit": false,
-    "actual_queue_write": false,
-    "market_allowed": false
+    "market": false,
+    "cancel": false,
+    "tp_repair_queue_write_without_future_confirm": false,
+    "automation_cycle_live_once_changes": false,
+    "executor_behavior_changes": false
   },
   "write_result_to": "last_result.json",
   "append_summary_to": "task_history.json"

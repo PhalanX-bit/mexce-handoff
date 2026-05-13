@@ -1,11 +1,11 @@
 {
-  "task_id": "2026-05-13-001",
-  "updated_at": "2026-05-13T04:39:30Z",
+  "task_id": "2026-05-13-002",
+  "updated_at": "2026-05-13T06:20:55Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "Real SILVER SHORT fill sync and lot-based lifecycle supervision",
-  "result_type": "silver_directional_fill_sync_lot_supervision",
-  "summary": "Real SILVER/USDT:USDT directional SHORT action 40 was filled and synced locally. The active directional lot is lot_id=26, source_action_id=40, side=SHORT, qty=5, entry_price=86.44. silver_directional_lifecycle_supervisor_report now treats the synced lot as the primary lifecycle state and returns ENTRY_FILLED_WAIT, TAKE_PROFIT_READY, or REPAIR_READY based on market conditions. Lot-based take-profit and repair enqueue previews are available and verified read-only. No TP/repair action has been enqueued or submitted.",
+  "title": "SILVER lot-based monitoring and guarded local enqueue hardening",
+  "result_type": "silver_directional_lot_monitoring_enqueue_hardening",
+  "summary": "Added and verified read-only watch support for silver_directional_lifecycle_supervisor_report, explicit active-lot thresholds/branch states, guarded local-only directional_entry_take_profit_enqueue_once, and guarded local-only directional_entry_repair_enqueue_once. The real active lot is SILVER SHORT lot_id=26, source_action_id=40, qty=5, entry_price=86.44. Current real supervisor state is ENTRY_FILLED_WAIT with TP price 86.0078 and repair trigger 87.0883. No TP/repair queue row was inserted, no live submit occurred, and no MARKET/cancel/executor/automation_cycle_live_once changes were made.",
   "changed_files": [
     "scripts/automation_read_only_runner.py",
     "scripts/test_automation_read_only_runner.py",
@@ -23,29 +23,14 @@
     "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json",
-    "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json"
+    "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --json",
+    "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 1 --max-iterations 2 --json-lines",
+    "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_once --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json",
+    "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_once --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json"
   ],
-  "real_silver_directional_entry": {
-    "action_id": 40,
-    "api_order_id": "809262021539443904",
-    "symbol": "SILVER/USDT:USDT",
-    "side": "SHORT",
-    "qty": 5,
-    "entry_price": 86.44,
-    "fill_state": "FILLED_CONFIRMED",
-    "deal_qty": 5,
-    "synced_lot_id": 26,
-    "lot_type": "DIRECTIONAL_ENTRY",
-    "source_action_id": 40
-  },
-  "lifecycle_supervision": {
-    "supervisor_mode": "silver_directional_lifecycle_supervisor_report",
-    "expected_current_states": [
-      "ENTRY_FILLED_WAIT",
-      "TAKE_PROFIT_READY",
-      "REPAIR_READY"
-    ],
+  "supervisor": {
+    "final_state": "ENTRY_FILLED_WAIT",
+    "recommended_next_action": "WAIT_FOR_TP_OR_REPAIR",
     "active_lot_summary": {
       "lot_id": 26,
       "source_action_id": 40,
@@ -54,47 +39,81 @@
       "qty_remaining": 5,
       "entry_price": 86.44
     },
-    "take_profit_preview_supported_from_lot_id": true,
-    "repair_preview_supported_from_lot_id": true,
-    "no_tp_or_repair_pending_action": true
+    "thresholds": {
+      "take_profit_price": 86.0078,
+      "repair_trigger_price": 87.0883,
+      "current_reference_price": null,
+      "distance_to_take_profit_bps": null,
+      "distance_to_repair_bps": null
+    },
+    "branch_states": {
+      "take_profit_state": "BLOCKED",
+      "repair_state": "BLOCKED"
+    },
+    "market_lookup_note": "Current real smoke could not fetch SILVER market price/contract size, so the supervisor stayed fail-safe at ENTRY_FILLED_WAIT with thresholds visible."
   },
-  "latest_lot_based_repair_preview_smoke": {
-    "mode": "directional_entry_repair_enqueue_preview",
-    "lot_id": 26,
-    "state": "BLOCKED",
-    "blocking_reasons": [
-      "market_price_unavailable"
+  "watch_mode": {
+    "implemented": true,
+    "json_lines": true,
+    "stop_states": [
+      "TAKE_PROFIT_READY",
+      "REPAIR_READY",
+      "STOP_AND_DIAGNOSE"
     ],
-    "active_lot_recognized": true,
-    "active_lot_marker_source": "source_action",
-    "actual_queue_write": false,
-    "actual_submit": false,
-    "actual_db_write": false
+    "continues_only_while": "ENTRY_FILLED_WAIT",
+    "real_smoke_final_state": "ENTRY_FILLED_WAIT",
+    "real_smoke_iterations_completed": 2,
+    "real_smoke_stopped_reason": "max_iterations"
+  },
+  "guarded_local_enqueue_modes": {
+    "directional_entry_take_profit_enqueue_once": {
+      "present": true,
+      "requires_confirm": "--confirm-directional-entry-take-profit-enqueue-once",
+      "real_no_confirm_state": "BLOCKED",
+      "real_no_confirm_actual_queue_write": false,
+      "real_no_confirm_actual_submit": false,
+      "real_no_confirm_actual_db_write": false
+    },
+    "directional_entry_repair_enqueue_once": {
+      "present": true,
+      "requires_confirm": "--confirm-directional-entry-repair-enqueue-once",
+      "real_no_confirm_state": "BLOCKED",
+      "real_no_confirm_actual_queue_write": false,
+      "real_no_confirm_actual_submit": false,
+      "real_no_confirm_actual_db_write": false
+    }
   },
   "tests": {
-    "lot_based_tp_preview": true,
-    "lot_based_repair_preview": true,
-    "source_action_marker_fallback": true,
-    "wrong_lot_type_blocks": true,
-    "missing_entry_price_blocks": true,
-    "read_only_flags_false": true
+    "watch_entry_filled_wait_loops": true,
+    "watch_take_profit_ready_stops": true,
+    "watch_repair_ready_stops": true,
+    "watch_stop_and_diagnose_stops": true,
+    "supervisor_threshold_output": true,
+    "take_profit_enqueue_no_confirm_blocks": true,
+    "take_profit_enqueue_ready_inserts_in_mock": true,
+    "take_profit_duplicate_blocks": true,
+    "take_profit_wait_inserts_nothing": true,
+    "repair_enqueue_no_confirm_blocks": true,
+    "repair_enqueue_ready_inserts_in_mock": true,
+    "repair_duplicate_blocks": true,
+    "repair_wait_inserts_nothing": true,
+    "read_only_submit_false": true
   },
   "safety_summary": {
-    "new_live_submit_after_completed_entry": false,
-    "mexc_api_submit_after_completed_entry": false,
+    "live_submit": false,
+    "mexc_api_submit": false,
     "market": false,
-    "tp_repair_queue_write": false,
     "cancel": false,
+    "tp_repair_queue_write_without_future_confirm": false,
     "automation_cycle_live_once_changes": false,
-    "executor_changes": false,
-    "policy_config_writes": false
+    "executor_behavior_changes": false
   },
   "next_operator_decision": {
     "status": "paused",
-    "recommended_next_action": "Run silver_directional_lifecycle_supervisor_report and follow only if it says TAKE_PROFIT_READY or REPAIR_READY.",
-    "supervisor_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --json",
-    "if_take_profit_ready": "Run lot-based take-profit enqueue preview/guarded enqueue only after explicit confirmation.",
-    "if_repair_ready": "Run lot-based repair enqueue preview/guarded enqueue only after explicit confirmation.",
-    "if_entry_filled_wait": "Pause and monitor."
+    "recommended_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
+    "if_take_profit_ready": "Consider only guarded local TP enqueue after explicit confirmation.",
+    "if_repair_ready": "Consider only guarded local repair enqueue after explicit confirmation.",
+    "if_entry_filled_wait": "Keep waiting.",
+    "if_stop_and_diagnose": "Pause and diagnose."
   }
 }

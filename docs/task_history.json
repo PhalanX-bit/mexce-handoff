@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-13T04:39:30Z",
+  "updated_at": "2026-05-13T06:20:55Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-13-002",
+      "title": "SILVER lot-based monitoring and guarded local enqueue hardening",
+      "status": "completed",
+      "completed_at": "2026-05-13T06:20:55Z",
+      "result_summary": "Added read-only JSONL watch for silver_directional_lifecycle_supervisor_report, explicit active-lot thresholds/branch states, and guarded local-only TP/repair enqueue-once modes. Real SILVER SHORT lot_id=26 remains ENTRY_FILLED_WAIT with TP price 86.0078 and repair trigger 87.0883. No TP/repair queue row was inserted, no live submit occurred, and no MARKET/cancel/executor/automation_cycle_live_once changes were made."
+    },
     {
       "task_id": "2026-05-13-001",
       "title": "Real SILVER SHORT fill sync and lot-based lifecycle supervision",
