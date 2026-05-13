@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-13T06:20:55Z",
+  "updated_at": "2026-05-13T07:17:05Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-13-003",
+      "title": "SILVER TP/repair guarded submit preflight and live-once scaffolding",
+      "status": "completed",
+      "completed_at": "2026-05-13T07:17:05Z",
+      "result_summary": "Added protected submit preflight and guarded submit-live-once modes for SILVER directional TP close and repair open actions. TP close maps to CLOSE_SHORT/CLOSE_LONG reduce-only LIMIT type=1; repair open maps to OPEN_LONG/OPEN_SHORT post-only LIMIT type=2. Real validation ran only read-only supervisor/watch smokes; no TP/repair enqueue, live submit, cancel, MARKET, automation_cycle_live_once, autopilot, or executor behavior change occurred."
+    },
     {
       "task_id": "2026-05-13-002",
       "title": "SILVER lot-based monitoring and guarded local enqueue hardening",

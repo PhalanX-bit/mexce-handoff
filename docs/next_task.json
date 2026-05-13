@@ -1,11 +1,11 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-13T06:20:55Z",
+  "updated_at": "2026-05-13T07:17:05Z",
   "status_kind": "next_task",
   "status": "paused",
-  "title": "Monitor active SILVER directional SHORT lot with supervisor watch",
+  "title": "Monitor active SILVER directional SHORT lot with guarded TP/repair paths",
   "task_type": "operator_monitoring",
-  "objective": "Active SILVER/USDT:USDT directional SHORT lot_id=26 remains open. Use the read-only lifecycle supervisor watch to monitor until TAKE_PROFIT_READY, REPAIR_READY, STOP_AND_DIAGNOSE, or max iterations. Do not enqueue TP/repair unless a later explicit guarded confirmation command is chosen.",
+  "objective": "Active SILVER/USDT:USDT directional SHORT lot_id=26 remains open. Use the read-only lifecycle supervisor watch to monitor until TAKE_PROFIT_READY, REPAIR_READY, STOP_AND_DIAGNOSE, or max iterations. TP/repair local enqueue and submit-live-once paths now exist but remain guarded and must only be used after explicit operator confirmation.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
     "active_directional_lot_id": 26,
@@ -15,6 +15,7 @@
     "entry_price": 86.44,
     "live_exchange_action_allowed": false,
     "local_tp_or_repair_enqueue_allowed_only_with_future_confirmation": true,
+    "tp_or_repair_submit_live_once_allowed_only_with_future_confirmation": true,
     "market_orders_allowed": false,
     "cancel_allowed": false,
     "automation_cycle_live_once_integration_allowed": false,
@@ -23,14 +24,16 @@
   "recommended_next_action": "Run the read-only SILVER lifecycle supervisor watch and keep waiting while state is ENTRY_FILLED_WAIT.",
   "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
   "if_take_profit_ready": {
-    "next_candidate": "guarded local TP enqueue only after explicit confirmation",
-    "preview_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json",
-    "enqueue_mode_present": true
+    "next_candidate": "guarded local TP enqueue only after explicit confirmation, then TP submit preflight, then explicit TP submit live-once only if operator confirms",
+    "enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_once --lot-id 26 --symbol SILVER_USDT --confirm-directional-entry-take-profit-enqueue-once --json",
+    "submit_preflight_command_template": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_submit_preflight --action-id <TP_ACTION_ID> --symbol SILVER_USDT --json",
+    "submit_live_once_command_template": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_submit_live_once --action-id <TP_ACTION_ID> --symbol SILVER_USDT --json --live --confirm-live --confirm-directional-entry-take-profit-submit-live-once"
   },
   "if_repair_ready": {
-    "next_candidate": "guarded local repair enqueue only after explicit confirmation",
-    "preview_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json",
-    "enqueue_mode_present": true
+    "next_candidate": "guarded local repair enqueue only after explicit confirmation, then repair submit preflight, then explicit repair submit live-once only if operator confirms",
+    "enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_once --lot-id 26 --symbol SILVER_USDT --confirm-directional-entry-repair-enqueue-once --json",
+    "submit_preflight_command_template": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_submit_preflight --action-id <REPAIR_ACTION_ID> --symbol SILVER_USDT --json",
+    "submit_live_once_command_template": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_submit_live_once --action-id <REPAIR_ACTION_ID> --symbol SILVER_USDT --json --live --confirm-live --confirm-directional-entry-repair-submit-live-once"
   },
   "if_entry_filled_wait": {
     "next_candidate": "pause and monitor",
@@ -41,7 +44,7 @@
     "recommended_action": "Do not enqueue or submit any action."
   },
   "safety_summary": {
-    "live_submit": false,
+    "new_live_submit_after_original_silver_entry": false,
     "mexc_api_submit": false,
     "market": false,
     "cancel": false,
