@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-12T16:21:51Z",
+  "updated_at": "2026-05-13T04:39:30Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-13-001",
+      "title": "Real SILVER SHORT fill sync and lot-based lifecycle supervision",
+      "status": "completed",
+      "completed_at": "2026-05-13T04:39:30Z",
+      "result_summary": "Real SILVER directional SHORT action 40 was filled and synced locally as DIRECTIONAL_ENTRY lot_id=26. The lifecycle supervisor now prioritizes the active lot and reports ENTRY_FILLED_WAIT, TAKE_PROFIT_READY, or REPAIR_READY from lot-based TP/repair planning. Lot-based take-profit and repair enqueue previews are available read-only. No TP/repair action has been enqueued or submitted."
+    },
     {
       "task_id": "2026-05-12-004",
       "title": "SILVER directional lifecycle supervisor verification",

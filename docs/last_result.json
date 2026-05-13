@@ -1,48 +1,89 @@
 {
-  "task_id": "2026-05-12-004",
-  "updated_at": "2026-05-12T16:21:51Z",
+  "task_id": "2026-05-13-001",
+  "updated_at": "2026-05-13T04:39:30Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "SILVER directional lifecycle supervisor verification",
-  "result_type": "silver_directional_lifecycle_supervisor_verification",
-  "summary": "Implemented and verified silver_directional_lifecycle_supervisor_report. The real local environment reports NO_ENTRY_READY_FOR_LOCAL_ENQUEUE with preflight READY_FOR_LOCAL_ENQUEUE, no pending entry, no filled directional lots, no pending take-profit close, and no pending repair action. SILVER remains fully read-only supervised and ready only for optional local enqueue after explicit operator decision.",
+  "title": "Real SILVER SHORT fill sync and lot-based lifecycle supervision",
+  "result_type": "silver_directional_fill_sync_lot_supervision",
+  "summary": "Real SILVER/USDT:USDT directional SHORT action 40 was filled and synced locally. The active directional lot is lot_id=26, source_action_id=40, side=SHORT, qty=5, entry_price=86.44. silver_directional_lifecycle_supervisor_report now treats the synced lot as the primary lifecycle state and returns ENTRY_FILLED_WAIT, TAKE_PROFIT_READY, or REPAIR_READY based on market conditions. Lot-based take-profit and repair enqueue previews are available and verified read-only. No TP/repair action has been enqueued or submitted.",
   "changed_files": [
     "scripts/automation_read_only_runner.py",
-    "scripts/test_automation_read_only_runner.py"
+    "scripts/test_automation_read_only_runner.py",
+    "next_task.json",
+    "last_result.json",
+    "task_history.json",
+    "docs/next_task.json",
+    "docs/last_result.json",
+    "docs/task_history.json",
+    "mexce-handoff/docs/next_task.json",
+    "mexce-handoff/docs/last_result.json",
+    "mexce-handoff/docs/task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='C:\\Users\\DADDY\\PycharmProjects\\Funding_strategies\\MEXC_anal_GPT\\mexce\\tmp_pycache_codex'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --json"
+    "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json",
+    "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json"
   ],
-  "silver_directional_lifecycle_supervisor": {
-    "mode": "silver_directional_lifecycle_supervisor_report",
-    "state": "NO_ENTRY_READY_FOR_LOCAL_ENQUEUE",
-    "recommended_next_action": "OPTIONAL_LOCAL_ENQUEUE_ONLY",
-    "preflight_summary_state": "READY_FOR_LOCAL_ENQUEUE",
-    "pending_entry_actions": [],
-    "filled_directional_lots": [],
-    "take_profit_pending_actions": [],
-    "repair_pending_actions": [],
-    "blocking_reasons": [],
-    "operator_note": "No SILVER directional entry is active. Optional local enqueue only after explicit operator decision."
+  "real_silver_directional_entry": {
+    "action_id": 40,
+    "api_order_id": "809262021539443904",
+    "symbol": "SILVER/USDT:USDT",
+    "side": "SHORT",
+    "qty": 5,
+    "entry_price": 86.44,
+    "fill_state": "FILLED_CONFIRMED",
+    "deal_qty": 5,
+    "synced_lot_id": 26,
+    "lot_type": "DIRECTIONAL_ENTRY",
+    "source_action_id": 40
+  },
+  "lifecycle_supervision": {
+    "supervisor_mode": "silver_directional_lifecycle_supervisor_report",
+    "expected_current_states": [
+      "ENTRY_FILLED_WAIT",
+      "TAKE_PROFIT_READY",
+      "REPAIR_READY"
+    ],
+    "active_lot_summary": {
+      "lot_id": 26,
+      "source_action_id": 40,
+      "symbol": "SILVER/USDT:USDT",
+      "side": "SHORT",
+      "qty_remaining": 5,
+      "entry_price": 86.44
+    },
+    "take_profit_preview_supported_from_lot_id": true,
+    "repair_preview_supported_from_lot_id": true,
+    "no_tp_or_repair_pending_action": true
+  },
+  "latest_lot_based_repair_preview_smoke": {
+    "mode": "directional_entry_repair_enqueue_preview",
+    "lot_id": 26,
+    "state": "BLOCKED",
+    "blocking_reasons": [
+      "market_price_unavailable"
+    ],
+    "active_lot_recognized": true,
+    "active_lot_marker_source": "source_action",
+    "actual_queue_write": false,
+    "actual_submit": false,
+    "actual_db_write": false
   },
   "tests": {
-    "no_entry_preflight_ready": true,
-    "pending_entry": true,
-    "filled_entry_tp_ready": true,
-    "filled_entry_repair_ready": true,
-    "pending_repair_stale_replace": true,
-    "pending_tp_close": true,
-    "conflict_stop_and_diagnose": true,
+    "lot_based_tp_preview": true,
+    "lot_based_repair_preview": true,
+    "source_action_marker_fallback": true,
+    "wrong_lot_type_blocks": true,
+    "missing_entry_price_blocks": true,
     "read_only_flags_false": true
   },
   "safety_summary": {
-    "live_submit": false,
-    "mexc_api_submit": false,
+    "new_live_submit_after_completed_entry": false,
+    "mexc_api_submit_after_completed_entry": false,
     "market": false,
-    "real_queue_db_write": false,
+    "tp_repair_queue_write": false,
     "cancel": false,
     "automation_cycle_live_once_changes": false,
     "executor_changes": false,
@@ -50,9 +91,10 @@
   },
   "next_operator_decision": {
     "status": "paused",
-    "recommended_next_action": "Stay paused, or optionally create one local SILVER directional entry action_queue row after explicit operator decision.",
-    "optional_confirmed_local_enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json --confirm-directional-entry-enqueue-once",
-    "alternative": "Stay paused and do not enqueue.",
-    "important": "Manual side remains required. The optional command is local enqueue only and does not submit to MEXC."
+    "recommended_next_action": "Run silver_directional_lifecycle_supervisor_report and follow only if it says TAKE_PROFIT_READY or REPAIR_READY.",
+    "supervisor_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --json",
+    "if_take_profit_ready": "Run lot-based take-profit enqueue preview/guarded enqueue only after explicit confirmation.",
+    "if_repair_ready": "Run lot-based repair enqueue preview/guarded enqueue only after explicit confirmation.",
+    "if_entry_filled_wait": "Pause and monitor."
   }
 }

@@ -1,35 +1,51 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-12T16:21:51Z",
+  "updated_at": "2026-05-13T04:39:30Z",
   "status_kind": "next_task",
   "status": "paused",
-  "title": "Await operator decision for optional SILVER directional sandbox local enqueue",
+  "title": "Monitor real SILVER directional SHORT lot and act only on TP/repair readiness",
   "task_type": "operator_decision",
-  "objective": "SILVER/USDT:USDT directional lifecycle supervisor is verified and currently reports NO_ENTRY_READY_FOR_LOCAL_ENQUEUE. No local action_queue row should be created unless the operator explicitly chooses to proceed. This remains local enqueue only and does not submit to MEXC.",
+  "objective": "A real SILVER/USDT:USDT directional SHORT entry has been filled and synced locally as lot_id=26. The operator should run the read-only lifecycle supervisor and only proceed if it reports TAKE_PROFIT_READY or REPAIR_READY. No TP/repair queue write or submit should occur without a later explicit guarded confirmation.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
+    "active_directional_lot_id": 26,
+    "source_action_id": 40,
+    "side": "SHORT",
+    "qty": 5,
+    "entry_price": 86.44,
     "live_exchange_action_allowed": false,
-    "local_action_queue_enqueue_allowed_only_with_confirmation": true,
+    "local_tp_or_repair_enqueue_allowed_only_with_future_confirmation": true,
     "code_changes_allowed": false,
     "ui_changes_allowed": false,
     "database_schema_changes_allowed": false,
     "secrets_allowed": false
   },
-  "recommended_next_action": "Stay paused, or optionally create one local SILVER directional entry action_queue row after explicit operator decision.",
-  "suggested_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_enqueue_once --symbol SILVER_USDT --side LONG --hypothetical-max-entry-qty 5 --hypothetical-max-entry-notional-pct 2 --hypothetical-leverage-cap 500 --json --confirm-directional-entry-enqueue-once",
-  "alternative_next_action": "Stay paused and do not enqueue.",
+  "recommended_next_action": "Run silver_directional_lifecycle_supervisor_report and follow only if it says TAKE_PROFIT_READY or REPAIR_READY.",
+  "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --json",
+  "if_take_profit_ready": {
+    "next_candidate": "local TP enqueue preview / guarded enqueue only",
+    "preview_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json"
+  },
+  "if_repair_ready": {
+    "next_candidate": "local repair enqueue preview / guarded enqueue only",
+    "preview_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_preview --lot-id 26 --symbol SILVER_USDT --hypothetical-leverage-cap 500 --json"
+  },
+  "if_entry_filled_wait": {
+    "next_candidate": "pause and monitor",
+    "recommended_action": "Do not enqueue TP/repair yet."
+  },
   "important_notes": [
-    "Manual side remains required; LONG is only the suggested command shape.",
-    "This command creates at most one local action_queue row.",
-    "This command does not submit to MEXC.",
-    "No live submit should be performed.",
-    "SILVER remains DIRECTIONAL_SANDBOX_ONLY.",
-    "automation_cycle_live_once and guarded autopilot remain intentionally excluded from SILVER directional sandbox execution."
+    "Manual/operator confirmation remains required for any future local TP or repair enqueue.",
+    "No TP or repair action has been enqueued or submitted yet.",
+    "No MARKET orders are allowed.",
+    "No cancel/replace should be performed from this next task.",
+    "SILVER remains DIRECTIONAL_SANDBOX_ONLY and intentionally excluded from automation_cycle_live_once/autopilot."
   ],
   "expected_result": {
-    "state": "DONE if confirmed and no duplicate pending row exists",
+    "supervisor_state": "ENTRY_FILLED_WAIT, TAKE_PROFIT_READY, or REPAIR_READY",
     "actual_submit": false,
     "mexc_api_submit": false,
+    "actual_queue_write": false,
     "market_allowed": false
   },
   "write_result_to": "last_result.json",
