@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-13T10:02:00Z",
+  "updated_at": "2026-05-14T03:21:26Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-14-001",
+      "title": "SILVER hedge completion and hedged state report",
+      "status": "completed",
+      "completed_at": "2026-05-14T03:21:26Z",
+      "result_summary": "SILVER directional sandbox reached HEDGED_1_TO_1: primary lot_id=26 SHORT 5 @ 86.44 and repair lot_id=27 LONG 5 @ 87.97, gross_qty=10, net_qty=0, locked_loss_estimate about 0.0765 USDT. Added read-only silver_hedged_state_report for monitoring hedged state and leg PnL estimates when market data is available. Next task is paused / monitor hedged SILVER state; future work only is explicit hedged-state harvest policy, read-only first."
+    },
     {
       "task_id": "2026-05-13-004",
       "title": "SILVER Directional Sandbox operator panel",

@@ -1,53 +1,59 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-13T10:02:00Z",
+  "updated_at": "2026-05-14T03:21:26Z",
   "status_kind": "next_task",
   "status": "paused",
-  "title": "Monitor active SILVER directional SHORT lot from Controls UI",
+  "title": "Monitor hedged SILVER directional state",
   "task_type": "operator_monitoring",
-  "objective": "Active SILVER/USDT:USDT directional SHORT lot_id=26 remains open. Use Controls UI -> SILVER Directional Sandbox panel, or the read-only lifecycle supervisor watch CLI, to monitor until TAKE_PROFIT_READY, REPAIR_READY, STOP_AND_DIAGNOSE, or max iterations. No action is allowed while state is ENTRY_FILLED_WAIT or WAIT_MARKET_DATA.",
+  "objective": "SILVER/USDT:USDT directional sandbox is now HEDGED_1_TO_1. Monitor the hedged state with the read-only silver_hedged_state_report. Do not open a new entry, do not run TP/repair, do not cancel, and do not use MARKET. Future work should design an explicit hedged-state harvest policy, read-only first.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
-    "active_directional_lot_id": 26,
-    "source_action_id": 40,
-    "side": "SHORT",
-    "qty": 5,
-    "entry_price": 86.44,
-    "take_profit_price": 86.0078,
-    "repair_trigger_price": 87.0883,
+    "state": "HEDGED_1_TO_1",
+    "primary_lot": {
+      "lot_id": 26,
+      "source_action_id": 40,
+      "side": "SHORT",
+      "qty": 5,
+      "entry_price": 86.44
+    },
+    "repair_lot": {
+      "lot_id": 27,
+      "source_action_id": 43,
+      "side": "LONG",
+      "qty": 5,
+      "entry_price": 87.97
+    },
+    "gross_qty": 10,
+    "net_qty": 0,
+    "locked_loss_estimate_usdt": 0.0765,
     "live_exchange_action_allowed": false,
-    "local_tp_or_repair_enqueue_allowed_only_with_future_confirmation": true,
+    "queue_write_allowed": false,
+    "db_write_allowed": false,
     "market_orders_allowed": false,
     "cancel_allowed": false,
     "automation_cycle_live_once_integration_allowed": false,
     "executor_changes_allowed": false
   },
-  "recommended_next_action": "Use Controls UI -> SILVER Directional Sandbox panel, or run the read-only SILVER lifecycle supervisor watch and keep waiting while state is ENTRY_FILLED_WAIT or WAIT_MARKET_DATA.",
-  "ui_next_step": "Open Controls UI -> SILVER Directional Sandbox panel, click Refresh summary / Refresh supervisor, and monitor the displayed state and TP/repair distances.",
-  "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
-  "if_take_profit_ready": {
-    "next_candidate": "only guarded local TP enqueue may be considered after explicit checkbox/confirmation",
-    "enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_take_profit_enqueue_once --lot-id 26 --symbol SILVER_USDT --json --confirm-directional-entry-take-profit-enqueue-once"
+  "recommended_next_action": "Run the read-only SILVER hedged state report and monitor. If market data is unavailable, wait and retry later.",
+  "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_hedged_state_report --json",
+  "if_market_data_unavailable": {
+    "recommended_action": "wait / retry later",
+    "do_not": [
+      "open new entry",
+      "TP/repair",
+      "cancel",
+      "MARKET"
+    ]
   },
-  "if_repair_ready": {
-    "next_candidate": "only guarded local repair enqueue may be considered after explicit checkbox/confirmation",
-    "enqueue_command": "python scripts\\automation_read_only_runner.py --mode directional_entry_repair_enqueue_once --lot-id 26 --symbol SILVER_USDT --json --confirm-directional-entry-repair-enqueue-once"
-  },
-  "if_entry_filled_wait_or_wait_market_data": {
-    "next_candidate": "monitor only",
-    "recommended_action": "Do not enqueue TP/repair."
-  },
-  "if_stop_and_diagnose": {
-    "next_candidate": "pause and diagnose",
-    "recommended_action": "Do not enqueue or submit any action."
+  "future_work_only": {
+    "next_design_candidate": "explicit hedged-state harvest policy",
+    "required_first_phase": "read-only design/report only"
   },
   "safety_summary": {
     "live_submit": false,
     "mexc_api_submit": false,
     "queue_write": false,
-    "queue_write_exception": "future guarded local TP/repair enqueue with checkbox only",
     "db_write": false,
-    "db_write_exception": "future guarded local enqueue if explicitly confirmed",
     "market": false,
     "cancel": false,
     "automation_cycle_live_once_changes": false,

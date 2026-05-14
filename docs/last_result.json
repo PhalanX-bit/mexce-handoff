@@ -1,14 +1,14 @@
 {
-  "task_id": "2026-05-13-004",
-  "updated_at": "2026-05-13T10:02:00Z",
+  "task_id": "2026-05-14-001",
+  "updated_at": "2026-05-14T03:21:26Z",
   "status_kind": "last_result",
   "status": "completed",
-  "title": "SILVER Directional Sandbox operator panel",
-  "result_type": "silver_directional_operator_cockpit_panel",
-  "summary": "Added a compact SILVER Directional Sandbox panel to Controls UI. The panel shows active lot state, recommended_next_action, lot/action identifiers, side, qty, entry/current prices, unrealized PnL estimate, TP/repair thresholds and distances, branch states, blocking reasons, safety summary, and the watch command. Refresh summary and refresh supervisor are read-only. Guarded local TP/repair enqueue buttons only appear for TAKE_PROFIT_READY or REPAIR_READY and require explicit checkbox confirmation. No enqueue buttons are enabled for ENTRY_FILLED_WAIT, WAIT_MARKET_DATA, or STOP_AND_DIAGNOSE. No live submit, MEXC API submit, MARKET, cancel, automation_cycle_live_once, or executor changes were made.",
+  "title": "SILVER hedge completion and hedged state report",
+  "result_type": "silver_hedged_state_monitoring",
+  "summary": "SILVER directional sandbox reached HEDGED_1_TO_1 after repair action 43 was synced locally. The primary lot is lot_id=26 SHORT 5 @ 86.44 and the repair lot is lot_id=27 LONG 5 @ 87.97. The hedge has gross_qty=10, net_qty=0, and locked_loss_estimate about 0.0765 USDT. Added read-only silver_hedged_state_report for monitoring hedged state, leg PnL estimates when market data is available, and future harvest eligibility placeholders. Smoke showed supervisor_state=HEDGED_1_TO_1 and WAIT_MARKET_DATA when live ticker data is unavailable. No new orders should be placed.",
   "changed_files": [
-    "app/V2/ui/controls_tab.py",
-    "scripts/test_controls_automation_parsing.py",
+    "scripts/automation_read_only_runner.py",
+    "scripts/test_automation_read_only_runner.py",
     "next_task.json",
     "last_result.json",
     "task_history.json",
@@ -20,57 +20,61 @@
     "mexce-handoff/docs/task_history.json"
   ],
   "commands_run": [
-    "$env:PYTHONPYCACHEPREFIX='C:\\Users\\DADDY\\PycharmProjects\\Funding_strategies\\MEXC_anal_GPT\\mexce\\tmp_pycache_codex'; python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
+    "python -m py_compile scripts\\automation_read_only_runner.py app\\V2\\ui\\controls_tab.py app\\V2\\streamlit_app.py",
     "python scripts\\test_controls_automation_parsing.py",
     "python scripts\\test_automation_read_only_runner.py",
-    "python scripts\\automation_read_only_runner.py --mode silver_directional_position_summary --json"
+    "python scripts\\automation_read_only_runner.py --mode silver_hedged_state_report --json"
   ],
-  "panel_behavior": {
-    "refresh_summary": "runs read-only silver_directional_position_summary",
-    "refresh_supervisor": "runs read-only silver_directional_lifecycle_supervisor_report",
-    "watch_command_visible": true,
-    "take_profit_enqueue": "shown only for TAKE_PROFIT_READY and locked behind checkbox",
-    "repair_enqueue": "shown only for REPAIR_READY and locked behind checkbox",
-    "entry_filled_wait": "monitor only; no enqueue enabled",
-    "wait_market_data": "market reference unavailable warning; no enqueue enabled",
-    "stop_and_diagnose": "red warning; no enqueue enabled"
+  "silver_hedge": {
+    "state": "HEDGED_1_TO_1",
+    "primary_lot": {
+      "lot_id": 26,
+      "source_action_id": 40,
+      "side": "SHORT",
+      "qty": 5,
+      "entry_price": 86.44
+    },
+    "repair_lot": {
+      "lot_id": 27,
+      "source_action_id": 43,
+      "side": "LONG",
+      "qty": 5,
+      "entry_price": 87.97
+    },
+    "gross_qty": 10,
+    "net_qty": 0,
+    "locked_loss_estimate_usdt": 0.0765
   },
-  "sample_state": {
-    "state": "WAIT_MARKET_DATA",
-    "lot_id": 26,
-    "source_action_id": 40,
-    "side": "SHORT",
-    "qty_remaining": 5,
-    "entry_price": 86.44,
-    "take_profit_price": 86.0078,
-    "repair_trigger_price": 87.0883,
-    "current_reference_price": null,
-    "warning": "market_price_unavailable"
+  "report_mode": {
+    "name": "silver_hedged_state_report",
+    "command": "python scripts\\automation_read_only_runner.py --mode silver_hedged_state_report --json",
+    "read_only": true,
+    "smoke_state_when_market_unavailable": "WAIT_MARKET_DATA",
+    "pnl_estimate_requires_market_price": true
+  },
+  "next_operator_decision": {
+    "status": "paused",
+    "recommended_command": "python scripts\\automation_read_only_runner.py --mode silver_hedged_state_report --json",
+    "if_market_data_unavailable": "wait / retry later",
+    "do_not": [
+      "open new entry",
+      "TP/repair",
+      "cancel",
+      "MARKET"
+    ],
+    "future_work_only": "design explicit hedged-state harvest policy, read-only first"
   },
   "tests": {
     "controls_parsing": true,
     "automation_read_only_runner": true,
     "compile": true,
-    "silver_commands_no_live": true,
-    "silver_enqueue_guard_requires_ready_state_and_checkbox": true,
-    "panel_source_contains_guarded_controls": true
-  },
-  "next_operator_decision": {
-    "status": "paused",
-    "ui_next_step": "Use Controls UI -> SILVER Directional Sandbox panel.",
-    "cli_alternative": "python scripts\\automation_read_only_runner.py --mode silver_directional_lifecycle_supervisor_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
-    "if_take_profit_ready": "Only guarded local TP enqueue may be considered.",
-    "if_repair_ready": "Only guarded local repair enqueue may be considered.",
-    "if_entry_filled_wait_or_wait_market_data": "Monitor only.",
-    "if_stop_and_diagnose": "Pause and diagnose."
+    "silver_hedged_report_smoke": true
   },
   "safety_summary": {
     "live_submit": false,
     "mexc_api_submit": false,
     "queue_write": false,
-    "queue_write_exception": "future guarded local TP/repair enqueue with checkbox only",
     "db_write": false,
-    "db_write_exception": "future guarded local enqueue if explicitly confirmed",
     "market": false,
     "cancel": false,
     "automation_cycle_live_once_changes": false,
