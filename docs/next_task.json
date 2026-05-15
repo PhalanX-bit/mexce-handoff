@@ -1,31 +1,41 @@
 {
   "task_id": "none",
-  "updated_at": "2026-05-14T03:21:26Z",
+  "updated_at": "2026-05-15T00:00:00Z",
   "status_kind": "next_task",
   "status": "paused",
-  "title": "Monitor hedged SILVER directional state",
+  "title": "Monitor partial hedge SILVER directional state",
   "task_type": "operator_monitoring",
-  "objective": "SILVER/USDT:USDT directional sandbox is now HEDGED_1_TO_1. Monitor the hedged state with the read-only silver_hedged_state_report. Do not open a new entry, do not run TP/repair, do not cancel, and do not use MARKET. Future work should design an explicit hedged-state harvest policy, read-only first.",
+  "objective": "SILVER/USDT:USDT directional sandbox is PARTIAL_HEDGE_NET_LONG after compression close action 45 closed SHORT 1. Monitor the partial hedge and only consider guarded local re-hedge enqueue if silver_partial_hedge_rehedge_plan_report reaches REHEDGE_CANDIDATE.",
   "scope": {
     "symbol": "SILVER/USDT:USDT",
-    "state": "HEDGED_1_TO_1",
-    "primary_lot": {
+    "state": "PARTIAL_HEDGE_NET_LONG",
+    "short_lot": {
       "lot_id": 26,
       "source_action_id": 40,
       "side": "SHORT",
-      "qty": 5,
+      "qty": 4,
       "entry_price": 86.44
     },
-    "repair_lot": {
+    "long_lot": {
       "lot_id": 27,
       "source_action_id": 43,
       "side": "LONG",
       "qty": 5,
       "entry_price": 87.97
     },
-    "gross_qty": 10,
-    "net_qty": 0,
-    "locked_loss_estimate_usdt": 0.0765,
+    "compression_close_action": {
+      "action_id": 45,
+      "side": "SHORT",
+      "close_qty": 1,
+      "fill_price": 84.58,
+      "reconcile_state": "FILLED_CONFIRMED"
+    },
+    "gross_qty": 9,
+    "net_side": "LONG",
+    "net_qty": 1,
+    "current_rehedge_state": "WAIT_REHEDGE",
+    "rehedge_candidate_side": "SHORT",
+    "rehedge_candidate_qty": 1,
     "live_exchange_action_allowed": false,
     "queue_write_allowed": false,
     "db_write_allowed": false,
@@ -34,30 +44,41 @@
     "automation_cycle_live_once_integration_allowed": false,
     "executor_changes_allowed": false
   },
-  "recommended_next_action": "Run the read-only SILVER hedged state report and monitor. If market data is unavailable, wait and retry later.",
-  "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_hedged_state_report --json",
-  "if_market_data_unavailable": {
-    "recommended_action": "wait / retry later",
-    "do_not": [
-      "open new entry",
-      "TP/repair",
-      "cancel",
-      "MARKET"
-    ]
+  "recommended_operator_workflow": [
+    "Keep collector running: powershell -ExecutionPolicy Bypass -File scripts\\run_silver_collector.ps1",
+    "Use Controls UI -> SILVER Strategy Cockpit.",
+    "Monitor: python scripts\\automation_read_only_runner.py --mode silver_partial_hedge_rehedge_plan_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
+    "If REHEDGE_CANDIDATE, only guarded local re-hedge enqueue may be considered.",
+    "Then run submit preflight.",
+    "Live submit only manually in terminal with explicit flags."
+  ],
+  "recommended_next_action": "Paused / monitor partial hedge. Use SILVER Strategy Cockpit or the re-hedge plan watch command. Do not enqueue unless REHEDGE_CANDIDATE appears.",
+  "suggested_command": "python scripts\\automation_read_only_runner.py --mode silver_partial_hedge_rehedge_plan_report --watch --interval-sec 30 --max-iterations 20 --json-lines",
+  "collector_command": "powershell -ExecutionPolicy Bypass -File scripts\\run_silver_collector.ps1",
+  "if_wait_rehedge": {
+    "recommended_action": "monitor only"
   },
-  "future_work_only": {
-    "next_design_candidate": "explicit hedged-state harvest policy",
-    "required_first_phase": "read-only design/report only"
+  "if_wait_market_data": {
+    "recommended_action": "check collector_health_report and collector process"
+  },
+  "if_rehedge_candidate": {
+    "local_enqueue_only": "python scripts\\automation_read_only_runner.py --mode silver_partial_hedge_rehedge_enqueue_once --symbol SILVER_USDT --json --confirm-silver-partial-hedge-rehedge-enqueue-once",
+    "next_step_after_enqueue": "run silver_partial_hedge_rehedge_submit_preflight for the inserted action id",
+    "live_submit_note": "copy-only from UI; terminal manual command requires --live --confirm-live --confirm-silver-partial-hedge-rehedge-submit-live-once"
+  },
+  "if_stop_and_diagnose": {
+    "recommended_action": "pause and diagnose"
   },
   "safety_summary": {
     "live_submit": false,
     "mexc_api_submit": false,
-    "queue_write": false,
-    "db_write": false,
     "market": false,
     "cancel": false,
+    "ui_live_submit": false,
     "automation_cycle_live_once_changes": false,
-    "executor_behavior_changes": false
+    "executor_behavior_changes": false,
+    "queue_write": "only future explicit guarded local modes",
+    "db_write": "only future explicit guarded local modes"
   },
   "write_result_to": "last_result.json",
   "append_summary_to": "task_history.json"

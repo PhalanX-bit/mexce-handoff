@@ -1,7 +1,14 @@
 {
-  "updated_at": "2026-05-14T03:21:26Z",
+  "updated_at": "2026-05-15T00:00:00Z",
   "status_kind": "short_history",
   "items": [
+    {
+      "task_id": "2026-05-15-001",
+      "title": "SILVER partial hedge and Strategy Cockpit milestone",
+      "status": "completed",
+      "completed_at": "2026-05-15T00:00:00Z",
+      "result_summary": "SILVER progressed to PARTIAL_HEDGE_NET_LONG after compression close action 45 filled CLOSE_SHORT 1 at 84.58. State is synced as SHORT 4, LONG 5, net LONG 1, gross 9. Collector/cache layer, guarded re-hedge workflow, and SILVER Strategy Cockpit UI are implemented. Next task is paused / monitor partial hedge; only consider guarded local re-hedge enqueue if REHEDGE_CANDIDATE appears."
+    },
     {
       "task_id": "2026-05-14-001",
       "title": "SILVER hedge completion and hedged state report",
